@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="nav_capsule_bg">#D91C1C24</color>
+    <color name="nav_capsule_stroke">#33FFFFFF</color>
+    <color name="nav_indicator_color">#332196F3</color>
+    <color name="site_capsule_bg">#26FFFFFF</color>
+    <color name="site_capsule_stroke">#33FFFFFF</color>
+    <color name="type_indicator_color">#2196F3</color>
+    <color name="type_unselected_color">#AAAAAA</color>
+</resources>

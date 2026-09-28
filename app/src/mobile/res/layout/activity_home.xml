@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/colorSurface">
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/navCard"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="18dp"
+        app:cardBackgroundColor="@color/nav_capsule_bg"
+        app:cardCornerRadius="30dp"
+        app:cardElevation="10dp"
+        app:cardMaxElevation="12dp"
+        app:strokeColor="@color/nav_capsule_stroke"
+        app:strokeWidth="1dp">
+
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/navigation"
+            android:layout_width="wrap_content"
+            android:layout_height="58dp"
+            android:background="@android:color/transparent"
+            android:minWidth="200dp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            app:elevation="0dp"
+            app:indicatorColor="@color/nav_indicator_color"
+            app:itemActiveIndicatorStyle="@style/NavActiveIndicator"
+            app:itemIconSize="26dp"
+            app:itemIconTint="@color/selector_nav_capsule"
+            app:itemRippleColor="@android:color/transparent"
+            app:itemTextColor="@color/selector_nav_capsule"
+            app:labelVisibilityMode="unlabeled"
+            app:menu="@menu/menu_nav" />
+
+    </com.google.android.material.card.MaterialCardView>
+
+</RelativeLayout>
