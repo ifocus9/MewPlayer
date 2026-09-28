@@ -27,8 +27,8 @@
     <color name="white_80">#CCFFFFFF</color>
     <color name="white_90">#E6FFFFFF</color>
 
-    <color name="nav_capsule_bg">#E6FFFFFF</color>
-    <color name="nav_capsule_stroke">#80FFFFFF</color>
+    <color name="nav_capsule_bg">#FFFFFF</color>
+    <color name="nav_capsule_stroke">#FFFFFF</color>
     <color name="nav_indicator_color">#E3F2FD</color>
     <color name="site_capsule_bg">#18000000</color>
     <color name="site_capsule_stroke">#20000000</color>
