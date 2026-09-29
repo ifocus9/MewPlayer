@@ -16,11 +16,6 @@
         app:iconTint="?attr/colorOnSurface"
         app:showAsAction="always" />
 
-    <item
-        android:id="@+id/history"
-        android:icon="@drawable/ic_popup_history"
-        android:title="@string/app_history"
-        app:iconTint="?attr/colorOnSurface"
-        app:showAsAction="always" />
+
 
 </menu>

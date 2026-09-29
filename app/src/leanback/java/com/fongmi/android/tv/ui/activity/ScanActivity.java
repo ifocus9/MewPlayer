@@ -10,7 +10,6 @@ import androidx.viewbinding.ViewBinding;
 
 import com.fongmi.android.tv.databinding.ActivityScanBinding;
 import com.fongmi.android.tv.ui.base.BaseActivity;
-import com.fongmi.android.tv.ui.dialog.RemoteTrustDialog;
 import com.fongmi.android.tv.utils.Util;
 import com.google.zxing.BarcodeFormat;
 import com.journeyapps.barcodescanner.BarcodeCallback;
@@ -49,7 +48,6 @@ public class ScanActivity extends BaseActivity implements BarcodeCallback {
     @Override
     public void barcodeResult(BarcodeResult result) {
         if (!result.getText().startsWith("http")) return;
-        RemoteTrustDialog.onScanResult(result.getText());
         setResult(RESULT_OK, new Intent().putExtra("address", result.getText()));
         finish();
     }

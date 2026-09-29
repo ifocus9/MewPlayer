@@ -2,9 +2,13 @@
 <resources>
     <color name="nav_capsule_bg">#D91C1C24</color>
     <color name="nav_capsule_stroke">#33FFFFFF</color>
-    <color name="nav_indicator_color">#332196F3</color>
+    <color name="nav_indicator_color">#2A2A32</color>
+    <color name="nav_item_selected">#2196F3</color>
+    <color name="nav_item_unselected">#E0E0E0</color>
     <color name="site_capsule_bg">#26FFFFFF</color>
     <color name="site_capsule_stroke">#33FFFFFF</color>
     <color name="type_indicator_color">#2196F3</color>
     <color name="type_unselected_color">#AAAAAA</color>
+    <color name="bg_site">#99000000</color>
+    <color name="text_site">#FFFFFF</color>
 </resources>

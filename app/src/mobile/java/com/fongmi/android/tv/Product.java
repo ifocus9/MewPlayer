@@ -16,13 +16,15 @@ public class Product {
     }
 
     public static int getColumn(Context context) {
+        if (!MobileWindow.isWide(context) && !ResUtil.isPad()) return 3;
         int count = MobileWindow.isWide(context) ? 7 : 5;
         count = count + (ResUtil.isPad() ? 1 : 0);
-        return Math.abs(PlayerSetting.getSize() - count);
+        return Math.max(3, Math.abs(PlayerSetting.getSize() - count));
     }
 
     public static int getColumn(Context context, Style style) {
-        return style.isLand() ? getColumn(context) - 1 : getColumn(context);
+        if (!MobileWindow.isWide(context) && !ResUtil.isPad()) return 3;
+        return style != null && style.isLand() ? Math.max(3, getColumn(context) - 1) : getColumn(context);
     }
 
     public static int[] getSpec(Context context) {
@@ -31,21 +33,21 @@ public class Product {
 
     public static int[] getSpec(Context context, int column) {
         Style style = Style.rect();
-        int space = ResUtil.dp2px(32) + ResUtil.dp2px(16 * (column - 1)) + getCutout(context);
+        int space = ResUtil.dp2px(12 * (column + 1)) + getCutout(context);
         return getSpec(context, space, column, style);
     }
 
     public static int[] getSpec(Context context, Style style) {
         int column = getColumn(context, style);
-        int space = ResUtil.dp2px(32) + ResUtil.dp2px(16 * (column - 1)) + getCutout(context);
-        if (style.isOval()) space += ResUtil.dp2px(column * 16);
+        int space = ResUtil.dp2px(12 * (column + 1)) + getCutout(context);
+        if (style != null && style.isOval()) space += ResUtil.dp2px(column * 16);
         return getSpec(context, space, column, style);
     }
 
     private static int[] getSpec(Context context, int space, int column, Style style) {
         int base = MobileWindow.getWidth(context) - space;
         int width = base / column;
-        int height = (int) (width / style.getRatio());
+        int height = (int) (width / (style != null ? style.getRatio() : 0.75f));
         return new int[]{width, height};
     }
 

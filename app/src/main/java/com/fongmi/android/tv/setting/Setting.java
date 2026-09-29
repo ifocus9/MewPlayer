@@ -584,7 +584,7 @@ public class Setting {
     }
 
     public static int getSearchColumn() {
-        return Math.min(Math.max(Prefers.getInt("search_column", 1), 1), 2);
+        return Math.min(Math.max(Prefers.getInt("search_column", 2), 1), 2);
     }
 
     public static void putSearchColumn(int column) {

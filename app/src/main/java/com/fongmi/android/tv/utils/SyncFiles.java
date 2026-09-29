@@ -233,7 +233,6 @@ public class SyncFiles {
     }
 
     private static boolean skip(String path) {
-        if ("WebHTV/RemoteTrust".equals(path) || path.startsWith("WebHTV/RemoteTrust/")) return true;
         if (path.startsWith("TV/lib/") || path.startsWith("TV/log/") || path.startsWith("TV/LogVar/")) return true;
         if (path.startsWith("TV/cache_") || path.startsWith("TV/.subtitle_proxy_cache/") || path.startsWith("TV/.ai_subtitle_cache/") || path.startsWith("TV/.online_subtitle_cache/")) return true;
         String name = path.substring(path.lastIndexOf('/') + 1);

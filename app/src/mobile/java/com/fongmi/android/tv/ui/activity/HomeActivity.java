@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.RelativeLayout;
 
@@ -31,6 +30,7 @@ import com.fongmi.android.tv.service.PlaybackService;
 import com.fongmi.android.tv.setting.Setting;
 import com.fongmi.android.tv.ui.base.BaseActivity;
 import com.fongmi.android.tv.ui.custom.FragmentStateManager;
+import com.fongmi.android.tv.ui.fragment.HistoryFragment;
 import com.fongmi.android.tv.ui.fragment.SettingDanmakuFragment;
 import com.fongmi.android.tv.ui.fragment.SettingFragment;
 import com.fongmi.android.tv.ui.fragment.SettingPlayerFragment;
@@ -39,18 +39,18 @@ import com.fongmi.android.tv.utils.FileChooser;
 import com.fongmi.android.tv.utils.MobileWindow;
 import com.fongmi.android.tv.utils.Notify;
 import com.fongmi.android.tv.utils.PermissionUtil;
+import com.fongmi.android.tv.utils.ResUtil;
 import com.fongmi.android.tv.utils.UrlUtil;
 import com.fongmi.android.tv.utils.Util;
 import com.fongmi.android.tv.web.WebHomeChromeStartup;
 import com.fongmi.android.tv.web.WebHomeViewport;
 import com.github.catvod.net.OkHttp;
-import com.google.android.material.navigation.NavigationBarView;
 import com.google.gson.JsonObject;
 
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
-public class HomeActivity extends BaseActivity implements NavigationBarView.OnItemSelectedListener, WebHomeChromeController.Host {
+public class HomeActivity extends BaseActivity implements WebHomeChromeController.Host {
 
     public static final String EXTRA_NAV_POSITION = "nav_position";
         private static final String STATE_CURRENT_POSITION = "currentPosition";
@@ -82,12 +82,13 @@ public class HomeActivity extends BaseActivity implements NavigationBarView.OnIt
     @Override
     protected void initView(Bundle savedInstanceState) {
         wideWindow = MobileWindow.isWide(this);
-                currentPosition = savedInstanceState == null ? 0 : savedInstanceState.getInt(STATE_CURRENT_POSITION, 0);
+        currentPosition = savedInstanceState == null ? 0 : savedInstanceState.getInt(STATE_CURRENT_POSITION, 0);
+        updateWindowBackground(currentPosition);
         mStartupConfig = Config.vod();
         mChrome = new WebHomeChromeController(this, mBinding, this, savedInstanceState, WebHomeChromeStartup.restore(mStartupConfig));
         mBinding.getRoot().addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> checkWindowShape(right - left, bottom - top));
-        mBinding.navigation.setOnItemSelectedListener(this);
         PermissionUtil.requestFile(this, allGranted -> PermissionUtil.requestNotify(this));
+        setNavigation();
         initFragment(savedInstanceState);
         initConfig();
     }
@@ -101,6 +102,18 @@ public class HomeActivity extends BaseActivity implements NavigationBarView.OnIt
 
     @Override
     protected void initEvent() {
+        mBinding.navVod.setOnClickListener(v -> {
+            setNavigationVisible(true);
+            selectNavigation(0);
+        });
+        mBinding.navKeep.setOnClickListener(v -> {
+            setNavigationVisible(true);
+            selectNavigation(3);
+        });
+        mBinding.navSetting.setOnClickListener(v -> {
+            setNavigationVisible(true);
+            selectNavigation(1);
+        });
     }
 
     private void checkAction(Intent intent) {
@@ -126,7 +139,8 @@ public class HomeActivity extends BaseActivity implements NavigationBarView.OnIt
             case 0 -> VodFragment.newInstance();
             case 1 -> SettingFragment.newInstance();
             case 2 -> SettingPlayerFragment.newInstance();
-                        case 4 -> SettingDanmakuFragment.newInstance();
+            case 3 -> HistoryFragment.newInstance();
+            case 4 -> SettingDanmakuFragment.newInstance();
             default -> null;
         });
         if (savedInstanceState == null) change(0);
@@ -139,7 +153,31 @@ public class HomeActivity extends BaseActivity implements NavigationBarView.OnIt
         changeFragment(position <= 0 ? 0 : position);
     }
 
+    public void showLoading() {
+        showLoading(getString(R.string.loading_source));
+    }
+
+    public void showLoading(String text) {
+        App.post(() -> {
+            if (isFinishing() || isDestroyed()) return;
+            mBinding.loadingText.setText(text);
+            mBinding.loadingLayout.setVisibility(View.VISIBLE);
+        });
+    }
+
+    public void hideLoading() {
+        App.post(() -> {
+            if (isFinishing() || isDestroyed()) return;
+            mBinding.loadingLayout.setVisibility(View.GONE);
+        });
+    }
+
+    public boolean isLoading() {
+        return mBinding.loadingLayout != null && mBinding.loadingLayout.getVisibility() == View.VISIBLE;
+    }
+
     private void initConfig() {
+        showLoading();
         VodConfig.get().config(mStartupConfig == null ? Config.vod() : mStartupConfig).load(getCallback());
     }
 
@@ -152,6 +190,7 @@ public class HomeActivity extends BaseActivity implements NavigationBarView.OnIt
 
             @Override
             public void error(String msg) {
+                hideLoading();
                 resetVodChrome();
                 checkAction(getIntent());
                 StateEvent.empty();
@@ -161,14 +200,16 @@ public class HomeActivity extends BaseActivity implements NavigationBarView.OnIt
     }
 
     private void setNavigation() {
-        mBinding.navigation.getMenu().findItem(R.id.vod).setVisible(true);
-        mBinding.navigation.getMenu().findItem(R.id.setting).setVisible(true);
+        mBinding.navVod.setVisibility(View.VISIBLE);
+        mBinding.navKeep.setVisibility(View.VISIBLE);
+        mBinding.navSetting.setVisibility(View.VISIBLE);
         syncNavigationSelection();
     }
 
     public void change(int position) {
-                setNavigationVisible(true);
-        if (position < 2) selectNavigation(position);
+        if (position != 0) hideLoading();
+        setNavigationVisible(true);
+        if (position == 0 || position == 1 || position == 3) selectNavigation(position);
         else changeFragment(position);
     }
 
@@ -179,6 +220,18 @@ public class HomeActivity extends BaseActivity implements NavigationBarView.OnIt
             mBinding.navigation.setVisibility(visible ? View.VISIBLE : View.GONE);
         }
         mBinding.getRoot().requestApplyInsets();
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onStateEvent(StateEvent event) {
+        switch (event.type()) {
+            case EMPTY:
+                hideLoading();
+                break;
+            case PROGRESS:
+                showLoading();
+                break;
+        }
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -204,31 +257,38 @@ public class HomeActivity extends BaseActivity implements NavigationBarView.OnIt
         if (event.type() == ServerEvent.Type.SEARCH) SearchActivity.start(this, event.text());
     }
 
-    @Override
-    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                setNavigationVisible(true);
-        if (item.getItemId() == R.id.setting) return changeFragment(1);
-        if (item.getItemId() == R.id.vod) return changeFragment(0);
-        return false;
-    }
 
     private void selectNavigation(int position) {
-        int itemId = position == 0 ? R.id.vod : R.id.setting;
-        if (mBinding.navigation.getSelectedItemId() == itemId) changeFragment(position);
-        else mBinding.navigation.setSelectedItemId(itemId);
+        syncNavigationSelection(position);
+        changeFragment(position);
     }
 
     private void syncNavigationSelection() {
-        int itemId = currentPosition == 0 ? R.id.vod : R.id.setting;
-        if (mBinding.navigation.getSelectedItemId() == itemId) return;
-        mBinding.navigation.setOnItemSelectedListener(null);
-        mBinding.navigation.setSelectedItemId(itemId);
-        mBinding.navigation.setOnItemSelectedListener(this);
+        syncNavigationSelection(currentPosition);
+    }
+
+    private void syncNavigationSelection(int position) {
+        mBinding.navVod.setSelected(position == 0);
+        mBinding.navKeep.setSelected(position == 3);
+        mBinding.navSetting.setSelected(position == 1);
+    }
+
+    public boolean isSettingActive() {
+        return currentPosition == 1 || currentPosition == 2 || currentPosition == 4;
+    }
+
+    private void updateWindowBackground(int position) {
+        int color = (position == 1 || position == 2 || position == 4) ? ResUtil.getColor(R.color.bg_setting) : ResUtil.getColor(R.color.white);
+        mBinding.getRoot().setBackgroundColor(color);
     }
 
     private boolean changeFragment(int position) {
         boolean changed = mManager.change(position);
-        if (changed) currentPosition = position;
+        if (changed) {
+            currentPosition = position;
+            syncNavigationSelection(position);
+        }
+        updateWindowBackground(position);
         refreshWebHomeChromeLayout();
         return changed;
     }
@@ -295,7 +355,7 @@ public class HomeActivity extends BaseActivity implements NavigationBarView.OnIt
     public void openVod() {
         resetVodChrome();
         setNavigationVisible(true);
-        mBinding.navigation.setSelectedItemId(R.id.vod);
+        selectNavigation(0);
         VodFragment fragment = (VodFragment) mManager.getFragment(0);
         if (fragment != null) fragment.openVodHome();
     }
@@ -358,12 +418,17 @@ public class HomeActivity extends BaseActivity implements NavigationBarView.OnIt
     protected void onBackInvoked() {
         if (mChrome != null && mChrome.consumeBack()) {
             return;
-        } else if (!mBinding.navigation.getMenu().findItem(R.id.vod).isVisible()) {
+        } else if (isLoading()) {
+            hideLoading();
+            return;
+        } else if (mBinding.navVod.getVisibility() != View.VISIBLE) {
             setNavigation();
         
-        } else if (mManager.isVisible(2) || mManager.isVisible(4)) {
+        } else if (currentPosition == 2 || currentPosition == 4 || mManager.isVisible(2) || mManager.isVisible(4)) {
             change(1);
-        } else if (mManager.isVisible(1)) {
+        } else if (currentPosition == 3 || mManager.isVisible(3)) {
+            if (mManager.canBack(3)) change(0);
+        } else if (currentPosition == 1 || mManager.isVisible(1)) {
             change(0);
         } else if (mManager.canBack(0)) {
             if (PlaybackService.isRunning()) Util.moveToBackground(this);

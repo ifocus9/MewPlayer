@@ -74,6 +74,12 @@ public class SearchActivity extends BaseActivity {
     }
 
     @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        setTheme(R.style.Theme_App);
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
     protected ViewBinding getBinding() {
         return ActivitySearchBinding.inflate(getLayoutInflater());
     }

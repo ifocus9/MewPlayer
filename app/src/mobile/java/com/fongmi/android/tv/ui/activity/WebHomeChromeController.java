@@ -14,9 +14,11 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
+import com.fongmi.android.tv.R;
 import com.fongmi.android.tv.bean.Site;
 import com.fongmi.android.tv.databinding.ActivityHomeBinding;
 import com.fongmi.android.tv.setting.Setting;
+import com.fongmi.android.tv.utils.ResUtil;
 import com.fongmi.android.tv.utils.Util;
 import com.fongmi.android.tv.web.WebHomeChrome;
 import com.fongmi.android.tv.web.WebHomeChromeOptions;
@@ -158,7 +160,11 @@ final class WebHomeChromeController {
         String effectiveMode = effectiveMode();
         WebHomeChromeOptions effectiveOptions = isActive() ? options : WebHomeChromeOptions.normal();
         Window window = activity.getWindow();
-        window.setStatusBarColor(effectiveOptions.topScrim);
+        int topScrim = effectiveOptions.topScrim;
+        if (!isActive() && activity.isSettingActive()) {
+            topScrim = ResUtil.getColor(R.color.bg_setting);
+        }
+        window.setStatusBarColor(topScrim);
         window.setNavigationBarColor(effectiveOptions.bottomScrim);
         WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(window, window.getDecorView());
         controller.setAppearanceLightStatusBars(useDarkIcons(effectiveOptions.statusBarStyle));
@@ -177,22 +183,39 @@ final class WebHomeChromeController {
     private void applyLayout() {
         boolean active = isActive();
         boolean normal = !active || WebHomeChrome.NORMAL.equals(mode);
-        binding.navigation.setVisibility(normal ? View.VISIBLE : View.GONE);
         WebHomeViewport current = buildViewport();
         int top = normal ? current.getSafeTop() : 0;
         int bottom = normal ? current.getSafeBottom() : 0;
         binding.container.setPadding(0, top, 0, 0);
-        binding.navigation.setPadding(0, 0, 0, bottom);
-        ViewGroup.LayoutParams params = binding.navigation.getLayoutParams();
-        int height = navigationBaseHeight + bottom;
-        if (params.height != height) {
-            params.height = height;
-            binding.navigation.setLayoutParams(params);
+
+        if (binding.navCard != null) {
+            binding.navCard.setVisibility(normal ? View.VISIBLE : View.GONE);
+            ViewGroup.MarginLayoutParams cardParams = (ViewGroup.MarginLayoutParams) binding.navCard.getLayoutParams();
+            int baseMargin = ResUtil.dp2px(18);
+            if (cardParams.bottomMargin != baseMargin + bottom) {
+                cardParams.bottomMargin = baseMargin + bottom;
+                binding.navCard.setLayoutParams(cardParams);
+            }
+            binding.navigation.setPadding(0, 0, 0, 0);
+            ViewGroup.LayoutParams params = binding.navigation.getLayoutParams();
+            if (params.height != navigationBaseHeight) {
+                params.height = navigationBaseHeight;
+                binding.navigation.setLayoutParams(params);
+            }
+        } else {
+            binding.navigation.setVisibility(normal ? View.VISIBLE : View.GONE);
+            binding.navigation.setPadding(0, 0, 0, bottom);
+            ViewGroup.LayoutParams params = binding.navigation.getLayoutParams();
+            int height = navigationBaseHeight + bottom;
+            if (params.height != height) {
+                params.height = height;
+                binding.navigation.setLayoutParams(params);
+            }
+            RelativeLayout.LayoutParams container = (RelativeLayout.LayoutParams) binding.container.getLayoutParams();
+            if (binding.navigation.getVisibility() == View.VISIBLE) container.addRule(RelativeLayout.ABOVE, binding.navigation.getId());
+            else container.removeRule(RelativeLayout.ABOVE);
+            binding.container.setLayoutParams(container);
         }
-        RelativeLayout.LayoutParams container = (RelativeLayout.LayoutParams) binding.container.getLayoutParams();
-        if (binding.navigation.getVisibility() == View.VISIBLE) container.addRule(RelativeLayout.ABOVE, binding.navigation.getId());
-        else container.removeRule(RelativeLayout.ABOVE);
-        binding.container.setLayoutParams(container);
     }
 
     private void dispatchViewport() {

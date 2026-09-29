@@ -35,8 +35,10 @@ public class TypeDialogAdapter extends RecyclerView.Adapter<TypeDialogAdapter.Vi
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Class item = mItems.get(position);
+        boolean selected = item.isSelected();
         holder.binding.text.setText(item.getTypeName());
-        holder.binding.text.setSelected(item.isSelected());
+        holder.binding.text.setSelected(selected);
+        holder.binding.text.setTypeface(null, selected ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
         holder.binding.text.setOnClickListener(v -> listener.onItemClick(position, item));
     }
 

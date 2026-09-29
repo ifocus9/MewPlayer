@@ -93,18 +93,20 @@
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/typeMore"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
                 android:layout_gravity="center_vertical"
                 android:layout_marginStart="2dp"
-                android:background="@android:color/transparent"
+                android:layout_marginEnd="6dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 android:minWidth="0dp"
                 android:minHeight="0dp"
                 android:padding="8dp"
-                android:scaleType="center"
+                android:scaleType="centerInside"
                 android:translationY="-4dp"
                 android:visibility="gone"
                 app:srcCompat="@drawable/ic_action_menu"
+                app:tint="?attr/colorOnSurfaceVariant"
                 tools:visibility="visible" />
 
         </androidx.appcompat.widget.LinearLayoutCompat>
@@ -133,31 +135,31 @@
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/filter"
+        style="@style/Widget.WebHTV.FloatingActionButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="23dp"
         android:visibility="gone"
-        app:backgroundTint="?attr/colorSecondaryContainer"
         app:layout_anchor="@id/pager"
         app:layout_anchorGravity="end|bottom"
         app:layout_behavior="com.fongmi.android.tv.ui.custom.CustomFabBehavior"
         app:srcCompat="@drawable/ic_fab_filter"
-        app:tint="?attr/colorOnSecondaryContainer"
         tools:visibility="visible" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/top"
+        style="@style/Widget.WebHTV.FloatingActionButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="23dp"
         android:tag="top"
         android:visibility="invisible"
-        app:backgroundTint="?attr/colorSecondaryContainer"
         app:layout_anchor="@id/pager"
         app:layout_anchorGravity="end|bottom"
         app:layout_behavior="com.fongmi.android.tv.ui.custom.CustomFabBehavior"
         app:srcCompat="@drawable/ic_fab_top"
-        app:tint="?attr/colorOnSecondaryContainer"
         tools:visibility="visible" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

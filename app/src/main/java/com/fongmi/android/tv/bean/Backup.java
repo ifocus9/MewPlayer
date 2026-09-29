@@ -175,7 +175,6 @@ public class Backup {
         if ("perf_exo_single_rate_rescue_enabled_v1".equals(key)) {
             return false;
         }
-        if (key.startsWith("remote_trust_")) return false;
         if (isWebHomeExtensionPref(key)) return options.isWebHome();
         if (key.startsWith("cache_")) return options.isWebHome() || options.isSpider();
         if (key.startsWith("config_")) return options.isConfig();

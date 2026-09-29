@@ -20,7 +20,6 @@ import com.fongmi.android.tv.bean.Backup;
 import com.fongmi.android.tv.bean.Device;
 import com.fongmi.android.tv.bean.SyncOptions;
 import com.fongmi.android.tv.databinding.DialogOneKeySyncBinding;
-import com.fongmi.android.tv.remote.RemoteStore;
 import com.fongmi.android.tv.server.Server;
 import com.fongmi.android.tv.setting.Setting;
 import com.fongmi.android.tv.ui.adapter.SyncDeviceAdapter;
@@ -187,7 +186,7 @@ public class OneKeySyncDialog extends BaseBottomSheetDialog implements SyncDevic
     }
 
     private MaterialCheckBox[] boxes() {
-        return new MaterialCheckBox[]{binding.config, binding.spider, binding.mpvConfig, binding.loginState, binding.webHome, binding.search, binding.history, binding.keep, binding.settings, binding.remoteRelay};
+        return new MaterialCheckBox[]{binding.config, binding.spider, binding.mpvConfig, binding.loginState, binding.webHome, binding.search, binding.history, binding.keep, binding.settings};
     }
 
     private void updateSyncPathSummary() {
@@ -209,7 +208,6 @@ public class OneKeySyncDialog extends BaseBottomSheetDialog implements SyncDevic
                 .history(binding.history.isChecked())
                 .keep(binding.keep.isChecked())
                 .settings(binding.settings.isChecked())
-                .remoteRelay(binding.remoteRelay.isChecked())
                 .paths(Setting.getSyncPaths());
     }
 
@@ -365,7 +363,6 @@ public class OneKeySyncDialog extends BaseBottomSheetDialog implements SyncDevic
             body.add("force", "false");
             if (toRemote) body.add("backup", Backup.create(options).toString());
             else body.add("device", Device.get().toString());
-            addRemoteRelay(body, options, toRemote);
             return body.build();
         }
         App.post(() -> updatePrepare(archive, loginArchive));
@@ -373,15 +370,10 @@ public class OneKeySyncDialog extends BaseBottomSheetDialog implements SyncDevic
         body.addFormDataPart("options", options.toString());
         body.addFormDataPart("force", "false");
         body.addFormDataPart("backup", Backup.create(options).toString());
-        if (options.isRemoteRelay()) body.addFormDataPart("remoteRelay", RemoteStore.exportRelayConfig());
         if (archive != null) body.addFormDataPart(SyncFiles.PART_NAME, archive.getFile().getName(), new ProgressRequestBody(archive.getFile(), ZIP, (written, total) -> App.post(() -> updateUpload(archive, written, total))));
         if (mpvArchive != null) body.addFormDataPart(MpvConfigSync.PART_NAME, mpvArchive.getFile().getName(), new ProgressRequestBody(mpvArchive.getFile(), ZIP, null));
         if (loginArchive != null) body.addFormDataPart(LoginStateSync.PART_NAME, loginArchive.getFile().getName(), new ProgressRequestBody(loginArchive.getFile(), ZIP, null));
         return body.build();
-    }
-
-    private void addRemoteRelay(FormBody.Builder body, SyncOptions options, boolean includeLocal) {
-        if (options.isRemoteRelay() && includeLocal) body.add("remoteRelay", RemoteStore.exportRelayConfig());
     }
 
     private void request(String url, RequestBody body, SyncFiles.Archive archive, MpvConfigSync.Archive mpvArchive, LoginStateSync.Archive loginArchive, int retry) {

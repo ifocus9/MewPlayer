@@ -140,12 +140,6 @@
             android:stopWithTask="false" />
 
         <service
-            android:name=".remote.RemoteAgentService"
-            android:exported="false"
-            android:foregroundServiceType="dataSync|connectedDevice"
-            android:stopWithTask="false" />
-
-        <service
             android:name=".node.NodeService"
             android:exported="false"
             android:process=":node" />

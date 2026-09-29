@@ -38,7 +38,6 @@ import com.fongmi.android.tv.impl.SiteListener;
 import com.fongmi.android.tv.model.SiteViewModel;
 import com.fongmi.android.tv.setting.Setting;
 import com.fongmi.android.tv.ui.activity.HomeActivity;
-import com.fongmi.android.tv.ui.activity.HistoryActivity;
 import com.fongmi.android.tv.ui.activity.SearchActivity;
 import com.fongmi.android.tv.ui.adapter.TypeAdapter;
 import com.fongmi.android.tv.ui.base.BaseFragment;
@@ -161,7 +160,10 @@ public class VodFragment extends BaseFragment implements ConfigListener, SiteLis
     }
 
     private void setAdapter(Result result) {
-        if (mWeb != null && mWeb.isVisible()) return;
+        if (mWeb != null && mWeb.isVisible()) {
+            hideProgress();
+            return;
+        }
         mAdapter.addAll(mResult = result);
         notifyPagerAdapter();
         setFabVisible(0);
@@ -170,6 +172,9 @@ public class VodFragment extends BaseFragment implements ConfigListener, SiteLis
         updateToolbarMenu();
         hideProgress();
         showContent();
+        if (mAdapter.getItemCount() == 0 && result != null && !TextUtils.isEmpty(result.getMsg())) {
+            Notify.show(result.getMsg());
+        }
     }
 
     private void updateTypeMoreVisible() {
@@ -274,7 +279,6 @@ public class VodFragment extends BaseFragment implements ConfigListener, SiteLis
     private boolean onMenuItemClick(MenuItem item) {
         if (item.getItemId() == R.id.link) onLink(null);
         else if (item.getItemId() == R.id.search) SearchActivity.start(requireActivity());
-        else if (item.getItemId() == R.id.history) HistoryActivity.start(requireActivity());
         else return false;
         return true;
     }
@@ -292,10 +296,12 @@ public class VodFragment extends BaseFragment implements ConfigListener, SiteLis
     }
 
     private void showProgress() {
-        mBinding.progress.getRoot().setVisibility(View.VISIBLE);
+        if (getActivity() instanceof HomeActivity activity) activity.showLoading();
+        mBinding.progress.getRoot().setVisibility(View.GONE);
     }
 
     private void hideProgress() {
+        if (getActivity() instanceof HomeActivity activity) activity.hideLoading();
         mBinding.progress.getRoot().setVisibility(View.GONE);
     }
 
@@ -401,6 +407,7 @@ public class VodFragment extends BaseFragment implements ConfigListener, SiteLis
             public void error(String msg) {
                 Notify.dismiss();
                 Notify.show(msg);
+                hideProgress();
                 showContent();
             }
         });

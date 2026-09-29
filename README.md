@@ -1,22 +1,67 @@
-# WebHomeTV
+# WebHomeTV (WebHTV)
 
-WebHomeTV 是基于 [FongMi](https://github.com/FongMi/TV) / CatVod 生态二次开发的 Android 影音应用,保留原有点播、直播、Spider、解析、投屏、本地 HTTP 服务等能力,并重点增强了 **WebHome 自定义首页**、**App Native SDK**、**管理页面**、**远程托管**、**WebHome 扩展**、**登录态学习/同步**、**网盘链接检测**、**站点健康排序**、**观影记录同步** 和 **Nostr/TMDB 推荐首页**。
+WebHomeTV 是基于 [FongMi](https://github.com/FongMi/TV) / CatVod 生态深度定制重构的 **专用于 Node.js 猫源的极简 TVBox 应用**。彻底去除了传统 TVBox 的历史包袱与繁琐冗余（彻底移除直播 Live 模块、告别复杂的多重 JSON 配置、移除 Python 运行时），保留并强化了 **WebHome 网页自定义首页** 与 **Media3 / MPV 双引擎原生硬解播放内核**。
 
-项目的核心目标不是替换 CSP/Spider 体系,而是让 CSP 站点首页变成一个真正可开发的网页应用:开发者用 HTML/CSS/JavaScript 定制首页,再通过 App 暴露的 Native 能力完成搜索、播放、跨域请求、资源代理、最近观看、网盘检测和状态同步。
+### 核心设计与特性
+
+- **专为 Node.js 猫源定制**：集成 `FongMi/nodejs-mobile` 嵌入式 Node 运行时，在本地启动常驻 Node 实例（默认监听 `127.0.0.1:9988`），直接将 Fastify / CatPawOpen 导出的 `/t4/config` 作为内部唯一数据源。
+- **纯粹点播配置**：直接输入 Node.js bundle 脚本地址（如 `https://domain.com/.../index.js;md5;[hash]` 或 `https://domain.com/.../index.js.md5`），App 自动完成 MD5 校验、增量更新与安全原子替换；网盘 Token、Cookie 等持久化在隔离数据目录（`data/db.json`），脚本更新绝不丢失登录态。
+- **独立 WebHome 首页配置**：在设置中开辟独立的 WebHome 首页入口（默认 `http://127.0.0.1:9988/web.html`，也可配置任意远程 H5），全屏沉浸式 WebView 容器通过 `window.webhome` 原生 JSBridge 调起硬解播放与聚合搜索。
+- **极致轻量纯粹**：彻底剔除直播全链路（导航/UI/后台调度/TVBus 等）、剔除复杂的 TVBox JSON 解析树、移除 Python (`chaquo`) 运行时，大幅减小 APK 体积并提升低配盒子的冷启动响应速度。
+
+### 系统架构
+
+```
+                    【用户远程托管】(OSS / CDN / GitHub)
+                               │
+                ┌──────────────┴──────────────┐
+                │                             │
+     [点播配置: JS + MD5]              [首页配置: H5 URL (可选)]
+     https://.../index.js;md5;...       http://.../webhome.html
+                │                             │
+                ▼                             ▼
+┌─────────────────────────────────────────────────────────────┐
+│                     WebHTV 客户端应用                        │
+│                                                             │
+│  ┌─────────────────────────┐  ┌──────────────────────────┐  │
+│  │ 首页配置 (WebHome 容器) │  │ 原生播放引擎 (OSD 层)    │  │
+│  │  - 加载设置的网页 URL   │  │  - Media3 (ExoPlayer)    │  │
+│  │  - window.webhome 桥接  │  │  - MPV 播放内核          │  │
+│  │  - 遥控器平滑焦点导航   │  │  - M3U8 代理 / 切片直通  │  │
+│  └───────────▲─────────────┘  └────────────▲─────────────┘  │
+│              │ 原生调用                    │ 播放直通        │
+│  ┌───────────┴─────────────────────────────┴─────────────┐  │
+│  │               WebHTV 核心控制与数据调度               │  │
+│  │  - NodeBundleManager: 监听点播配置，下载/校验 index.js│  │
+│  │  - NodeService: 管理 FongMi/nodejs-mobile 本地常驻服务│  │
+│  │  - T4 适配器: 自动从 127.0.0.1:9988/t4 挂载数据源    │  │
+│  │  - 搜索 / 详情 / 历史进度 / 收藏持久化                │  │
+│  └───────────────────────────▲───────────────────────────┘  │
+│                              │ 127.0.0.1:9988 (IPC)         │
+│  ┌───────────────────────────┴───────────────────────────┐  │
+│  │         嵌入式 Node.js 运行时 (FongMi/nodejs-mobile)  │  │
+│  │  - libnode.so + JNI 桥接                              │  │
+│  │  - 运行: context.getFilesDir()/nodejs/index.js        │  │
+│  │  - 数据持久化: filesDir/nodejs/data/db.json (网盘Token)│  │
+│  │  - 对外暴露: /t4/* (API), /web.html (后台), /proxy    │  │
+│  └───────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ### 增强功能
 
-- **网盘检测**:内置网盘分享链接有效性检测,WebHome 和本地 HTTP API 均可调用。
-- **站点健康排序**:自动学习站点搜索、详情和播放成功率,搜索与换源优先使用更可用的站点;站点弹窗默认保留用户配置顺序,可在弹窗内单独开启健康排序。
-- **管理页面**:在 App 内启动局域网浏览器管理页 `/m`,可管理本机或远端设备文件、登录态、同步目录、站点注入、接口、壳代理、搜索和推送,运行期间通过前台服务保活。
-- **远程托管**:通过自建 Cloudflare/Deno/Vercel/Go/Rust 中转服务绑定多台 WebHTV 设备,支持设备状态、远程搜索/推送、接口配置、主页设置、一键同步和最近日志;Go/Rust 版支持 WebSocket 实时通道,不支持时自动回退 HTTP 轮询。部署说明和二进制见 [远程托管中转服务器文档及二进制](serverless)。
-- **一键同步**:在同一局域网设备间同步配置、站源数据(Jar/脚本保存数据)、登录态、WebHome 数据、搜索记录、观看历史、收藏和应用设置,每项可单独勾选。
-- **站点注入**:添加自定义 WebHome 或通用 CSP 站点,主列表显示核心摘要和快捷操作,新增/修改在独立表单中维护启用状态、插入位置、首页、搜索和换源行为;顶部“识别”可粘贴单个或多个松散站点 JSON 片段并自动归类追加;WebHome 站点级扩展可直接填写扩展 URL / JSON,也可选择本地 JS/CSS/JSON 自动生成配置。
-- **WebHome 扩展**:给真实网页注入用户脚本,主列表显示扩展摘要和状态,新增/修改在独立表单中配置本地文件、远程链接/manifest、直接代码、表单生成或 JSON;匹配范围默认从当前点播配置的 WebHome 站点弹窗多选,也可切换到 CSP key 正则;提供调试工作台用于 Web 预览、Console/Network/Elements 和代码保存预览。
-- **观影记录同步**:增强功能中提供独立总览页,包含总开关、本机 API 修改开关、远端同步源和 Webhook 上报。爬虫可通过 `/api/playback/current` 读取当前播放记录,也可在用户开启修改后调用 `/api/playback/progress`、`/api/playback/progress/batch` 或 `/api/playback/progress/delete` 写入/清理本地进度;App 也可从用户配置的远端 API 拉取批量记录合并到本地历史,并通过删除墓碑同步清理记录。仓库内置的 Cloudflare、Deno、Vercel、Go、Rust 五种服务端都可用同一 URL 同时承接 Webhook 和增量拉取，分别使用 Durable Object SQLite、Deno KV、Redis REST 或本地原子文件持久化。完整协议见 `webhome-devkit/docs/应用完整开发文档.md` 的“观影记录同步”章节。
-- **登录态学习**:用户手动开启后学习 Cookie、Token、接口 Jar 网盘登录文件等登录态路径,待确认项可在管理页查看/编辑,并可参与一键同步。
-- **APP 代理**:配置代理地址和域名匹配规则,可按当前站点自动建议代理域名,用于改善特定站点、接口或播放链路的网络访问。
-- **调试日志**:本机和局域网日志查看入口,便于排查播放、代理、站源和 WebHome 相关问题。
+- **Node.js 猫源与 Bundle 管理**: 内置 `nodejs-mobile` 运行时（`libnode.so` + JNI 桥接），点播配置直接支持带 MD5 校验的 Node.js 脚本直链，支持增量拉取、本地平滑重载与端口探针就绪感知；数据目录隔离保护网盘登录态。
+- **WebHome 网页自定义首页**: 拥有独立的首页 URL 配置项与全屏沉浸容器，内置 `window.webhome` 原生 JSBridge，支持遥控器平滑焦点导航与播放/搜索/跨域原生调用。
+- **网盘检测**: 内置网盘分享链接有效性检测,WebHome 和本地 HTTP API 均可调用。
+- **站点健康排序**: 自动学习站点搜索、详情和播放成功率,搜索与换源优先使用更可用的站点;站点弹窗默认保留用户配置顺序,可在弹窗内单独开启健康排序。
+- **管理页面**: 在 App 内启动局域网浏览器管理页 `/m`,可管理本机或远端设备文件、登录态、同步目录、站点注入、接口、壳代理、搜索和推送,运行期间通过前台服务保活。
+- **一键同步**: 在同一局域网设备间同步配置、站源数据(脚本保存数据)、登录态、WebHome 数据、搜索记录、观看历史、收藏和应用设置,每项可单独勾选。
+- **站点注入**: 添加自定义 WebHome 或通用站点,主列表显示核心摘要和快捷操作,新增/修改在独立表单中维护启用状态、插入位置、首页、搜索和换源行为;顶部“识别”可粘贴单个或多个松散站点 JSON 片段并自动归类追加;WebHome 站点级扩展可直接填写扩展 URL / JSON,也可选择本地 JS/CSS/JSON 自动生成配置。
+- **WebHome 扩展**: 给真实网页注入用户脚本,主列表显示扩展摘要和状态,新增/修改在独立表单中配置本地文件、远程链接/manifest、直接代码、表单生成或 JSON;匹配范围默认从当前点播配置的 WebHome 站点弹窗多选,也可切换到 CSP key 正则;提供调试工作台用于 Web 预览、Console/Network/Elements 和代码保存预览。
+- **观影记录同步**: 增强功能中提供独立总览页,包含总开关、本机 API 修改开关、远端同步源和 Webhook 上报。爬虫可通过 `/api/playback/current` 读取当前播放记录,也可在用户开启修改后调用 `/api/playback/progress`、`/api/playback/progress/batch` 或 `/api/playback/progress/delete` 写入/清理本地进度;App 也可从用户配置的远端 API 拉取批量记录合并到本地历史,并通过删除墓碑同步清理记录。完整协议见 `webhome-devkit/docs/应用完整开发文档.md` 的“观影记录同步”章节。
+- **登录态学习**: 用户手动开启后学习 Cookie、Token、接口网盘登录文件等登录态路径,待确认项可在管理页查看/编辑,并可参与一键同步。
+- **APP 代理**: 配置代理地址和域名匹配规则,可按当前站点自动建议代理域名,用于改善特定站点、接口或播放链路的网络访问。
+- **调试日志**: 本机和局域网日志查看入口,便于排查播放、代理、站源和 WebHome 相关问题。
 
 以上能力集中在设置页的"增强功能"入口,手机端和电视端均为独立设置页。
 
@@ -40,8 +85,8 @@ https://github.com/user-attachments/assets/984c274f-8a9b-4857-b641-d251e061f5cc
 
 完整开发说明见 [**应用完整开发文档.md**](webhome-devkit/docs/应用完整开发文档.md),包含:
 
-- App 配置字段(点播、解析、直播、样式)
-- Spider 开发,JS/Python Spider 运行时
+- App 配置字段(点播 Node Bundle、WebHome 首页、解析、样式)
+- Spider 与 Node.js 猫源开发 (CatPawOpen Fastify 单文件 bundle 规范)
 - 本地 HTTP 服务端点总览
 - WebHome SDK 全部方法的参数和返回值
 - 透明背景、电视端遥控器 UX、性能最佳实践
@@ -78,11 +123,10 @@ WebHome 主页、扩展、模板、示例和 AI skills 统一放在 [webhome-dev
 
 - 项目使用纯命令行工具链，不依赖任何 IDE。必须在 `JAVA_HOME`/`PATH` 中配置独立 JDK 21，并单独配置 Android SDK Command-line Tools。
 - 需要 JDK 21；当前 `sourceCompatibility` / `targetCompatibility` 均为 Java 21。
-- Python 3.10。Chaquo 运行时和构建时 Python 均固定为 3.10，仅安装 Python 3.11/3.12/3.13 会失败。
 - Android SDK Platform 37 和 Build Tools 37.0.0。当前 `compileSdk=37`、`minSdk=24`、`targetSdk=28`。
-- Android NDK 29.0.14206865（r29）用于重建 MPV/FFmpeg/libplacebo 和 MPV JNI；NDK 28.2.13676358（r28c）继续用于 IJK/DVD。普通 Gradle 打包直接使用仓库已提交二进制，不要求安装 NDK。`scripts/build_mpv_player_jni.sh` 只重建 JNI 桥接库 `libplayer.so`，不会重编 `libmpv.so`、FFmpeg 或 libplacebo。
+- Android NDK 29.0.14206865（r29）用于重建 MPV/FFmpeg/libplacebo 和 MPV JNI；NDK 28.2.13676358（r28c）继续用于 IJK/DVD。普通 Gradle 打包直接使用仓库已提交二进制（包括已内置的 `libnode.so`），不要求安装 NDK、Node.js 或 Python 环境。`scripts/build_mpv_player_jni.sh` 只重建 JNI 桥接库 `libplayer.so`，不会重编 `libmpv.so`、FFmpeg 或 libplacebo。
 - 使用仓库内置 Gradle Wrapper：Gradle 9.5.1，Android Gradle Plugin 9.2.1。
-- 能访问 Maven Central、Google Maven、Gradle Plugin Portal 和 JitPack。仓库内已带定制 Media3、nextlib 和本地 AAR，但普通 Android 依赖仍需要联网下载。
+- 能访问 Maven Central、Google Maven、Gradle Plugin Portal 和 JitPack。仓库内已带定制 Media3、nextlib、nodejs-mobile 和本地 AAR，但普通 Android 依赖仍需要联网下载。
 
 macOS/Linux 可用以下命令确认版本：
 
@@ -359,7 +403,7 @@ keyPassword=your_key_password
 
 ### 播放层依赖
 
-- `app/libs/*.aar`:内置 Hook、TVBus、Thunder、ForceTech、JianPian 播放能力依赖。
+- `app/libs/*.aar`:内置 Hook、Thunder、ForceTech、JianPian 播放能力依赖。
 - `third_party/maven`:已生成的 `androidx.media3:*:1.11.0-alpha01-fongmi` 本地 Maven 产物，以及定制 `nextlib-media3ext`。
 - `third_party/media-lock.json`:记录 Media3、nextlib、FFmpeg、NDK 与 CMake 的精确构建输入，配套脚本为 `scripts/build_media_deps.sh`。
 - `third_party/patches/media3-*.patch`:在锁定的 FongMi Media3 源码上叠加本项目补丁；`media3-upstream-playback-fixes-2026-08.patch` 选择性移植 AV1/HEVC HDR 元数据、scrub、DASH、LL-HLS、MP4 IT.35、MediaSession 和 detached Surface 等上游修复，`media3-danmaku-live.patch` 提供 WebSocket 实时弹幕的批量接收、有界队列、TTL、每帧处理上限和聚合统计，`media3-dolby-vision-matroska.patch` 将 MKV `BlockAdditional` 中的 Dolby Vision RPU 追加到对应 HEVC sample，供 Exo 的 DV7 转换链处理。
@@ -393,7 +437,6 @@ scripts/build_media_deps.sh --nextlib-only
 ### 常见构建失败
 
 - `Unsupported class file major version`、`invalid source release: 21`：当前终端没有使用 JDK 21。
-- `Chaquopy ... is not a valid Python 3.10 command`：安装主机 Python 3.10，并确保当前终端能执行 `python3.10 --version`。
 - `SDK location not found`：缺少 `local.properties`，或 `sdk.dir` 指向错误。
 - `failed to find target with hash string 'android-37'`：未安装 Android SDK Platform 37。
 - `NDK clang++ not found`：重建 MPV/JNI 时确认已安装 `29.0.14206865`，重建 IJK/DVD 时确认已安装 `28.2.13676358`，并检查 `ANDROID_NDK_HOME` 是否与对应 lock 一致。
@@ -406,10 +449,9 @@ scripts/build_media_deps.sh --nextlib-only
 ## 目录结构
 
 ```text
-app/          Android 主应用(mobile/leanback 双 flavor)
+app/          Android 主应用(mobile/leanback 双 flavor，内置 nodejs-mobile 运行时与 JNI 桥)
 catvod/       CatVod 抽象层、Spider 接口、网络和代理工具
 quickjs/      JavaScript Spider 运行时
-chaquo/       Python Spider 运行时
 webhome-devkit/ WebHome 开发套件(文档、主页/扩展示例、模板、AI skills)
 scripts/      Media3 和 MPV JNI 本地依赖构建脚本
 third_party/  Media3 本地 Maven、nextlib 源码、MPV JNI 源码和版本锁定文件

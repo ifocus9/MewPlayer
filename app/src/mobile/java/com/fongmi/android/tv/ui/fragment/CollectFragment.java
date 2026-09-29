@@ -295,7 +295,7 @@ public class CollectFragment extends BaseFragment implements MenuProvider, Colle
         Drawable icon = ContextCompat.getDrawable(requireContext(), getCount() == 1 ? R.drawable.ic_site_double_column : R.drawable.ic_site_single_column);
         if (icon == null) return;
         icon = icon.mutate();
-        icon.setTint(Color.WHITE);
+        icon.setTint(ResUtil.getColor(R.color.black_90));
         item.setIcon(icon);
     }
 

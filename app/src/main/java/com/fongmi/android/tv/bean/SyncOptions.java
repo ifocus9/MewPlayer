@@ -24,8 +24,6 @@ public class SyncOptions {
     private boolean settings;
     @SerializedName("loginState")
     private boolean loginState = true;
-    @SerializedName("remoteRelay")
-    private boolean remoteRelay;
     @SerializedName("mpvConfig")
     private boolean mpvConfig;
     @SerializedName("paths")
@@ -113,15 +111,6 @@ public class SyncOptions {
 
     public SyncOptions loginState(boolean loginState) {
         this.loginState = loginState;
-        return this;
-    }
-
-    public boolean isRemoteRelay() {
-        return remoteRelay;
-    }
-
-    public SyncOptions remoteRelay(boolean remoteRelay) {
-        this.remoteRelay = remoteRelay;
         return this;
     }
 

@@ -4,51 +4,68 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
+    android:layout_margin="5dp"
     android:foreground="@drawable/shape_vod">
 
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/image"
         android:layout_width="match_parent"
         android:layout_height="80dp"
-        android:background="@color/black_20"
-        app:shapeAppearanceOverlay="@style/Vod.Grid" />
+        android:background="@color/black_05"
+        android:scaleType="centerCrop"
+        app:shapeAppearanceOverlay="@style/Vod.Grid.Large" />
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/year"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="5dp"
+        android:layout_marginTop="5dp"
         android:background="@drawable/shape_vod_year"
         android:singleLine="true"
         android:textColor="@color/text_year"
-        android:textSize="12sp"
+        android:textSize="11sp"
         android:visibility="gone"
         tools:text="2022"
-        tools:visibility="visible" />
-
-    <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/site"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@drawable/shape_vod_site"
-        android:singleLine="true"
-        android:textColor="@color/text_site"
-        android:textSize="12sp"
-        android:visibility="gone"
-        tools:text="泥巴"
         tools:visibility="visible" />
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/remark"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/name"
-        android:layout_marginEnd="16dp"
-        android:background="@drawable/shape_vod_remark"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="5dp"
+        android:layout_marginEnd="5dp"
+        android:background="@drawable/shape_vod_score_badge"
+        android:ellipsize="end"
+        android:maxWidth="70dp"
         android:singleLine="true"
-        android:textColor="@color/text_remark"
-        android:textSize="12sp"
-        tools:text="1080p" />
+        android:textColor="@color/white"
+        android:textSize="10.5sp"
+        android:textStyle="bold"
+        tools:text="评分: 8.5" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/site"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@+id/image"
+        android:layout_alignBottom="@+id/image"
+        android:layout_marginStart="5dp"
+        android:layout_marginBottom="5dp"
+        android:background="@drawable/shape_vod_site"
+        android:ellipsize="end"
+        android:maxWidth="70dp"
+        android:singleLine="true"
+        android:textColor="@color/white"
+        android:textSize="10.5sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        tools:text="泥巴"
+        tools:visibility="visible" />
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/name"
@@ -57,15 +74,16 @@
         android:layout_below="@+id/image"
         android:layout_alignStart="@+id/image"
         android:layout_alignEnd="@+id/image"
-        android:background="@drawable/shape_vod_name"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="3dp"
         android:ellipsize="end"
         android:gravity="center"
         android:maxLines="1"
-        android:textColor="@color/white"
-        app:autoSizeMaxTextSize="14sp"
-        app:autoSizeMinTextSize="12sp"
-        app:autoSizeStepGranularity="1sp"
+        android:textColor="?attr/colorOnSurface"
+        app:autoSizeMaxTextSize="13.5sp"
+        app:autoSizeMinTextSize="10sp"
+        app:autoSizeStepGranularity="0.5sp"
         app:autoSizeTextType="uniform"
-        tools:text="蜘蛛人" />
+        tools:text="年会不能停！2" />
 
 </RelativeLayout>

@@ -134,4 +134,35 @@
         <item name="cornerSize">17dp</item>
     </style>
 
+    <style name="NavTextActive" parent="TextAppearance.MaterialComponents.Caption">
+        <item name="android:textSize">11sp</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="NavTextInactive" parent="TextAppearance.MaterialComponents.Caption">
+        <item name="android:textSize">11sp</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="ShapeAppearance.WebHTV.Circle" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
+    <style name="Widget.WebHTV.FloatingActionButton" parent="Widget.Material3.FloatingActionButton.Surface">
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.WebHTV.Circle</item>
+        <item name="backgroundTint">@color/white</item>
+        <item name="tint">#217AF4</item>
+        <item name="rippleColor">#1A217AF4</item>
+        <item name="elevation">6dp</item>
+        <item name="hoveredFocusedTranslationZ">8dp</item>
+        <item name="pressedTranslationZ">3dp</item>
+        <item name="fabCustomSize">46dp</item>
+        <item name="maxImageSize">22dp</item>
+    </style>
+
+
+    <style name="ThemeOverlay.WebHTV.NavCapsule" parent="">
+        <item name="elevationOverlayEnabled">false</item>
+    </style>
 </resources>

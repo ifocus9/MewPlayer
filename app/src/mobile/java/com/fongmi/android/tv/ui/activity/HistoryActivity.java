@@ -9,10 +9,9 @@ import android.view.MenuItem;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
-import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.viewbinding.ViewBinding;
 
-import com.fongmi.android.tv.Product;
 import com.fongmi.android.tv.R;
 import com.fongmi.android.tv.bean.History;
 import com.fongmi.android.tv.databinding.ActivityHistoryBinding;
@@ -20,7 +19,6 @@ import com.fongmi.android.tv.event.RefreshEvent;
 import com.fongmi.android.tv.ui.adapter.HistoryAdapter;
 import com.fongmi.android.tv.ui.base.BaseActivity;
 import com.fongmi.android.tv.ui.dialog.SyncDialog;
-import com.fongmi.android.tv.utils.MobileWindow;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.greenrobot.eventbus.Subscribe;
@@ -47,6 +45,12 @@ public class HistoryActivity extends BaseActivity implements HistoryAdapter.OnCl
     }
 
     @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        setTheme(R.style.Theme_App);
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
     protected void initView(Bundle savedInstanceState) {
         setSupportActionBar(mBinding.toolbar);
         setRecyclerView();
@@ -54,11 +58,9 @@ public class HistoryActivity extends BaseActivity implements HistoryAdapter.OnCl
     }
 
     private void setRecyclerView() {
-        int column = MobileWindow.isWide(this) ? Product.getColumn(this) : 3;
         mBinding.recycler.setHasFixedSize(true);
-        mBinding.recycler.setLayoutManager(new GridLayoutManager(this, column));
+        mBinding.recycler.setLayoutManager(new LinearLayoutManager(this));
         mBinding.recycler.setAdapter(mAdapter = new HistoryAdapter(this));
-        mAdapter.setSize(Product.getSpec(this, column));
     }
 
     private void getHistory() {

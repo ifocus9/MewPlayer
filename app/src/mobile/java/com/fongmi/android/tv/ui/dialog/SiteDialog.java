@@ -33,7 +33,7 @@ import com.fongmi.android.tv.ui.custom.CustomTextListener;
 import com.fongmi.android.tv.ui.custom.SpaceItemDecoration;
 import com.fongmi.android.tv.utils.ResUtil;
 import com.fongmi.android.tv.utils.Util;
-import com.google.android.material.button.MaterialButton;
+import androidx.appcompat.widget.AppCompatTextView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
@@ -184,26 +184,20 @@ public class SiteDialog extends BaseAlertDialog implements SiteAdapter.OnClickLi
         updateGroupView();
     }
 
-    private MaterialButton getGroupView(String group) {
-        MaterialButton button = new MaterialButton(requireContext(), null, com.google.android.material.R.attr.materialButtonOutlinedStyle);
-        LinearLayoutCompat.LayoutParams params = new LinearLayoutCompat.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    private androidx.appcompat.widget.AppCompatTextView getGroupView(String group) {
+        androidx.appcompat.widget.AppCompatTextView view = new androidx.appcompat.widget.AppCompatTextView(requireContext());
+        LinearLayoutCompat.LayoutParams params = new LinearLayoutCompat.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ResUtil.dp2px(28));
         params.setMarginEnd(ResUtil.dp2px(8));
-        button.setLayoutParams(params);
-        button.setText(group);
-        button.setSingleLine(true);
-        button.setAllCaps(false);
-        button.setMinWidth(0);
-        button.setMinHeight(0);
-        button.setMinimumWidth(0);
-        button.setMinimumHeight(0);
-        button.setInsetTop(0);
-        button.setInsetBottom(0);
-        button.setPadding(ResUtil.dp2px(14), ResUtil.dp2px(6), ResUtil.dp2px(14), ResUtil.dp2px(6));
-        button.setTextColor(ContextCompat.getColorStateList(requireContext(), R.color.dialog_outlined_button_text));
-        button.setBackgroundTintList(ContextCompat.getColorStateList(requireContext(), R.color.dialog_outlined_button_bg));
-        button.setStrokeColor(ContextCompat.getColorStateList(requireContext(), R.color.dialog_outlined_button_stroke));
-        button.setOnClickListener(v -> onGroupClick(group, button));
-        return button;
+        view.setLayoutParams(params);
+        view.setText(group);
+        view.setGravity(Gravity.CENTER);
+        view.setSingleLine(true);
+        view.setTextSize(12.5f);
+        view.setPadding(ResUtil.dp2px(12), 0, ResUtil.dp2px(12), 0);
+        view.setBackgroundResource(R.drawable.selector_site_group_tag);
+        view.setTextColor(ContextCompat.getColorStateList(requireContext(), R.color.selector_site_group_text));
+        view.setOnClickListener(v -> onGroupClick(group, view));
+        return view;
     }
 
     private void onGroupClick(String group, View view) {
@@ -216,10 +210,13 @@ public class SiteDialog extends BaseAlertDialog implements SiteAdapter.OnClickLi
 
     private void updateGroupView() {
         for (int i = 0; i < binding.groupList.getChildCount(); i++) {
-            View view = binding.groupList.getChildAt(i);
-            boolean selected = ((MaterialButton) view).getText().toString().equals(selectedGroup);
-            view.setSelected(selected);
-            view.setAlpha(TextUtils.isEmpty(selectedGroup) || selected ? 1.0f : 0.5f);
+            View child = binding.groupList.getChildAt(i);
+            if (child instanceof androidx.appcompat.widget.AppCompatTextView) {
+                androidx.appcompat.widget.AppCompatTextView view = (androidx.appcompat.widget.AppCompatTextView) child;
+                boolean selected = view.getText().toString().equals(selectedGroup);
+                view.setSelected(selected);
+                view.setTypeface(null, selected ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+            }
         }
     }
 

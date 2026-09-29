@@ -39,8 +39,10 @@ public class ValueAdapter extends RecyclerView.Adapter<ValueAdapter.ViewHolder> 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Value item = mItems.get(position);
+        boolean selected = item.isSelected();
         holder.binding.text.setText(item.getN());
-        holder.binding.text.setSelected(item.isSelected());
+        holder.binding.text.setSelected(selected);
+        holder.binding.text.setTypeface(null, selected ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
         holder.binding.text.setOnClickListener(v -> onItemClick(item));
     }
 

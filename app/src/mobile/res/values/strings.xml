@@ -3,9 +3,12 @@
     <!-- App -->
     <string name="app_keep">Keep</string>
     <string name="app_history">History</string>
+    <string name="type_title">All Categories</string>
+    <string name="filter_title">Filter</string>
 
     <!-- Nav -->
-    <string name="nav_vod">Vod</string>
+    <string name="nav_vod">Discover</string>
+    <string name="nav_keep">Watchlist</string>
     <string name="nav_live">Live</string>
     <string name="nav_setting">Setting</string>
 

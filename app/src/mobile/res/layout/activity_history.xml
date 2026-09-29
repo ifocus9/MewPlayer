@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
     android:fitsSystemWindows="true"
     android:orientation="vertical">
 
@@ -11,9 +12,11 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorSurface"
         app:menu="@menu/menu_history"
         app:navigationIconTint="?attr/colorOnSurface"
         app:title="@string/app_history"
+        app:titleTextColor="?attr/colorOnSurface"
         app:titleTextAppearance="@style/ToolbarTextAppearance" />
 
     <com.fongmi.android.tv.ui.custom.ProgressLayout
@@ -25,13 +28,11 @@
             android:id="@+id/recycler"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginTop="-8dp"
             android:clipChildren="false"
             android:clipToPadding="false"
-            android:paddingStart="8dp"
-            android:paddingEnd="8dp"
-            android:paddingBottom="8dp"
-            tools:listitem="@layout/adapter_vod" />
+            android:paddingTop="4dp"
+            android:paddingBottom="16dp"
+            tools:listitem="@layout/adapter_history" />
 
     </com.fongmi.android.tv.ui.custom.ProgressLayout>
 </androidx.appcompat.widget.LinearLayoutCompat>
