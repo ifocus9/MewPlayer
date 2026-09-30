@@ -31,7 +31,6 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 
@@ -57,7 +56,6 @@ public class Setting {
     private static final int[] UI_SCALE_OPTIONS = {UI_SCALE_FOLLOW_SYSTEM, UI_SCALE_STANDARD, UI_SCALE_MILD_COMPACT, UI_SCALE_COMPACT, UI_SCALE_MORE_COMPACT, UI_SCALE_SMALLER};
 
     public static final int WALL_BLACK = 0;
-    private static final int[] DEFAULT_WALLS = {WALL_BLACK};
 
     public static String getDoh() {
         return Prefers.getString("doh");
@@ -77,10 +75,6 @@ public class Setting {
 
     public static String getHot() {
         return Prefers.getString("hot");
-    }
-
-    public static void putHot(String hot) {
-        Prefers.put("hot", hot);
     }
 
     public static String getHotTv() {
@@ -135,14 +129,6 @@ public class Setting {
         return WALL_BLACK;
     }
 
-    public static int[] getDefaultWalls() {
-        return DEFAULT_WALLS.clone();
-    }
-
-    public static int getDefaultWallIndex(int wall) {
-        return wall == WALL_BLACK ? 0 : -1;
-    }
-
     public static boolean isBuiltInWall(int wall) {
         return wall == WALL_BLACK;
     }
@@ -177,14 +163,6 @@ public class Setting {
 
     public static void putReset(int reset) {
         Prefers.put("reset", reset);
-    }
-
-    public static int getSiteMode() {
-        return Prefers.getInt("site_mode");
-    }
-
-    public static void putSiteMode(int mode) {
-        Prefers.put("site_mode", mode);
     }
 
     public static int getSiteColumn() {
@@ -256,24 +234,8 @@ public class Setting {
         return isLanguage(language) ? language : LANGUAGE_FOLLOW_SYSTEM;
     }
 
-    public static void putLanguage(int language) {
-        int value = isLanguage(language) ? language : LANGUAGE_FOLLOW_SYSTEM;
-        Prefers.put("language", value);
-        applyLanguage(value);
-    }
-
     public static void applyLanguage() {
         applyLanguage(getLanguage());
-    }
-
-    public static int getLanguageIndex() {
-        int language = getLanguage();
-        for (int i = 0; i < LANGUAGE_OPTIONS.length; i++) if (LANGUAGE_OPTIONS[i] == language) return i;
-        return LANGUAGE_FOLLOW_SYSTEM;
-    }
-
-    public static void putLanguageIndex(int index) {
-        putLanguage(index >= 0 && index < LANGUAGE_OPTIONS.length ? LANGUAGE_OPTIONS[index] : LANGUAGE_FOLLOW_SYSTEM);
     }
 
     private static boolean isLanguage(int language) {
@@ -305,20 +267,6 @@ public class Setting {
     public static int getUiScale() {
         int scale = Prefers.getInt("ui_scale", UI_SCALE_FOLLOW_SYSTEM);
         return isUiScale(scale) ? scale : UI_SCALE_FOLLOW_SYSTEM;
-    }
-
-    public static void putUiScale(int scale) {
-        Prefers.put("ui_scale", isUiScale(scale) ? scale : UI_SCALE_FOLLOW_SYSTEM);
-    }
-
-    public static int getUiScaleIndex() {
-        int scale = getUiScale();
-        for (int i = 0; i < UI_SCALE_OPTIONS.length; i++) if (UI_SCALE_OPTIONS[i] == scale) return i;
-        return UI_SCALE_FOLLOW_SYSTEM;
-    }
-
-    public static void putUiScaleIndex(int index) {
-        putUiScale(index >= 0 && index < UI_SCALE_OPTIONS.length ? UI_SCALE_OPTIONS[index] : UI_SCALE_FOLLOW_SYSTEM);
     }
 
     private static boolean isUiScale(int scale) {
@@ -361,10 +309,6 @@ public class Setting {
         return Prefers.getBoolean("drive_check", true);
     }
 
-    public static void putDriveCheck(boolean driveCheck) {
-        Prefers.put("drive_check", driveCheck);
-    }
-
     public static boolean isCompactEpisodeTitle() {
         return Prefers.getBoolean("compact_episode_title");
     }
@@ -377,24 +321,12 @@ public class Setting {
         return Prefers.getBoolean("site_health_sort", true);
     }
 
-    public static void putSiteHealthSort(boolean sort) {
-        Prefers.put("site_health_sort", sort);
-    }
-
     public static boolean isSiteHealthDialogSort() {
         return Prefers.getBoolean("site_health_dialog_sort");
     }
 
-    public static void putSiteHealthDialogSort(boolean sort) {
-        Prefers.put("site_health_dialog_sort", sort);
-    }
-
     public static boolean isWebHomeExtension() {
         return Prefers.getBoolean("web_home_extension", true);
-    }
-
-    public static void putWebHomeExtension(boolean extension) {
-        Prefers.put("web_home_extension", extension);
     }
 
     public static final String DEFAULT_WEB_HOME_URL = "";
@@ -403,45 +335,16 @@ public class Setting {
         return Prefers.getString("web_home_page", DEFAULT_WEB_HOME_URL);
     }
 
-    public static String getWebHomePageDisplay() {
-        return getWebHomePage();
-    }
-
-    public static void putWebHomePage(String url) {
-        Prefers.put("web_home_page", url == null ? "" : url.trim());
-    }
-
-    public static void resetWebHomePage() {
-        Prefers.put("web_home_page", DEFAULT_WEB_HOME_URL);
-    }
-
     public static boolean isWebHomeFullscreen() {
         return Prefers.getBoolean("web_home_fullscreen", true);
-    }
-
-    public static void putWebHomeFullscreen(boolean fullscreen) {
-        Prefers.put("web_home_fullscreen", fullscreen);
     }
 
     public static boolean isPlaybackArtworkWall() {
         return Prefers.getBoolean("playback_artwork_wall", true);
     }
 
-    public static void putPlaybackArtworkWall(boolean artworkWall) {
-        Prefers.put("playback_artwork_wall", artworkWall);
-    }
-
     public static boolean isCspWarmup() {
         return getCspWarmupMode() != CSP_WARMUP_DISABLED;
-    }
-
-    public static void putCspWarmup(boolean warmup) {
-        if (warmup) {
-            Prefers.put("csp_warmup", true);
-            if (getCspWarmupSelectedMode() == CSP_WARMUP_DISABLED) Prefers.put("csp_warmup_mode", CSP_WARMUP_DEFAULT);
-        } else {
-            Prefers.put("csp_warmup", false);
-        }
     }
 
     public static int getCspWarmupMode() {
@@ -454,15 +357,6 @@ public class Setting {
         return mode == CSP_WARMUP_CUSTOM ? CSP_WARMUP_CUSTOM : CSP_WARMUP_DEFAULT;
     }
 
-    public static void putCspWarmupMode(int mode) {
-        if (mode == CSP_WARMUP_DISABLED) {
-            Prefers.put("csp_warmup", false);
-        } else {
-            Prefers.put("csp_warmup", true);
-            Prefers.put("csp_warmup_mode", mode == CSP_WARMUP_CUSTOM ? CSP_WARMUP_CUSTOM : CSP_WARMUP_DEFAULT);
-        }
-    }
-
     public static List<String> getCspWarmupSites() {
         try {
             List<String> keys = App.gson().fromJson(Prefers.getString("csp_warmup_sites", "[]"), STRING_LIST);
@@ -473,12 +367,6 @@ public class Setting {
         } catch (Exception e) {
             return Collections.emptyList();
         }
-    }
-
-    public static void putCspWarmupSites(List<String> keys) {
-        LinkedHashSet<String> result = new LinkedHashSet<>();
-        if (keys != null) for (String key : keys) if (key != null && !key.trim().isEmpty()) result.add(key.trim());
-        Prefers.put("csp_warmup_sites", App.gson().toJson(result));
     }
 
     public static int getSearchColumn() {
@@ -547,11 +435,6 @@ public class Setting {
         return Prefers.getString("shell_proxy_rules");
     }
 
-    public static void putShellProxyRules(String rules) {
-        Prefers.put("shell_proxy_rules", rules);
-        ProxySetting.apply();
-    }
-
     public static void putShellProxyConfig(String url, String rules) {
         Prefers.put("shell_proxy_url", url);
         Prefers.put("shell_proxy_rules", rules);
@@ -563,18 +446,8 @@ public class Setting {
         return Prefers.getString("shell_proxy_url");
     }
 
-    public static void putShellProxyUrl(String url) {
-        Prefers.put("shell_proxy_url", url);
-        ProxySetting.apply();
-    }
-
     public static String getShellProxyHosts() {
         return Prefers.getString("shell_proxy_hosts", "*");
-    }
-
-    public static void putShellProxyHosts(String hosts) {
-        Prefers.put("shell_proxy_hosts", hosts);
-        ProxySetting.apply();
     }
 
     public static boolean getUpdate() {
@@ -589,48 +462,24 @@ public class Setting {
         return UpdateSource.normalize(Prefers.getString("update_source", UpdateSource.OCI));
     }
 
-    public static void putUpdateSource(String source) {
-        Prefers.put("update_source", UpdateSource.normalize(source));
-    }
-
     public static String getUpdateGithubProxy() {
         return GithubProxy.find(Prefers.getString("update_github_proxy", GithubProxy.DIRECT)).id;
-    }
-
-    public static void putUpdateGithubProxy(String proxy) {
-        Prefers.put("update_github_proxy", GithubProxy.find(proxy).id);
     }
 
     public static String getUpdateGithubProxyUrl() {
         return Prefers.getString("update_github_proxy_url");
     }
 
-    public static void putUpdateGithubProxyUrl(String url) {
-        Prefers.put("update_github_proxy_url", url == null ? "" : url.trim());
-    }
-
     public static String getUpdateGithubProxyMode() {
         return GithubProxy.normalizeMode(Prefers.getString("update_github_proxy_mode", GithubProxy.MODE_FULL_URL));
-    }
-
-    public static void putUpdateGithubProxyMode(String mode) {
-        Prefers.put("update_github_proxy_mode", GithubProxy.normalizeMode(mode));
     }
 
     public static String getUpdateOciMirror() {
         return OciMirror.find(Prefers.getString("update_oci_mirror", OciMirror.DEFAULT)).id;
     }
 
-    public static void putUpdateOciMirror(String mirror) {
-        Prefers.put("update_oci_mirror", OciMirror.find(mirror).id);
-    }
-
     public static String getUpdateOciMirrorUrl() {
         return Prefers.getString("update_oci_mirror_url");
-    }
-
-    public static void putUpdateOciMirrorUrl(String url) {
-        Prefers.put("update_oci_mirror_url", url == null ? "" : url.trim());
     }
 
     public static boolean isAdblock() {
@@ -653,22 +502,12 @@ public class Setting {
         return Prefers.getInt("theme_color", -1);
     }
 
-    public static void putThemeColor(int color) {
-        Prefers.put("theme_color", color);
-    }
-
     public static int getWallColor() {
         return Prefers.getInt("wall_color", 0);
     }
 
     public static void putWallColor(int color) {
         Prefers.put("wall_color", color);
-    }
-
-    public static int getDynamicColor() {
-        int color = getThemeColor();
-        if (color == -1) return 0;
-        return color != 0 ? color : getWallColor();
     }
 
     public static boolean hasFileAccess() {
