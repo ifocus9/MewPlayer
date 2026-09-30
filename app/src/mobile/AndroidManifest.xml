@@ -120,10 +120,6 @@
             android:screenOrientation="fullUser"
             android:supportsPictureInPicture="true" />
 
-        <receiver
-            android:name=".receiver.ShortcutReceiver"
-            android:exported="false" />
-
         <service
             android:name=".service.DLNACastService"
             android:exported="false" />

@@ -23,8 +23,7 @@
 
 # Gson
 -keep class com.google.gson.** { *; }
--keep class com.fongmi.android.tv.remote.** { *; }
--keep class com.fongmi.android.tv.gitcloud.** { *; }
+-keep class com.fongmi.android.tv.gitcloud.secure.** { *; }
 
 # SimpleXML
 -keep interface org.simpleframework.xml.core.Label { public *; }
@@ -49,13 +48,9 @@
 -keeppackagenames kotlin.**
 -keep class kotlin.** { *; }
 
-# JGit
+# JGit 依赖已移除，仅保留 java.lang 反射接口的 dontwarn
 -dontwarn java.lang.ProcessHandle
 -dontwarn java.lang.management.ManagementFactory
--dontwarn org.eclipse.jgit.**
--keep class org.eclipse.jgit.** { *; }
--keeppackagenames org.slf4j.**
--keep class org.slf4j.** { *; }
 
 # CatVod
 -keep class com.github.catvod.Proxy { *; }
