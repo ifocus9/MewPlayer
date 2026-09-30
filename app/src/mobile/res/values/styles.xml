@@ -18,7 +18,6 @@
         <item name="colorOnSecondaryContainer">#1565C0</item>
     </style>
 
-    <style name="Theme.Splash" parent="Theme.App" />
 
     <style name="Theme.App" parent="Theme.Base" />
 
@@ -122,26 +121,12 @@
         <item name="android:textSize">15sp</item>
     </style>
 
-    <style name="NavActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
-        <item name="android:width">48dp</item>
-        <item name="android:height">34dp</item>
-        <item name="marginHorizontal">4dp</item>
-        <item name="shapeAppearance">@style/ShapeAppearance.NavIndicator</item>
-    </style>
 
     <style name="ShapeAppearance.NavIndicator" parent="">
         <item name="cornerSize">17dp</item>
     </style>
 
-    <style name="NavTextActive" parent="TextAppearance.MaterialComponents.Caption">
-        <item name="android:textSize">11sp</item>
-        <item name="android:textStyle">normal</item>
-    </style>
 
-    <style name="NavTextInactive" parent="TextAppearance.MaterialComponents.Caption">
-        <item name="android:textSize">11sp</item>
-        <item name="android:textStyle">normal</item>
-    </style>
 
     <style name="ShapeAppearance.WebHTV.Circle" parent="">
         <item name="cornerFamily">rounded</item>

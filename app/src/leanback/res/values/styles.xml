@@ -9,7 +9,6 @@
         <item name="android:windowAnimationStyle">@style/NoAnim</item>
     </style>
 
-    <style name="Theme.Splash" parent="Theme.App" />
 
     <style name="Theme.App" parent="Theme.Base" />
 

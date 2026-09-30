@@ -33,9 +33,6 @@
         <item name="keep_content_on_player_reset">false</item>
     </style>
 
-    <style name="Player.Live">
-        <item name="keep_content_on_player_reset">true</item>
-    </style>
 
     <style name="Video" />
 
