@@ -987,7 +987,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         mBinding.video.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
             mPiP.update(this, view);
             updateCustomButtonLayout();
-            updateOsdBounds(null);
             Log.d(SIZE_TAG, "video layout new=" + (right - left) + "x" + (bottom - top)
                     + " old=" + (oldRight - oldLeft) + "x" + (oldBottom - oldTop)
                     + " fullscreen=" + isFullscreen()
@@ -5870,7 +5869,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         updateVideoHeight();
         applyResizeMode(getScale());
         checkOrientation();
-        updateOsdBounds(size);
         logVideoFrame("onSizeChanged after size=" + size.width + "x" + size.height);
     }
 
@@ -5971,39 +5969,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         logVideoFrame("updateVideoHeight restore from=" + mFrameParams.height + " to=" + mFrameHeight);
         mFrameParams.height = mFrameHeight;
         mBinding.video.setLayoutParams(mFrameParams);
-    }
-
-    /**
-     * 让 OSD 覆盖层贴合视频画面实际显示区域。
-     * 视频框尺寸固定（竖屏半屏 220dp / 全屏 match_parent），当片源比例与视频框比例不一致时
-     * 播放器按 resize_mode=fit 等比缩放，画面上下（或左右）会留下黑边；而 OSD 原来锚在视频框四角，
-     * 于是时间/速度/片名会掉进黑边里，跟画面脱节。
-     * 这里把 OSD 容器按画面真实高度居中收缩：上下留黑边时让 OSD 贴住画面，左右留黑边（竖版片源）
-     * 时保持满宽，避免窄画幅下左侧“时间”与右侧“速度”互相挤压。
-     */
-    private void updateOsdBounds(VideoSize size) {
-        View osd = mBinding.osd.getRoot();
-        if (osd == null) return;
-        int fw = mBinding.video.getWidth();
-        int fh = mBinding.video.getHeight();
-        if (fw <= 0 || fh <= 0) return;
-        int vw = size != null ? size.width : (service() == null ? 0 : player().getVideoWidth());
-        int vh = size != null ? size.height : (service() == null ? 0 : player().getVideoHeight());
-        int height = fh;
-        if (vw > 0 && vh > 0) {
-            float videoAspect = (float) vw / (float) vh;
-            float frameAspect = (float) fw / (float) fh;
-            // 画面比视频框更宽 → 上下留黑边，OSD 收缩到画面高度；否则（含左右留黑边）保持满高
-            if (videoAspect > frameAspect) height = Math.max(1, Math.round(fw / videoAspect));
-        }
-        ViewGroup.LayoutParams raw = osd.getLayoutParams();
-        if (!(raw instanceof FrameLayout.LayoutParams)) return;
-        FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) raw;
-        if (lp.width == ViewGroup.LayoutParams.MATCH_PARENT && lp.height == height && lp.gravity == Gravity.CENTER_VERTICAL) return;
-        lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
-        lp.height = height;
-        lp.gravity = Gravity.CENTER_VERTICAL;
-        osd.setLayoutParams(lp);
     }
 
     private void logVideoFrame(String step) {
