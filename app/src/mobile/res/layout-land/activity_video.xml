@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/bg_setting"
     android:tag="land">
 
     <com.fongmi.android.tv.ui.custom.ProgressLayout
@@ -546,34 +547,39 @@
 
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/name"
-                style="@style/Video.ContextText"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:textColor="@color/white"
-                android:textSize="19sp"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="20sp"
+                android:textStyle="bold"
                 tools:text="慶餘年第二季" />
 
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/remark"
-                style="@style/Video.ContextText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
+                android:background="@drawable/shape_search_remark"
                 android:ellipsize="end"
-                android:maxWidth="112dp"
+                android:maxWidth="140dp"
+                android:paddingStart="8dp"
+                android:paddingTop="3dp"
+                android:paddingEnd="8dp"
+                android:paddingBottom="3dp"
                 android:singleLine="true"
-                android:textColor="@color/white_80"
-                android:textSize="13sp"
+                android:textColor="@color/white"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:visibility="gone"
                 tools:text="更新至第30集" />
 
         </androidx.appcompat.widget.LinearLayoutCompat>
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/site"
-            style="@style/Video.ContextText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@+id/titleRow"
@@ -581,13 +587,12 @@
             android:layout_marginTop="6dp"
             android:layout_marginEnd="16dp"
             android:singleLine="true"
-            android:textColor="@color/white_80"
+            android:textColor="#666666"
             android:textSize="13sp"
             tools:text="站源：泥巴" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/other"
-            style="@style/Video.ContextText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@+id/site"
@@ -595,13 +600,12 @@
             android:layout_marginTop="6dp"
             android:layout_marginEnd="16dp"
             android:singleLine="true"
-            android:textColor="@color/white_90"
+            android:textColor="#666666"
             android:textSize="13sp"
             tools:text="年份：2022 地區：台灣 類型：科幻" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/director"
-            style="@style/Video.ContextText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@+id/other"
@@ -609,13 +613,12 @@
             android:layout_marginTop="6dp"
             android:layout_marginEnd="16dp"
             android:singleLine="true"
-            android:textColor="@color/white_80"
+            android:textColor="#666666"
             android:textSize="13sp"
             tools:text="導演：FongMi" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/actor"
-            style="@style/Video.ContextText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@+id/director"
@@ -625,7 +628,7 @@
             android:layout_marginEnd="16dp"
             android:ellipsize="end"
             android:maxLines="1"
-            android:textColor="@color/white_80"
+            android:textColor="#666666"
             android:textSize="13sp"
             tools:text="演員：FongMi" />
 
@@ -643,11 +646,11 @@
 
                 <androidx.appcompat.widget.LinearLayoutCompat
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:clipChildren="false"
                     android:clipToPadding="false"
                     android:orientation="vertical"
-                    android:paddingBottom="8dp">
+                    android:paddingBottom="48dp">
 
                     <androidx.appcompat.widget.LinearLayoutCompat
                         android:id="@+id/content_layout"
@@ -660,16 +663,14 @@
                         android:orientation="horizontal">
 
                         <com.google.android.material.textview.MaterialTextView
-                            style="@style/Video.ContextText"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/detail_content"
-                            android:textColor="@color/white_70"
+                            android:textColor="#8E8E93"
                             android:textSize="13sp" />
 
                         <com.google.android.material.textview.MaterialTextView
                             android:id="@+id/content"
-                            style="@style/Video.ContextText"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="4dp"
@@ -677,7 +678,7 @@
                             android:ellipsize="end"
                             android:lineSpacingExtra="3dp"
                             android:maxLines="2"
-                            android:textColor="@color/white_90"
+                            android:textColor="#444444"
                             android:textSize="13sp"
                             tools:text="一個身世神秘的少年范閒，因對自身身世的好奇而離開故鄉澹州，前赴南慶京都。" />
 
@@ -691,13 +692,15 @@
                         android:layout_marginTop="10dp"
                         android:layout_marginEnd="16dp"
                         android:gravity="center"
-                        android:orientation="horizontal">
+                        android:orientation="horizontal"
+                        android:visibility="gone">
 
                         <com.google.android.material.textview.MaterialTextView
                             android:id="@+id/shortDisplay"
                             style="@style/VideoActionButton"
                             android:layout_marginEnd="8dp"
                             android:text="@string/play_short_display"
+                            app:drawableTint="?attr/colorOnSurface"
                             app:drawableTopCompat="@drawable/ic_action_short_display_shadow" />
 
                         <com.google.android.material.textview.MaterialTextView
@@ -705,6 +708,7 @@
                             style="@style/VideoActionButton"
                             android:layout_marginEnd="8dp"
                             android:text="@string/play_search"
+                            app:drawableTint="?attr/colorOnSurface"
                             app:drawableTopCompat="@drawable/ic_action_search_shadow" />
 
                         <com.google.android.material.textview.MaterialTextView
@@ -712,31 +716,36 @@
                             style="@style/VideoActionButton"
                             android:layout_marginEnd="8dp"
                             android:text="@string/play_cast"
+                            app:drawableTint="?attr/colorOnSurface"
                             app:drawableTopCompat="@drawable/ic_control_cast_shadow" />
 
                         <com.google.android.material.textview.MaterialTextView
                             android:id="@+id/settingAction"
                             style="@style/VideoActionButton"
                             android:text="@string/nav_setting"
+                            app:drawableTint="?attr/colorOnSurface"
                             app:drawableTopCompat="@drawable/ic_control_setting_shadow" />
 
                     </androidx.appcompat.widget.LinearLayoutCompat>
 
                     <androidx.appcompat.widget.LinearLayoutCompat
+                        android:id="@+id/flagLayout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:layout_marginEnd="12dp"
                         android:gravity="center_vertical"
-                        android:orientation="horizontal">
+                        android:orientation="horizontal"
+                        android:visibility="gone"
+                        tools:visibility="visible">
 
                         <com.google.android.material.textview.MaterialTextView
-                            style="@style/Video.ContextText"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/detail_flag"
-                            android:textColor="@color/white"
-                            android:textSize="16sp" />
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
 
                         <View
                             android:layout_width="0dp"
@@ -755,19 +764,21 @@
                         android:orientation="horizontal"
                         android:paddingStart="16dp"
                         android:paddingEnd="16dp"
-                        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+                        android:visibility="gone"
+                        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                        tools:visibility="visible" />
 
                     <com.google.android.material.textview.MaterialTextView
                         android:id="@+id/quality_text"
-                        style="@style/Video.ContextText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:layout_marginTop="14dp"
                         android:layout_marginEnd="16dp"
                         android:text="@string/detail_quality"
-                        android:textColor="@color/white"
+                        android:textColor="?attr/colorOnSurface"
                         android:textSize="16sp"
+                        android:textStyle="bold"
                         android:visibility="gone"
                         tools:visibility="visible" />
 
@@ -786,20 +797,23 @@
                         tools:visibility="visible" />
 
                     <androidx.appcompat.widget.LinearLayoutCompat
+                        android:id="@+id/episodeLayout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:layout_marginTop="16dp"
                         android:layout_marginEnd="12dp"
-                        android:gravity="center_vertical">
+                        android:gravity="center_vertical"
+                        android:visibility="gone"
+                        tools:visibility="visible">
 
                         <com.google.android.material.textview.MaterialTextView
-                            style="@style/Video.ContextText"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/detail_episode"
-                            android:textColor="@color/white"
-                            android:textSize="16sp" />
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
 
                         <androidx.appcompat.widget.AppCompatImageView
                             android:id="@+id/reverse"
@@ -808,6 +822,7 @@
                             android:layout_marginStart="8dp"
                             android:background="?attr/selectableItemBackgroundBorderless"
                             android:src="@drawable/ic_action_reverse"
+                            app:tint="?attr/colorOnSurface"
                             android:visibility="gone"
                             tools:visibility="visible" />
 
@@ -822,6 +837,7 @@
                             android:layout_height="wrap_content"
                             android:background="?attr/selectableItemBackgroundBorderless"
                             android:src="@drawable/ic_action_more"
+                            app:tint="?attr/colorOnSurface"
                             android:visibility="gone"
                             tools:visibility="visible" />
 
@@ -856,7 +872,6 @@
                         android:paddingStart="16dp"
                         android:paddingEnd="16dp"
                         app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-                        app:maxHeight="328dp"
                         app:spanCount="6"
                         tools:itemCount="36"
                         tools:listitem="@layout/adapter_episode_grid" />

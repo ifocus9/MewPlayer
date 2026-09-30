@@ -274,11 +274,11 @@ public class HomeActivity extends BaseActivity implements WebHomeChromeControlle
     }
 
     public boolean isSettingActive() {
-        return currentPosition == 1 || currentPosition == 2 || currentPosition == 4;
+        return currentPosition == 1 || currentPosition == 4;
     }
 
     private void updateWindowBackground(int position) {
-        int color = (position == 1 || position == 2 || position == 4) ? ResUtil.getColor(R.color.bg_setting) : ResUtil.getColor(R.color.white);
+        int color = (position == 1 || position == 4) ? ResUtil.getColor(R.color.bg_setting) : ResUtil.getColor(R.color.white);
         mBinding.getRoot().setBackgroundColor(color);
     }
 

@@ -31,82 +31,10 @@
             android:paddingEnd="16dp"
             android:paddingBottom="92dp">
 
-            <!-- Card 1: 点播配置 -->
+            <!-- Card 1: 点播与播放设置 -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="@color/white"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="0dp">
-
-                <androidx.appcompat.widget.LinearLayoutCompat
-                    android:layout_width="match_parent"
-                    android:layout_height="56dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <androidx.appcompat.widget.LinearLayoutCompat
-                        android:id="@+id/vod"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:background="?android:attr/selectableItemBackground"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingStart="16dp"
-                        android:paddingEnd="8dp">
-
-                        <com.google.android.material.textview.MaterialTextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginEnd="12dp"
-                            android:text="@string/setting_vod"
-                            android:textColor="?attr/colorOnSurface"
-                            android:textSize="16sp" />
-
-                        <com.google.android.material.textview.MaterialTextView
-                            android:id="@+id/vodUrl"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:ellipsize="middle"
-                            android:gravity="end"
-                            android:singleLine="true"
-                            android:textColor="#8E8E93"
-                            android:textSize="14sp"
-                            tools:text="https://cat...ex.js.md5" />
-
-                    </androidx.appcompat.widget.LinearLayoutCompat>
-
-                    <androidx.appcompat.widget.AppCompatImageView
-                        android:id="@+id/vodHome"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="?android:attr/selectableItemBackgroundBorderless"
-                        android:padding="9dp"
-                        app:tint="#666666"
-                        android:src="@drawable/ic_setting_home" />
-
-                    <androidx.appcompat.widget.AppCompatImageView
-                        android:id="@+id/vodHistory"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginEnd="8dp"
-                        android:background="?android:attr/selectableItemBackgroundBorderless"
-                        android:padding="9dp"
-                        app:tint="#666666"
-                        android:src="@drawable/ic_setting_history" />
-
-                </androidx.appcompat.widget.LinearLayoutCompat>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Card 2: 播放与弹幕设置 -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
                 app:cardBackgroundColor="@color/white"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
@@ -116,6 +44,73 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
+
+                    <!-- 点播配置 -->
+                    <androidx.appcompat.widget.LinearLayoutCompat
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <androidx.appcompat.widget.LinearLayoutCompat
+                            android:id="@+id/vod"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="?android:attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="8dp">
+
+                            <com.google.android.material.textview.MaterialTextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginEnd="12dp"
+                                android:text="@string/setting_vod"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textSize="16sp" />
+
+                            <com.google.android.material.textview.MaterialTextView
+                                android:id="@+id/vodUrl"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:ellipsize="middle"
+                                android:gravity="end"
+                                android:singleLine="true"
+                                android:textColor="#8E8E93"
+                                android:textSize="14sp"
+                                tools:text="https://cat...ex.js.md5" />
+
+                        </androidx.appcompat.widget.LinearLayoutCompat>
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:id="@+id/vodHome"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="?android:attr/selectableItemBackgroundBorderless"
+                            android:padding="9dp"
+                            app:tint="#666666"
+                            android:src="@drawable/ic_setting_home" />
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:id="@+id/vodHistory"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_marginEnd="8dp"
+                            android:background="?android:attr/selectableItemBackgroundBorderless"
+                            android:padding="9dp"
+                            app:tint="#666666"
+                            android:src="@drawable/ic_setting_history" />
+
+                    </androidx.appcompat.widget.LinearLayoutCompat>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="0.6dp"
+                        android:layout_marginStart="16dp"
+                        android:background="#EFEFEF" />
 
                     <!-- 播放设置 -->
                     <androidx.appcompat.widget.LinearLayoutCompat
@@ -133,39 +128,6 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/setting_player"
-                            android:textColor="?attr/colorOnSurface"
-                            android:textSize="16sp" />
-
-                        <androidx.appcompat.widget.AppCompatImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:src="@drawable/ic_chevron_right" />
-
-                    </androidx.appcompat.widget.LinearLayoutCompat>
-
-                    <!-- 下划线分割 -->
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="0.6dp"
-                        android:layout_marginStart="16dp"
-                        android:background="#EFEFEF" />
-
-                    <!-- 弹幕设置 -->
-                    <androidx.appcompat.widget.LinearLayoutCompat
-                        android:id="@+id/danmaku"
-                        android:layout_width="match_parent"
-                        android:layout_height="56dp"
-                        android:background="?android:attr/selectableItemBackground"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingStart="16dp"
-                        android:paddingEnd="16dp">
-
-                        <com.google.android.material.textview.MaterialTextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/setting_danmaku"
                             android:textColor="?attr/colorOnSurface"
                             android:textSize="16sp" />
 

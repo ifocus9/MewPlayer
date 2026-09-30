@@ -22,9 +22,8 @@ import com.fongmi.android.tv.impl.ConfigListener;
 import com.fongmi.android.tv.impl.SiteListener;
 import com.fongmi.android.tv.setting.Setting;
 import com.fongmi.android.tv.ui.activity.HomeActivity;
+import com.fongmi.android.tv.ui.activity.SettingPlayerActivity;
 import com.fongmi.android.tv.ui.base.BaseFragment;
-import com.fongmi.android.tv.ui.dialog.AboutDialog;
-
 import com.fongmi.android.tv.ui.dialog.ChoiceDialog;
 import com.fongmi.android.tv.ui.dialog.ConfigDialog;
 import com.fongmi.android.tv.ui.dialog.DebugLogDialog;
@@ -110,7 +109,6 @@ public class SettingFragment extends BaseFragment implements ConfigListener, Sit
         mBinding.debugLog.setOnClickListener(this::setDebugLog);
         mBinding.debugLog.setOnLongClickListener(this::onDebugLogLongClick);
         mBinding.player.setOnClickListener(this::onPlayer);
-        mBinding.danmaku.setOnClickListener(this::onDanmaku);
         mBinding.restore.setOnClickListener(this::onRestore);
         mBinding.version.setOnClickListener(this::onVersion);
         mBinding.vod.setOnLongClickListener(this::onVodEdit);
@@ -162,9 +160,6 @@ public class SettingFragment extends BaseFragment implements ConfigListener, Sit
         VodConfig.get().setHome(item);
     }
 
-
-
-
     private void onVod(View view) {
         ConfigDialog.create().vod().show(this);
     }
@@ -183,11 +178,7 @@ public class SettingFragment extends BaseFragment implements ConfigListener, Sit
     }
 
     private void onPlayer(View view) {
-        getRoot().change(2);
-    }
-
-    private void onDanmaku(View view) {
-        getRoot().change(4);
+        SettingPlayerActivity.start(requireActivity());
     }
 
     private void setDebugLog(View view) {
@@ -201,13 +192,9 @@ public class SettingFragment extends BaseFragment implements ConfigListener, Sit
         return true;
     }
 
-
-
-
     private void onVersion(View view) {
-        AboutDialog.show(requireActivity(), () -> Updater.create().force().start(requireActivity()));
+        Updater.create().force().start(requireActivity());
     }
-
 
     private void setIncognito(View view) {
         Setting.putIncognito(!Setting.isIncognito());

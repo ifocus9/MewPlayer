@@ -7,6 +7,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.viewbinding.ViewBinding;
 
 import com.fongmi.android.tv.R;
@@ -19,6 +20,10 @@ public class SpeedDialog extends BaseAlertDialog {
 
     private DialogSpeedBinding binding;
     private float value;
+
+    public static void show(FragmentActivity activity) {
+        new SpeedDialog().show(activity.getSupportFragmentManager(), null);
+    }
 
     public static void show(Fragment fragment) {
         new SpeedDialog().show(fragment.getChildFragmentManager(), null);
@@ -54,10 +59,13 @@ public class SpeedDialog extends BaseAlertDialog {
     }
 
     private void onPositive(DialogInterface dialog, int which) {
-        ((SpeedListener) requireParentFragment()).setSpeed(binding.slider.getValue());
+        float speed = binding.slider.getValue();
+        if (getParentFragment() instanceof SpeedListener) ((SpeedListener) getParentFragment()).setSpeed(speed);
+        else if (getActivity() instanceof SpeedListener) ((SpeedListener) getActivity()).setSpeed(speed);
     }
 
     private void onNegative(DialogInterface dialog, int which) {
-        ((SpeedListener) requireParentFragment()).setSpeed(value);
+        if (getParentFragment() instanceof SpeedListener) ((SpeedListener) getParentFragment()).setSpeed(value);
+        else if (getActivity() instanceof SpeedListener) ((SpeedListener) getActivity()).setSpeed(value);
     }
 }

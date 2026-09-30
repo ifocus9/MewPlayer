@@ -17,7 +17,6 @@ import com.fongmi.android.tv.event.RefreshEvent;
 import com.fongmi.android.tv.ui.activity.VideoActivity;
 import com.fongmi.android.tv.ui.adapter.HistoryAdapter;
 import com.fongmi.android.tv.ui.base.BaseFragment;
-import com.fongmi.android.tv.ui.dialog.SyncDialog;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.greenrobot.eventbus.EventBus;
@@ -67,15 +66,8 @@ public class HistoryFragment extends BaseFragment implements HistoryAdapter.OnCl
         if (item.getItemId() == R.id.delete) {
             onDelete();
             return true;
-        } else if (item.getItemId() == R.id.sync) {
-            onSync();
-            return true;
         }
         return false;
-    }
-
-    private void onSync() {
-        SyncDialog.create().history().show(requireActivity());
     }
 
     private void onDelete() {

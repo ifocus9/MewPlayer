@@ -108,6 +108,7 @@ public class TypeFragment extends BaseFragment implements CustomScroller.Callbac
 
     @Override
     protected void initView() {
+        mBinding.swipeLayout.setColorSchemeResources(R.color.loading_indicator);
         mScroller = new CustomScroller(this);
         mExtends = getExtend();
         mFilters = getFilter();

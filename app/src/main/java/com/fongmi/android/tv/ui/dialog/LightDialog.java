@@ -122,16 +122,16 @@ public final class LightDialog {
         button.setMinHeight(ResUtil.dp2px(compact ? 36 : 40));
         button.setInsetTop(0);
         button.setInsetBottom(0);
-        button.setCornerRadius(ResUtil.dp2px(6));
+        button.setCornerRadius(ResUtil.dp2px(10));
         button.setFocusable(true);
         button.setFocusableInTouchMode(Util.isLeanback());
         button.setTextColor(ContextCompat.getColorStateList(context, primary ? R.color.dialog_primary_button_text : R.color.dialog_outlined_button_text));
         button.setBackgroundTintList(ContextCompat.getColorStateList(context, primary ? R.color.dialog_primary_button_bg : R.color.dialog_outlined_button_bg));
         button.setStrokeColor(ContextCompat.getColorStateList(context, R.color.dialog_outlined_button_stroke));
-        button.setStrokeWidth(primary ? 0 : ResUtil.dp2px(1));
+        button.setStrokeWidth(0);
         button.setOnClickListener(listener);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ResUtil.dp2px(compact ? 36 : 40));
-        params.leftMargin = first ? 0 : ResUtil.dp2px(compact ? 6 : 12);
+        params.leftMargin = first ? 0 : ResUtil.dp2px(compact ? 6 : 10);
         button.setLayoutParams(params);
         return button;
     }
@@ -143,7 +143,7 @@ public final class LightDialog {
         boolean land = ResUtil.isLand(context);
         params.width = Math.min(Math.round(ResUtil.getScreenWidth(context) * (land ? landFactor : portFactor)), ResUtil.dp2px(maxDp));
         params.height = WindowManager.LayoutParams.WRAP_CONTENT;
-        params.dimAmount = 0.58f;
+        params.dimAmount = 0.45f;
         window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         window.getDecorView().setPadding(0, 0, 0, 0);
         window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);

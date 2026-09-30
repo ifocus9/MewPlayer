@@ -39,5 +39,8 @@
     <color name="type_unselected_color">#666666</color>
     <color name="bg_site">#99000000</color>
     <color name="text_site">#FFFFFF</color>
+    <color name="colorPrimary">#217AF4</color>
+    <color name="primary_blue">#217AF4</color>
+    <color name="loading_indicator">#666666</color>
 
 </resources>

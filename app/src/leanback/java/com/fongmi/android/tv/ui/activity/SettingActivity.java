@@ -21,10 +21,8 @@ import com.fongmi.android.tv.event.RefreshEvent;
 import com.fongmi.android.tv.impl.Callback;
 import com.fongmi.android.tv.impl.ConfigListener;
 import com.fongmi.android.tv.impl.SiteListener;
-import com.fongmi.android.tv.setting.PlayerSetting;
 import com.fongmi.android.tv.setting.Setting;
 import com.fongmi.android.tv.ui.base.BaseActivity;
-import com.fongmi.android.tv.ui.dialog.AboutDialog;
 import com.fongmi.android.tv.ui.dialog.ConfigDialog;
 import com.fongmi.android.tv.ui.dialog.DebugLogDialog;
 import com.fongmi.android.tv.ui.dialog.DohDialog;
@@ -108,7 +106,6 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
         mBinding.debugLog.setOnClickListener(this::setDebugLog);
         mBinding.debugLog.setOnLongClickListener(this::onDebugLogLongClick);
         mBinding.player.setOnClickListener(this::onPlayer);
-        mBinding.danmaku.setOnClickListener(this::onDanmaku);
         mBinding.restore.setOnClickListener(this::onRestore);
         mBinding.version.setOnClickListener(this::onVersion);
         mBinding.vod.setOnLongClickListener(this::onVodEdit);
@@ -214,12 +211,8 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
         return true;
     }
 
-    private void onDanmaku(View view) {
-        SettingDanmakuActivity.start(this);
-    }
-
     private void onVersion(View view) {
-        AboutDialog.show(this, () -> Updater.create().force().start(this));
+        Updater.create().force().start(this);
     }
 
     private void setWallDefault(View view) {

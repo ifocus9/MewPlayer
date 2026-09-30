@@ -55,9 +55,13 @@ public class ProgressLayout extends RelativeLayout {
 
     private void ensureProgressView() {
         if (mProgressView != null) return;
-        mProgressView = ViewProgressBinding.inflate(LayoutInflater.from(getContext())).getRoot();
+        ViewProgressBinding binding = ViewProgressBinding.inflate(LayoutInflater.from(getContext()));
+        mProgressView = binding.getRoot();
         mProgressView.setTag(TAG_PROGRESS);
         mProgressView.setVisibility(GONE);
+        if (binding.indicator != null) {
+            binding.indicator.setIndicatorColor(com.fongmi.android.tv.utils.ResUtil.getColor(com.fongmi.android.tv.R.color.loading_indicator));
+        }
         addView(mProgressView, centerParams());
     }
 

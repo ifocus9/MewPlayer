@@ -3,9 +3,7 @@ package com.fongmi.android.tv.ui.custom;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewConfiguration;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -19,9 +17,6 @@ public class CustomRecyclerView extends RecyclerView {
     private int minHeight;
     private int maxWidth;
     private int maxHeight;
-    private int touchSlop;
-    private float x1;
-    private float y1;
 
     public CustomRecyclerView(@NonNull Context context) {
         super(context);
@@ -39,7 +34,6 @@ public class CustomRecyclerView extends RecyclerView {
     }
 
     private void init(Context context, @Nullable AttributeSet attrs) {
-        touchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
         if (attrs != null) setAttrs(context, attrs);
         setOverScrollMode(View.OVER_SCROLL_NEVER);
     }
@@ -104,28 +98,5 @@ public class CustomRecyclerView extends RecyclerView {
     public void scrollToPosition(int position) {
         super.scrollToPosition(position);
         postDelayed(() -> focus(position), 50);
-    }
-
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent event) {
-        if (event.getPointerCount() != 1) return false;
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_UP:
-                x1 = y1 = 0;
-                break;
-            case MotionEvent.ACTION_DOWN:
-                x1 = event.getX();
-                y1 = event.getY();
-                getParent().requestDisallowInterceptTouchEvent(true);
-                break;
-            case MotionEvent.ACTION_MOVE:
-                float x2 = event.getX();
-                float y2 = event.getY();
-                float offsetX = Math.abs(x2 - x1);
-                float offsetY = Math.abs(y2 - y1);
-                if (offsetX > offsetY && offsetX > touchSlop) getParent().requestDisallowInterceptTouchEvent(false);
-                break;
-        }
-        return super.dispatchTouchEvent(event);
     }
 }

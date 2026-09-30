@@ -11,4 +11,6 @@
     <color name="type_unselected_color">#AAAAAA</color>
     <color name="bg_site">#99000000</color>
     <color name="text_site">#FFFFFF</color>
+    <color name="colorPrimary">#217AF4</color>
+    <color name="primary_blue">#217AF4</color>
 </resources>

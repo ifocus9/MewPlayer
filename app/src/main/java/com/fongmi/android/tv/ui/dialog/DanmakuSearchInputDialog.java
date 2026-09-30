@@ -298,7 +298,7 @@ public final class DanmakuSearchInputDialog extends DialogFragment implements Ca
 
         progress = new CircularProgressIndicator(requireContext());
         progress.setIndeterminate(true);
-        progress.setIndicatorColor(Color.parseColor("#0B57D0"));
+        progress.setIndicatorColor(Color.parseColor("#666666"));
         progress.setIndicatorSize(dp(32));
         progress.setTrackThickness(dp(2));
         progress.setVisibility(GONE);

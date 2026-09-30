@@ -5,14 +5,14 @@
     android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="48dp"
-    android:layout_marginBottom="8dp"
+    android:layout_marginBottom="6dp"
     android:addStatesFromChildren="true"
     android:background="@drawable/selector_git_cloud_card"
     android:descendantFocusability="afterDescendants"
     android:gravity="center_vertical"
     android:orientation="horizontal"
-    android:paddingStart="12dp"
-    android:paddingEnd="8dp">
+    android:paddingStart="14dp"
+    android:paddingEnd="10dp">
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/name"
@@ -21,27 +21,27 @@
         android:layout_weight="1"
         android:ellipsize="end"
         android:singleLine="true"
-        android:textColor="#202124"
+        android:textColor="#1F2329"
         android:textSize="15sp"
         tools:text="倍速" />
 
     <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/visible"
-        android:layout_width="40dp"
-        android:layout_height="36dp"
-        android:background="@drawable/selector_dialog_switch"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/setting_show"
         android:focusable="true"
-        android:padding="8dp"
-        android:scaleType="center"
+        android:padding="7dp"
+        android:scaleType="centerInside"
         android:src="@drawable/ic_player_button_visible"
-        app:tint="@color/dialog_tonal_button_text" />
+        app:tint="@color/colorPrimary" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/up"
         style="@style/Widget.Material3.Button.TonalButton"
-        android:layout_width="40dp"
-        android:layout_height="36dp"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
         android:layout_marginStart="6dp"
         android:contentDescription="@string/player_button_up"
         android:focusable="true"
@@ -50,17 +50,18 @@
         android:paddingEnd="0dp"
         android:textColor="@color/dialog_tonal_button_text"
         app:backgroundTint="@color/dialog_tonal_button_bg"
+        app:cornerRadius="8dp"
         app:icon="@drawable/ic_player_button_up"
         app:iconGravity="textStart"
         app:iconPadding="0dp"
-        app:iconSize="18dp"
+        app:iconSize="16dp"
         app:iconTint="@color/dialog_tonal_button_text" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/down"
         style="@style/Widget.Material3.Button.TonalButton"
-        android:layout_width="40dp"
-        android:layout_height="36dp"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
         android:layout_marginStart="6dp"
         android:contentDescription="@string/player_button_down"
         android:focusable="true"
@@ -69,10 +70,11 @@
         android:paddingEnd="0dp"
         android:textColor="@color/dialog_tonal_button_text"
         app:backgroundTint="@color/dialog_tonal_button_bg"
+        app:cornerRadius="8dp"
         app:icon="@drawable/ic_player_button_down"
         app:iconGravity="textStart"
         app:iconPadding="0dp"
-        app:iconSize="18dp"
+        app:iconSize="16dp"
         app:iconTint="@color/dialog_tonal_button_text" />
 
 </androidx.appcompat.widget.LinearLayoutCompat>

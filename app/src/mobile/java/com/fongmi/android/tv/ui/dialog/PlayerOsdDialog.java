@@ -13,6 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -34,6 +35,17 @@ public final class PlayerOsdDialog extends DialogFragment {
     public interface Callback {
 
         void onApply(boolean[] checked);
+    }
+
+    public static void show(FragmentActivity activity, String[] items, boolean[] checked, Callback callback) {
+        for (Fragment child : activity.getSupportFragmentManager().getFragments()) {
+            if (child instanceof PlayerOsdDialog) return;
+        }
+        PlayerOsdDialog dialog = new PlayerOsdDialog();
+        dialog.items = items == null ? new String[0] : Arrays.copyOf(items, items.length);
+        dialog.checked = checked == null ? new boolean[0] : Arrays.copyOf(checked, checked.length);
+        dialog.callback = callback;
+        dialog.show(activity.getSupportFragmentManager(), PlayerOsdDialog.class.getSimpleName());
     }
 
     public static void show(Fragment fragment, String[] items, boolean[] checked, Callback callback) {

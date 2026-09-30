@@ -186,9 +186,10 @@ public final class ChoiceDialog extends DialogFragment {
         if (window == null) return;
         WindowManager.LayoutParams params = window.getAttributes();
         boolean land = ResUtil.isLand(requireContext());
-        params.width = (int) (ResUtil.getScreenWidth(requireContext()) * (land ? 0.52f : 0.9f));
+        int screenWidth = ResUtil.getScreenWidth(requireContext());
+        params.width = Math.min((int) (screenWidth * (land ? 0.48f : 0.86f)), dp(land ? 400 : 360));
         params.height = WindowManager.LayoutParams.WRAP_CONTENT;
-        params.dimAmount = 0.58f;
+        params.dimAmount = 0.45f;
         window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         window.getDecorView().setPadding(0, 0, 0, 0);
         window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
@@ -202,14 +203,15 @@ public final class ChoiceDialog extends DialogFragment {
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundResource(R.drawable.shape_shell_proxy_dialog);
-        int vertical = dp(24);
-        int horizontal = dp(actionCount() >= 3 ? 18 : 24);
+        int vertical = dp(22);
+        int horizontal = dp(actionCount() >= 3 ? 18 : 22);
         root.setPadding(horizontal, vertical, horizontal, vertical);
 
         MaterialTextView titleView = new MaterialTextView(requireContext());
         titleView.setText(title);
-        titleView.setTextColor(Color.parseColor("#202124"));
+        titleView.setTextColor(Color.parseColor("#1F2329"));
         titleView.setTextSize(18);
+        titleView.setTypeface(null, android.graphics.Typeface.BOLD);
         titleView.setGravity(Gravity.CENTER_VERTICAL);
         titleView.setSingleLine(false);
         root.addView(titleView, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -255,15 +257,16 @@ public final class ChoiceDialog extends DialogFragment {
         button.setMinHeight(dp(44));
         button.setInsetTop(0);
         button.setInsetBottom(0);
-        button.setStrokeWidth(dp(1));
-        button.setCornerRadius(dp(6));
+        button.setPadding(dp(16), 0, dp(16), 0);
+        button.setCornerRadius(dp(10));
         setItemEnabled(button, position);
         button.setText(itemText(position));
+        button.setTextSize(15);
         styleItem(button, position);
         button.setOnFocusChangeListener((view, hasFocus) -> styleItem(button, position));
         button.setOnClickListener(view -> onItemClick(position));
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46));
-        params.bottomMargin = dp(8);
+        params.bottomMargin = dp(6);
         button.setLayoutParams(params);
         return button;
     }
@@ -290,18 +293,25 @@ public final class ChoiceDialog extends DialogFragment {
     private void styleItem(MaterialButton button, int position) {
         if (!itemEnabled(position)) {
             button.setTextColor(ColorStateList.valueOf(Color.parseColor("#9AA0A6")));
-            button.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#F1F3F4")));
-            button.setStrokeColor(ColorStateList.valueOf(Color.parseColor("#E0E0E0")));
+            button.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#F4F5F7")));
+            button.setStrokeColor(ColorStateList.valueOf(Color.parseColor("#E5E7EB")));
+            button.setStrokeWidth(dp(1));
             return;
         }
         boolean on = itemSelected(position);
         boolean focused = button.isFocused();
-        int text = focused ? Color.WHITE : on ? Color.parseColor("#174EA6") : Color.parseColor("#202124");
-        int bg = focused ? Color.parseColor("#1A73E8") : on ? Color.parseColor("#E8F0FE") : Color.WHITE;
-        int stroke = focused ? Color.parseColor("#174EA6") : on ? Color.parseColor("#8AB4F8") : Color.parseColor("#DADCE0");
+        int text = focused ? Color.WHITE : on ? Color.parseColor("#217AF4") : Color.parseColor("#2B303B");
+        int bg = focused ? Color.parseColor("#217AF4") : on ? Color.parseColor("#EEF5FE") : Color.parseColor("#F7F8FA");
+        int stroke = focused ? Color.parseColor("#217AF4") : on ? Color.parseColor("#217AF4") : Color.parseColor("#EAECEF");
         button.setTextColor(ColorStateList.valueOf(text));
         button.setBackgroundTintList(ColorStateList.valueOf(bg));
         button.setStrokeColor(ColorStateList.valueOf(stroke));
+        button.setStrokeWidth(dp(1));
+        if (on) {
+            button.setTypeface(null, android.graphics.Typeface.BOLD);
+        } else {
+            button.setTypeface(null, android.graphics.Typeface.NORMAL);
+        }
     }
 
     private void focusSelectedItem() {
@@ -381,25 +391,25 @@ public final class ChoiceDialog extends DialogFragment {
         button.setMaxLines(1);
         button.setEllipsize(TextUtils.TruncateAt.END);
         button.setGravity(Gravity.CENTER);
-        button.setTextSize(compact ? 14 : 15);
+        button.setTextSize(compact ? 13 : 14);
         button.setIncludeFontPadding(false);
-        button.setPadding(dp(compact ? 6 : 16), 0, dp(compact ? 6 : 16), 0);
+        button.setPadding(dp(compact ? 8 : 16), 0, dp(compact ? 8 : 16), 0);
         if (compact) TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(button, 10, 14, 1, TypedValue.COMPLEX_UNIT_SP);
-        button.setMinWidth(compact ? 0 : dp(88));
+        button.setMinWidth(compact ? 0 : dp(80));
         button.setMinimumWidth(0);
         button.setMinHeight(dp(40));
         button.setInsetTop(0);
         button.setInsetBottom(0);
-        button.setCornerRadius(dp(6));
+        button.setCornerRadius(dp(10));
         button.setFocusable(true);
         button.setFocusableInTouchMode(Util.isLeanback());
         button.setTextColor(ContextCompat.getColorStateList(requireContext(), primary ? R.color.dialog_primary_button_text : R.color.dialog_outlined_button_text));
         button.setBackgroundTintList(ContextCompat.getColorStateList(requireContext(), primary ? R.color.dialog_primary_button_bg : R.color.dialog_outlined_button_bg));
         button.setStrokeColor(ContextCompat.getColorStateList(requireContext(), R.color.dialog_outlined_button_stroke));
-        button.setStrokeWidth(primary ? 0 : dp(1));
+        button.setStrokeWidth(0);
         button.setOnClickListener(listener);
         LinearLayout.LayoutParams params = compact ? new LinearLayout.LayoutParams(0, dp(40), 1) : new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(40));
-        params.leftMargin = first ? 0 : dp(compact ? 6 : 12);
+        params.leftMargin = first ? 0 : dp(compact ? 6 : 10);
         button.setLayoutParams(params);
         return button;
     }

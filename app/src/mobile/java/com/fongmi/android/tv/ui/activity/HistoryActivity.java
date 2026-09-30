@@ -18,7 +18,6 @@ import com.fongmi.android.tv.databinding.ActivityHistoryBinding;
 import com.fongmi.android.tv.event.RefreshEvent;
 import com.fongmi.android.tv.ui.adapter.HistoryAdapter;
 import com.fongmi.android.tv.ui.base.BaseActivity;
-import com.fongmi.android.tv.ui.dialog.SyncDialog;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.greenrobot.eventbus.Subscribe;
@@ -70,10 +69,6 @@ public class HistoryActivity extends BaseActivity implements HistoryAdapter.OnCl
         });
     }
 
-    private void onSync() {
-        SyncDialog.create().history().show(this);
-    }
-
     private void onDelete() {
         if (mAdapter.isDelete()) {
             new MaterialAlertDialogBuilder(this).setTitle(R.string.dialog_delete_record).setMessage(R.string.dialog_delete_history).setNegativeButton(R.string.dialog_negative, null).setPositiveButton(R.string.dialog_positive, (dialog, which) -> mAdapter.clear()).show();
@@ -115,7 +110,6 @@ public class HistoryActivity extends BaseActivity implements HistoryAdapter.OnCl
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == android.R.id.home) onBackInvoked();
         else if (item.getItemId() == R.id.delete) onDelete();
-        else if (item.getItemId() == R.id.sync) onSync();
         return super.onOptionsItemSelected(item);
     }
 

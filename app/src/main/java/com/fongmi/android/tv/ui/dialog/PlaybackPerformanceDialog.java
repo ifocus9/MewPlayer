@@ -84,6 +84,7 @@ public final class PlaybackPerformanceDialog extends DialogFragment {
         WindowManager.LayoutParams params = window.getAttributes();
         params.width = (int) (ResUtil.getScreenWidth(requireContext()) * (ResUtil.isLand(requireContext()) ? 0.58f : 0.92f));
         params.height = WindowManager.LayoutParams.WRAP_CONTENT;
+        params.dimAmount = 0.45f;
         window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         window.getDecorView().setPadding(0, 0, 0, 0);
         window.setAttributes(params);
@@ -102,27 +103,28 @@ public final class PlaybackPerformanceDialog extends DialogFragment {
 
         MaterialTextView title = new MaterialTextView(requireContext());
         title.setText(getString(R.string.player_performance) + " · " + playerName());
-        title.setTextColor(Color.parseColor("#202124"));
+        title.setTextColor(Color.parseColor("#1F2329"));
         title.setTextSize(18);
+        title.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         title.setGravity(Gravity.CENTER_VERTICAL);
         titleBar.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
 
         MaterialButton reset = actionButton(R.string.dialog_reset, view -> reset());
         reset.setTextSize(13);
-        LinearLayout.LayoutParams resetParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(36));
+        LinearLayout.LayoutParams resetParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(34));
         resetParams.leftMargin = dp(8);
         titleBar.addView(reset, resetParams);
 
         MaterialButton help = actionButton(R.string.player_performance_help, view -> showHelpDialog());
         help.setTextSize(13);
         help.setContentDescription(getString(R.string.player_performance_help_title));
-        LinearLayout.LayoutParams helpParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(36));
+        LinearLayout.LayoutParams helpParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(34));
         helpParams.leftMargin = dp(8);
         titleBar.addView(help, helpParams);
         root.addView(titleBar, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(40)));
 
         profileTabs = createProfileTabs();
-        LinearLayout.LayoutParams tabLayout = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46));
+        LinearLayout.LayoutParams tabLayout = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(44));
         tabLayout.topMargin = dp(12);
         root.addView(profileTabs, tabLayout);
 
@@ -133,7 +135,7 @@ public final class PlaybackPerformanceDialog extends DialogFragment {
         list.setOrientation(LinearLayout.VERTICAL);
         scroll.addView(list, new ScrollView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Math.min(dp(460), Math.max(dp(300), ResUtil.getScreenHeight(requireContext()) * 2 / 3)));
-        scrollParams.topMargin = dp(16);
+        scrollParams.topMargin = dp(14);
         root.addView(scroll, scrollParams);
         refreshRows();
         return root;
@@ -246,7 +248,7 @@ public final class PlaybackPerformanceDialog extends DialogFragment {
     private void addHelpSection(LinearLayout content, String text) {
         MaterialTextView section = new MaterialTextView(requireContext());
         section.setText(text);
-        section.setTextColor(Color.parseColor("#174EA6"));
+        section.setTextColor(Color.parseColor("#217AF4"));
         section.setTextSize(15);
         section.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -258,7 +260,7 @@ public final class PlaybackPerformanceDialog extends DialogFragment {
     private void addHelpItem(LinearLayout content, String title, String description) {
         MaterialTextView name = new MaterialTextView(requireContext());
         name.setText(title);
-        name.setTextColor(Color.parseColor("#202124"));
+        name.setTextColor(Color.parseColor("#1F2329"));
         name.setTextSize(14);
         name.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         content.addView(name, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -280,23 +282,22 @@ public final class PlaybackPerformanceDialog extends DialogFragment {
         button.setText(text);
         button.setSingleLine(true);
         button.setGravity(Gravity.CENTER);
-        button.setTextSize(14);
-        button.setMinWidth(dp(64));
+        button.setTextSize(13);
+        button.setMinWidth(dp(56));
         button.setMinimumWidth(0);
-        button.setMinHeight(dp(36));
-        button.setMinimumHeight(dp(36));
-        button.setPaddingRelative(dp(10), 0, dp(10), 0);
+        button.setMinHeight(dp(34));
+        button.setMinimumHeight(dp(34));
+        button.setPaddingRelative(dp(12), 0, dp(12), 0);
         button.setInsetLeft(0);
         button.setInsetRight(0);
         button.setInsetTop(0);
         button.setInsetBottom(0);
         button.setFocusable(true);
         button.setFocusableInTouchMode(Util.isLeanback());
-        button.setCornerRadius(dp(6));
-        button.setTextColor(ColorStateList.valueOf(Color.parseColor("#174EA6")));
-        button.setBackgroundTintList(ColorStateList.valueOf(Color.WHITE));
-        button.setStrokeColor(ColorStateList.valueOf(Color.parseColor("#8AB4F8")));
-        button.setStrokeWidth(dp(1));
+        button.setCornerRadius(dp(8));
+        button.setTextColor(ColorStateList.valueOf(Color.parseColor("#4E5564")));
+        button.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#F2F4F7")));
+        button.setStrokeWidth(0);
         button.setOnFocusChangeListener((view, hasFocus) -> styleAction(button, hasFocus));
         button.setOnClickListener(listener);
         return button;
@@ -318,17 +319,17 @@ public final class PlaybackPerformanceDialog extends DialogFragment {
         button.setInsetBottom(0);
         button.setFocusable(true);
         button.setFocusableInTouchMode(Util.isLeanback());
-        button.setBackgroundTintList(ContextCompat.getColorStateList(requireContext(), R.color.dialog_outlined_button_bg));
+        button.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#F2F4F7")));
         button.setTextColor(Color.parseColor("#5F6368"));
+        button.setStrokeWidth(0);
         button.setOnClickListener(listener);
         return button;
     }
 
     private void styleAction(MaterialButton button, boolean focused) {
-        button.setTextColor(ColorStateList.valueOf(Color.parseColor(focused ? "#FFFFFF" : "#174EA6")));
-        button.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor(focused ? "#1A73E8" : "#FFFFFF")));
-        button.setStrokeColor(ColorStateList.valueOf(Color.parseColor(focused ? "#1A73E8" : "#8AB4F8")));
-        button.setStrokeWidth(dp(1));
+        button.setTextColor(ColorStateList.valueOf(Color.parseColor(focused ? "#1F2329" : "#4E5564")));
+        button.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor(focused ? "#E5E7EB" : "#F2F4F7")));
+        button.setStrokeWidth(0);
     }
 
     private void apply(int profile) {
@@ -357,8 +358,8 @@ public final class PlaybackPerformanceDialog extends DialogFragment {
         tabs.setBackgroundColor(Color.TRANSPARENT);
         tabs.setTabMode(TabLayout.MODE_FIXED);
         tabs.setTabGravity(TabLayout.GRAVITY_FILL);
-        tabs.setSelectedTabIndicatorColor(Color.parseColor("#1A73E8"));
-        tabs.setTabTextColors(Color.parseColor("#5F6368"), Color.parseColor("#1A73E8"));
+        tabs.setSelectedTabIndicatorColor(Color.parseColor("#217AF4"));
+        tabs.setTabTextColors(Color.parseColor("#5F6368"), Color.parseColor("#217AF4"));
         tabs.setTabRippleColor(ColorStateList.valueOf(Color.TRANSPARENT));
         tabs.setUnboundedRipple(false);
         tabs.setFocusable(false);
@@ -796,11 +797,13 @@ public final class PlaybackPerformanceDialog extends DialogFragment {
     private void addHeader(String text) {
         MaterialTextView header = new MaterialTextView(requireContext());
         header.setText(text);
-        header.setTextColor(Color.parseColor("#5F6368"));
+        header.setTextColor(Color.parseColor("#5F6672"));
         header.setTextSize(13);
+        header.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         header.setGravity(Gravity.CENTER_VERTICAL);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(28));
-        params.topMargin = list.getChildCount() == 0 ? 0 : dp(8);
+        params.topMargin = list.getChildCount() == 0 ? 0 : dp(10);
+        params.bottomMargin = dp(4);
         list.addView(header, params);
     }
 
@@ -812,41 +815,46 @@ public final class PlaybackPerformanceDialog extends DialogFragment {
         button.setAllCaps(false);
         button.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
         button.setSingleLine(false);
-        button.setMinHeight(dp(46));
+        button.setMinHeight(dp(44));
         button.setInsetTop(0);
         button.setInsetBottom(0);
+        button.setPadding(dp(16), 0, dp(16), 0);
         button.setText(label + "    " + value);
         button.setTextSize(14);
-        button.setTextColor(ColorStateList.valueOf(Color.parseColor("#202124")));
-        button.setBackgroundTintList(ColorStateList.valueOf(overridden
-                ? Color.parseColor("#E8F0FE") : Color.WHITE));
-        button.setCornerRadius(dp(6));
-        button.setStrokeColor(ColorStateList.valueOf(Color.parseColor(overridden
-                ? "#8AB4F8" : "#C4C7C5")));
-        button.setStrokeWidth(dp(1));
+        button.setCornerRadius(dp(10));
         button.setFocusable(true);
         button.setFocusableInTouchMode(Util.isLeanback());
         button.setEnabled(action != null);
+        styleRow(button, action != null, overridden, false);
         button.setOnFocusChangeListener((view, hasFocus) ->
                 styleRow(button, action != null, overridden, hasFocus));
         if (action != null) button.setOnClickListener(view -> action.run());
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48));
-        params.bottomMargin = dp(7);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46));
+        params.bottomMargin = dp(6);
         list.addView(button, params);
     }
 
     private void styleRow(MaterialButton button, boolean enabled,
                           boolean overridden, boolean focused) {
-        int text = focused ? Color.WHITE : enabled ? Color.parseColor("#202124") : Color.parseColor("#5F6368");
-        int bg = focused ? Color.parseColor("#1A73E8")
-                : overridden ? Color.parseColor("#E8F0FE") : Color.WHITE;
-        int stroke = focused ? Color.parseColor("#1A73E8")
-                : overridden ? Color.parseColor("#8AB4F8")
-                : Color.parseColor("#C4C7C5");
+        int text = focused ? Color.WHITE
+                : !enabled ? Color.parseColor("#9AA0A6")
+                : overridden ? Color.parseColor("#217AF4")
+                : Color.parseColor("#2B303B");
+        int bg = focused ? Color.parseColor("#217AF4")
+                : overridden ? Color.parseColor("#EEF5FE")
+                : Color.parseColor("#F7F8FA");
+        int stroke = focused ? Color.parseColor("#217AF4")
+                : overridden ? Color.parseColor("#217AF4")
+                : Color.parseColor("#EAECEF");
         button.setTextColor(ColorStateList.valueOf(text));
         button.setBackgroundTintList(ColorStateList.valueOf(bg));
         button.setStrokeColor(ColorStateList.valueOf(stroke));
-        button.setStrokeWidth(dp(focused ? 2 : 1));
+        button.setStrokeWidth(dp(1));
+        if (overridden) {
+            button.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        } else {
+            button.setTypeface(Typeface.DEFAULT, Typeface.NORMAL);
+        }
     }
 
     private void toggleRender() {

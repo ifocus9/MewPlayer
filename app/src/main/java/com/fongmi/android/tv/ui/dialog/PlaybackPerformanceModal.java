@@ -25,13 +25,16 @@ import java.util.function.IntConsumer;
 /** Programmatic modal surfaces shared by playback performance settings. */
 final class PlaybackPerformanceModal {
 
-    private static final int COLOR_TEXT = Color.rgb(32, 33, 36);
-    private static final int COLOR_SECONDARY = Color.rgb(95, 99, 104);
-    private static final int COLOR_BLUE = Color.rgb(26, 115, 232);
-    private static final int COLOR_BLUE_TEXT = Color.rgb(23, 78, 166);
-    private static final int COLOR_BLUE_LIGHT = Color.rgb(232, 240, 254);
-    private static final int COLOR_STROKE = Color.rgb(196, 199, 197);
-    private static final int COLOR_BLUE_STROKE = Color.rgb(138, 180, 248);
+    private static final int COLOR_TEXT = Color.rgb(43, 48, 59);
+    private static final int COLOR_SECONDARY = Color.rgb(95, 102, 114);
+    private static final int COLOR_BLUE = Color.rgb(33, 122, 244);
+    private static final int COLOR_BLUE_TEXT = Color.rgb(33, 122, 244);
+    private static final int COLOR_BLUE_LIGHT = Color.rgb(238, 245, 254);
+    private static final int COLOR_BG_UNSELECTED = Color.rgb(247, 248, 250);
+    private static final int COLOR_STROKE = Color.rgb(234, 236, 239);
+    private static final int COLOR_BLUE_STROKE = Color.rgb(33, 122, 244);
+    private static final int COLOR_ACTION_BG = Color.rgb(242, 244, 247);
+    private static final int COLOR_ACTION_TEXT = Color.rgb(78, 85, 100);
 
     private PlaybackPerformanceModal() {
     }
@@ -181,10 +184,11 @@ final class PlaybackPerformanceModal {
         button.setSingleLine(false);
         button.setText((selected ? "✓  " : "") + text);
         button.setTextSize(14);
-        button.setMinHeight(dp(context, 48));
+        button.setMinHeight(dp(context, 44));
         button.setInsetTop(0);
         button.setInsetBottom(0);
-        button.setCornerRadius(dp(context, 6));
+        button.setPadding(dp(context, 16), 0, dp(context, 16), 0);
+        button.setCornerRadius(dp(context, 10));
         button.setFocusable(true);
         button.setFocusableInTouchMode(Util.isLeanback());
         styleListButton(button, selected, false);
@@ -192,8 +196,8 @@ final class PlaybackPerformanceModal {
                 styleListButton(button, selected, focused));
         button.setOnClickListener(view -> action.run());
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(context, 50));
-        params.bottomMargin = dp(context, 7);
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(context, 46));
+        params.bottomMargin = dp(context, 6);
         body.addView(button, params);
     }
 
@@ -204,13 +208,17 @@ final class PlaybackPerformanceModal {
         int text = focused ? Color.WHITE
                 : selected ? COLOR_BLUE_TEXT : COLOR_TEXT;
         int background = focused ? COLOR_BLUE
-                : selected ? COLOR_BLUE_LIGHT : Color.WHITE;
+                : selected ? COLOR_BLUE_LIGHT : COLOR_BG_UNSELECTED;
         int stroke = focused || selected ? COLOR_BLUE : COLOR_STROKE;
         button.setTextColor(ColorStateList.valueOf(text));
         button.setBackgroundTintList(ColorStateList.valueOf(background));
         button.setStrokeColor(ColorStateList.valueOf(stroke));
-        button.setStrokeWidth(dp(button.getContext(),
-                focused || selected ? 2 : 1));
+        button.setStrokeWidth(dp(button.getContext(), 1));
+        if (selected) {
+            button.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        } else {
+            button.setTypeface(Typeface.DEFAULT, Typeface.NORMAL);
+        }
     }
 
     private static void addFooterButton(
@@ -244,14 +252,14 @@ final class PlaybackPerformanceModal {
         button.setMinimumWidth(0);
         button.setMinHeight(dp(context, 38));
         button.setMinimumHeight(dp(context, 38));
-        button.setPaddingRelative(dp(context, 12), 0, dp(context, 12), 0);
+        button.setPaddingRelative(dp(context, 14), 0, dp(context, 14), 0);
         button.setInsetLeft(0);
         button.setInsetRight(0);
         button.setInsetTop(0);
         button.setInsetBottom(0);
         button.setFocusable(true);
         button.setFocusableInTouchMode(Util.isLeanback());
-        button.setCornerRadius(dp(context, 6));
+        button.setCornerRadius(dp(context, 10));
         styleActionButton(button, primary, false);
         button.setOnFocusChangeListener((view, focused) ->
                 styleActionButton(button, primary, focused));
@@ -265,12 +273,10 @@ final class PlaybackPerformanceModal {
             boolean focused) {
         boolean filled = primary || focused;
         button.setTextColor(ColorStateList.valueOf(
-                filled ? Color.WHITE : COLOR_BLUE_TEXT));
+                filled ? Color.WHITE : COLOR_ACTION_TEXT));
         button.setBackgroundTintList(ColorStateList.valueOf(
-                filled ? COLOR_BLUE : Color.WHITE));
-        button.setStrokeColor(ColorStateList.valueOf(
-                filled ? COLOR_BLUE : COLOR_BLUE_STROKE));
-        button.setStrokeWidth(dp(button.getContext(), 1));
+                filled ? COLOR_BLUE : COLOR_ACTION_BG));
+        button.setStrokeWidth(0);
     }
 
     private static MaterialButton closeButton(
@@ -292,7 +298,7 @@ final class PlaybackPerformanceModal {
         button.setInsetBottom(0);
         button.setFocusable(true);
         button.setFocusableInTouchMode(Util.isLeanback());
-        button.setCornerRadius(dp(context, 6));
+        button.setCornerRadius(dp(context, 8));
         styleCloseButton(button, false);
         button.setOnFocusChangeListener((view, focused) ->
                 styleCloseButton(button, focused));
@@ -304,12 +310,10 @@ final class PlaybackPerformanceModal {
             MaterialButton button,
             boolean focused) {
         button.setTextColor(ColorStateList.valueOf(
-                focused ? Color.WHITE : COLOR_SECONDARY));
+                focused ? Color.rgb(31, 35, 41) : COLOR_SECONDARY));
         button.setBackgroundTintList(ColorStateList.valueOf(
-                focused ? COLOR_BLUE : Color.WHITE));
-        button.setStrokeColor(ColorStateList.valueOf(
-                focused ? COLOR_BLUE : COLOR_STROKE));
-        button.setStrokeWidth(dp(button.getContext(), focused ? 1 : 0));
+                focused ? Color.rgb(229, 231, 235) : COLOR_ACTION_BG));
+        button.setStrokeWidth(0);
     }
 
     private static int dp(Context context, int value) {

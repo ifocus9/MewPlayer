@@ -653,9 +653,8 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         if (shouldUseImmersiveAudio()) {
             setAudioStageVisible(true);
             mBinding.progressLayout.showContent();
-        } else if (hasInitialPreview()) {
-            showInitialPreview();
         } else {
+            showInitialPreview();
             mBinding.progressLayout.showProgress();
         }
         showProgress();
@@ -893,16 +892,8 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     }
 
     private void updateEpisodeViewportHeight() {
-        if (mBinding.episode.getVisibility() != View.VISIBLE || mBinding.getRoot().getHeight() <= 0) return;
-        int[] root = new int[2];
-        int[] episode = new int[2];
-        mBinding.getRoot().getLocationOnScreen(root);
-        mBinding.episode.getLocationOnScreen(episode);
-        int available = root[1] + mBinding.getRoot().getHeight() - mEpisodeBottomInset - ResUtil.dp2px(8) - episode[1];
-        if (available <= 0 || available == mEpisodeMaxHeight) return;
-        mEpisodeMaxHeight = available;
-        mBinding.episode.setMaxHeight(available);
-        mBinding.episode.requestLayout();
+        if (mBinding == null || mBinding.episode == null) return;
+        mBinding.episode.setMaxHeight(0);
     }
 
     @Override
@@ -1237,6 +1228,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     private void getDetail() {
         detailStartTime = System.currentTimeMillis();
         detailHealthRecorded = false;
+        mBinding.progressLayout.showProgress();
         SpiderDebug.log("video-flow", "detail start key=%s id=%s name=%s", getKey(), getId(), getName());
         mViewModel.detailContent(getKey(), getId());
     }
@@ -1250,6 +1242,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         getIntent().putExtra("id", item.getId());
         mBinding.swipeLayout.setRefreshing(true);
         mBinding.swipeLayout.setEnabled(false);
+        mBinding.progressLayout.showProgress();
         mBinding.scroll.scrollTo(0, 0);
         mClock.setCallback(null);
         clearLyrics();
@@ -1299,6 +1292,8 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         item.checkContent(getContent());
         mBinding.name.setText(item.getName());
         mFlagAdapter.addAll(item.getFlags());
+        if (mBinding.flagLayout != null) mBinding.flagLayout.setVisibility(item.getFlags().isEmpty() ? View.GONE : View.VISIBLE);
+        if (mBinding.flag != null) mBinding.flag.setVisibility(item.getFlags().isEmpty() ? View.GONE : View.VISIBLE);
         App.removeCallbacks(mR4);
         checkHistory(item);
         setAudioStageVisible(shouldUseImmersiveAudio());
@@ -1504,6 +1499,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         mBinding.control.prev.setVisibility(size < 2 ? View.GONE : View.VISIBLE);
         mBinding.reverse.setVisibility(size < 2 ? View.GONE : View.VISIBLE);
         mBinding.episode.setVisibility(items.isEmpty() ? View.GONE : View.VISIBLE);
+        if (mBinding.episodeLayout != null) mBinding.episodeLayout.setVisibility(items.isEmpty() ? View.GONE : View.VISIBLE);
         mBinding.more.setVisibility(View.GONE);
         List<EpisodeGroupAdapter.Group> groups = EpisodeGroupAdapter.build(size, getSelectedEpisodePosition(items), mHistory != null && mHistory.isRevSort());
         mEpisodeGroupAdapter.addAll(groups);
@@ -4431,7 +4427,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     }
 
     private void showInitialPreview() {
-        mBinding.progressLayout.showContent();
         mBinding.name.setText(getName());
         setText(mBinding.content, 0, getContent());
         setDetailLyrics(getContent());
@@ -4687,20 +4682,23 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     private void applyAudioPageMode(boolean visible) {
         if (mBinding.videoShadow != null) mBinding.videoShadow.setVisibility(visible ? View.GONE : View.VISIBLE);
         mBinding.name.setVisibility(visible ? View.GONE : View.VISIBLE);
-        mBinding.remark.setVisibility(visible ? View.GONE : View.VISIBLE);
+        mBinding.remark.setVisibility(visible ? View.GONE : TextUtils.isEmpty(mBinding.remark.getText()) ? View.GONE : View.VISIBLE);
         mBinding.site.setVisibility(visible ? View.GONE : mBinding.site.getText().length() == 0 ? View.GONE : View.VISIBLE);
         mBinding.other.setVisibility(visible ? View.GONE : mBinding.other.getText().length() == 0 ? View.GONE : View.VISIBLE);
         mBinding.director.setVisibility(visible ? View.GONE : mBinding.director.getText().length() == 0 ? View.GONE : View.VISIBLE);
         mBinding.actor.setVisibility(visible ? View.GONE : mBinding.actor.getText().length() == 0 ? View.GONE : View.VISIBLE);
         mBinding.contentLayout.setVisibility(visible ? View.GONE : mBinding.content.getText().length() == 0 ? View.GONE : View.VISIBLE);
-        mBinding.actionRow.setVisibility(visible ? View.GONE : View.VISIBLE);
-        mBinding.flag.setVisibility(visible || mFlagAdapter == null || mFlagAdapter.isEmpty() ? View.GONE : View.VISIBLE);
+        mBinding.actionRow.setVisibility(View.GONE);
+        boolean flagVisible = !visible && mFlagAdapter != null && !mFlagAdapter.isEmpty();
+        if (mBinding.flagLayout != null) mBinding.flagLayout.setVisibility(flagVisible ? View.VISIBLE : View.GONE);
+        mBinding.flag.setVisibility(flagVisible ? View.VISIBLE : View.GONE);
         boolean qualityVisible = mQualityAdapter != null && mQualityAdapter.getItemCount() > 1;
         boolean episodeGroupVisible = mEpisodeGroupAdapter != null && mEpisodeGroupAdapter.getItemCount() > 1;
         boolean episodeVisible = mEpisodeAdapter != null && mEpisodeAdapter.getItemCount() > 0;
         boolean quickVisible = mQuickAdapter != null && mQuickAdapter.getItemCount() > 0;
         mBinding.qualityText.setVisibility(visible || !qualityVisible ? View.GONE : View.VISIBLE);
         mBinding.quality.setVisibility(visible || !qualityVisible ? View.GONE : View.VISIBLE);
+        if (mBinding.episodeLayout != null) mBinding.episodeLayout.setVisibility(visible || !episodeVisible ? View.GONE : View.VISIBLE);
         mBinding.episodeGroup.setVisibility(visible || !episodeGroupVisible ? View.GONE : View.VISIBLE);
         mBinding.episode.setVisibility(visible || !episodeVisible ? View.GONE : View.VISIBLE);
         mBinding.quick.setVisibility(visible || !quickVisible ? View.GONE : View.VISIBLE);

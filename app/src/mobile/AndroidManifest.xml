@@ -102,7 +102,10 @@
             android:configChanges="screenSize|smallestScreenSize|screenLayout"
             android:screenOrientation="fullUser" />
 
-
+        <activity
+            android:name=".ui.activity.SettingPlayerActivity"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
+            android:screenOrientation="fullUser" />
 
         <activity
             android:name=".ui.activity.ScanActivity"

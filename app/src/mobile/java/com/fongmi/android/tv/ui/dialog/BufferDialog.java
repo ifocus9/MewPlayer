@@ -7,6 +7,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.viewbinding.ViewBinding;
 
 import com.fongmi.android.tv.R;
@@ -19,6 +20,10 @@ public class BufferDialog extends BaseAlertDialog {
 
     private DialogBufferBinding binding;
     private int value;
+
+    public static void show(FragmentActivity activity) {
+        new BufferDialog().show(activity.getSupportFragmentManager(), null);
+    }
 
     public static void show(Fragment fragment) {
         new BufferDialog().show(fragment.getChildFragmentManager(), null);
@@ -54,10 +59,13 @@ public class BufferDialog extends BaseAlertDialog {
     }
 
     private void onPositive(DialogInterface dialog, int which) {
-        ((BufferListener) requireParentFragment()).setBuffer((int) binding.slider.getValue());
+        int buffer = (int) binding.slider.getValue();
+        if (getParentFragment() instanceof BufferListener) ((BufferListener) getParentFragment()).setBuffer(buffer);
+        else if (getActivity() instanceof BufferListener) ((BufferListener) getActivity()).setBuffer(buffer);
     }
 
     private void onNegative(DialogInterface dialog, int which) {
-        ((BufferListener) requireParentFragment()).setBuffer(value);
+        if (getParentFragment() instanceof BufferListener) ((BufferListener) getParentFragment()).setBuffer(value);
+        else if (getActivity() instanceof BufferListener) ((BufferListener) getActivity()).setBuffer(value);
     }
 }

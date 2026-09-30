@@ -11,19 +11,23 @@
 
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/image"
-        android:layout_width="88dp"
+        android:layout_width="92dp"
         android:layout_height="match_parent"
-        android:layout_margin="5dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentBottom="true"
         android:background="@color/black_05"
         android:scaleType="centerCrop"
-        app:shapeAppearanceOverlay="@style/Vod.Grid.Large" />
+        app:shapeAppearanceOverlay="@style/Vod.List" />
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/site"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignStart="@+id/image"
-        android:layout_alignTop="@+id/image"
+        android:layout_alignBottom="@+id/image"
+        android:layout_marginStart="5dp"
+        android:layout_marginBottom="5dp"
         android:background="@drawable/shape_vod_site"
         android:ellipsize="end"
         android:maxWidth="82dp"
@@ -38,6 +42,7 @@
     <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginStart="10dp"
         android:layout_marginEnd="10dp"
         android:layout_marginVertical="8dp"
         android:layout_toEndOf="@+id/image"
@@ -51,7 +56,7 @@
             android:ellipsize="end"
             android:lineSpacingExtra="2dp"
             android:maxLines="3"
-            android:textColor="#1F2329"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="14.5sp"
             android:textStyle="bold"
             tools:text="少帅.全集" />
@@ -63,11 +68,10 @@
             android:layout_marginTop="4dp"
             android:background="@drawable/shape_search_remark"
             android:ellipsize="end"
-            android:paddingHorizontal="6dp"
-            android:paddingVertical="3dp"
             android:singleLine="true"
-            android:textColor="#86909C"
+            android:textColor="@color/white"
             android:textSize="11.5sp"
+            android:textStyle="bold"
             tools:text="2024-01-15" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>

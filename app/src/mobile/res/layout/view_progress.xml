@@ -6,11 +6,12 @@
     android:layout_height="match_parent">
 
     <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/indicator"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:indeterminate="true"
-        app:indicatorColor="?attr/colorPrimary" />
+        app:indicatorColor="@color/white" />
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/traffic"
@@ -18,7 +19,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:layout_marginTop="40dp"
-        android:textColor="?attr/colorOnSurface"
+        android:textColor="@color/white"
         android:textSize="12sp"
         android:visibility="gone"
         tools:text="120 KB/s"
