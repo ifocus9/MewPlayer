@@ -1310,7 +1310,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         setText(mBinding.actor, R.string.detail_actor, item.getActor());
         setText(mBinding.content, 0, item.getContent());
         setDetailLyrics(item.getContent());
-        setText(mBinding.remark, 0, item.getRemarks());
         setOther(mBinding.other, item);
         updateAudioStageText();
         if (mAudioStageVisible) applyAudioPageMode(true);
@@ -4682,7 +4681,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     private void applyAudioPageMode(boolean visible) {
         if (mBinding.videoShadow != null) mBinding.videoShadow.setVisibility(visible ? View.GONE : View.VISIBLE);
         mBinding.name.setVisibility(visible ? View.GONE : View.VISIBLE);
-        mBinding.remark.setVisibility(visible ? View.GONE : TextUtils.isEmpty(mBinding.remark.getText()) ? View.GONE : View.VISIBLE);
         mBinding.site.setVisibility(visible ? View.GONE : mBinding.site.getText().length() == 0 ? View.GONE : View.VISIBLE);
         mBinding.other.setVisibility(visible ? View.GONE : mBinding.other.getText().length() == 0 ? View.GONE : View.VISIBLE);
         mBinding.director.setVisibility(visible ? View.GONE : mBinding.director.getText().length() == 0 ? View.GONE : View.VISIBLE);

@@ -8,35 +8,13 @@
     android:orientation="vertical"
     android:padding="20dp">
 
-    <androidx.appcompat.widget.LinearLayoutCompat
+    <com.google.android.material.textview.MaterialTextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-
-        <com.google.android.material.textview.MaterialTextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/player_button_config"
-            android:textColor="#1F2329"
-            android:textSize="18sp"
-            android:textStyle="bold" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/reset"
-            style="@style/Widget.Material3.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="34dp"
-            android:minWidth="56dp"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:text="@string/dialog_reset"
-            android:textColor="#4E5564"
-            app:backgroundTint="#F2F4F7"
-            app:cornerRadius="8dp" />
-
-    </androidx.appcompat.widget.LinearLayoutCompat>
+        android:text="@string/player_button_config"
+        android:textColor="#1F2329"
+        android:textSize="18sp"
+        android:textStyle="bold" />
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/summary"
@@ -57,14 +35,64 @@
         android:paddingTop="4dp"
         android:paddingBottom="4dp" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/close"
+    <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="match_parent"
-        android:layout_height="42dp"
-        android:layout_marginTop="12dp"
-        android:text="@string/dialog_positive"
-        android:textColor="@color/dialog_primary_button_text"
-        app:backgroundTint="@color/dialog_primary_button_bg"
-        app:cornerRadius="10dp" />
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:gravity="end|center_vertical"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/reset"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:minWidth="80dp"
+            android:minHeight="40dp"
+            android:paddingStart="16dp"
+            android:paddingTop="0dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="0dp"
+            android:singleLine="true"
+            android:text="@string/dialog_reset"
+            android:textAllCaps="false"
+            android:textColor="@color/dialog_outlined_button_text"
+            android:textSize="14sp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:insetLeft="0dp"
+            android:insetRight="0dp"
+            app:backgroundTint="@color/dialog_outlined_button_bg"
+            app:cornerRadius="10dp"
+            app:strokeWidth="0dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/close"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginStart="10dp"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:minWidth="80dp"
+            android:minHeight="40dp"
+            android:paddingStart="16dp"
+            android:paddingTop="0dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="0dp"
+            android:singleLine="true"
+            android:text="@string/dialog_positive"
+            android:textAllCaps="false"
+            android:textColor="@color/dialog_primary_button_text"
+            android:textSize="14sp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:insetLeft="0dp"
+            android:insetRight="0dp"
+            app:backgroundTint="@color/dialog_primary_button_bg"
+            app:cornerRadius="10dp"
+            app:strokeWidth="0dp" />
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
 
 </androidx.appcompat.widget.LinearLayoutCompat>

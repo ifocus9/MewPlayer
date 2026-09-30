@@ -47,7 +47,7 @@ import java.util.List;
 public class CollectFragment extends BaseFragment implements MenuProvider, CollectAdapter.OnClickListener, SearchAdapter.OnClickListener, CustomScroller.Callback {
 
     private static final int GRID_ITEM_MARGIN_DP = 4;
-    private static final int GRID_TOP_PADDING_DP = 8;
+    private static final int GRID_TOP_PADDING_DP = 4;
 
     private FragmentCollectBinding mBinding;
     private CollectAdapter mCollectAdapter;
@@ -226,7 +226,7 @@ public class CollectFragment extends BaseFragment implements MenuProvider, Colle
     }
 
     private void setResultPadding() {
-        int top = isGrid() ? ResUtil.dp2px(GRID_TOP_PADDING_DP) : 0;
+        int top = ResUtil.dp2px(GRID_TOP_PADDING_DP);
         mBinding.recycler.setPadding(mBinding.recycler.getPaddingStart(), top, mBinding.recycler.getPaddingEnd(), mBinding.recycler.getPaddingBottom());
     }
 

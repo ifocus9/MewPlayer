@@ -37,6 +37,14 @@ public abstract class BaseAlertDialog extends DialogFragment {
     protected void initEvent() {
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (getDialog() != null && getContext() != null) {
+            LightDialog.applyWindow(getDialog(), requireContext());
+        }
+    }
+
     protected void setWidth(float factor) {
         if (getDialog() == null || getDialog().getWindow() == null) return;
         WindowManager.LayoutParams params = getDialog().getWindow().getAttributes();

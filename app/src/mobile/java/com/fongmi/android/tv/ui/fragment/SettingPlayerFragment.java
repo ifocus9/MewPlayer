@@ -167,7 +167,7 @@ public class SettingPlayerFragment extends BaseFragment implements UaListener, B
     }
 
     private void onScale(View view) {
-        ChoiceDialog.showSingle(this, R.string.player_scale, scale, PlayerSetting.getScale(), which -> {
+        ChoiceDialog.showSingleNoCancel(this, R.string.player_scale, scale, PlayerSetting.getScale(), which -> {
             mBinding.scaleText.setText(scale[which]);
             PlayerSetting.putScale(which);
         });

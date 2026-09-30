@@ -467,34 +467,14 @@
 
                         <com.google.android.material.textview.MaterialTextView
                             android:id="@+id/name"
-                            android:layout_width="0dp"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
                             android:ellipsize="end"
                             android:maxLines="1"
                             android:textColor="?attr/colorOnSurface"
                             android:textSize="20sp"
                             android:textStyle="bold"
                             tools:text="慶餘年第二季" />
-
-                        <com.google.android.material.textview.MaterialTextView
-                            android:id="@+id/remark"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="10dp"
-                            android:background="@drawable/shape_search_remark"
-                            android:ellipsize="end"
-                            android:maxWidth="140dp"
-                            android:paddingStart="8dp"
-                            android:paddingTop="3dp"
-                            android:paddingEnd="8dp"
-                            android:paddingBottom="3dp"
-                            android:singleLine="true"
-                            android:textColor="@color/white"
-                            android:textSize="12sp"
-                            android:textStyle="bold"
-                            android:visibility="gone"
-                            tools:text="更新至第30集" />
 
                     </androidx.appcompat.widget.LinearLayoutCompat>
 

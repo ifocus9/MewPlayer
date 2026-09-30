@@ -1,7 +1,7 @@
 <resources xmlns:xliff="http://schemas.android.com/apk/res-auto">
 
     <!-- App -->
-    <string name="app_name">影視</string>
+    <string name="app_name">MewPlayer</string>
     <string name="loading_source">正在載入源...</string>
     <string name="history_item_site">站源： %1$s</string>
     <string name="history_item_flag">線路： %1$s</string>

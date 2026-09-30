@@ -1,7 +1,7 @@
 <resources xmlns:xliff="http://schemas.android.com/apk/res-auto">
 
     <!-- App -->
-    <string name="app_name">TV</string>
+    <string name="app_name">MewPlayer</string>
     <string name="loading_source">Loading source...</string>
     <string name="history_item_site">Site: %1$s</string>
     <string name="history_item_flag">Line: %1$s</string>

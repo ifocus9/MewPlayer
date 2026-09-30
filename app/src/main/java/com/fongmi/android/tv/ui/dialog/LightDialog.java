@@ -47,6 +47,7 @@ public final class LightDialog {
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(root(context, title, content, positive, listener(dialog, onPositive), negative, listener(dialog, onNegative), neutral, listener(dialog, onNeutral)));
         dialog.setCanceledOnTouchOutside(true);
+        applyWindow(dialog, context, landFactor, portFactor, maxDp);
         dialog.setOnShowListener(d -> applyWindow(dialog, context, landFactor, portFactor, maxDp));
         return dialog;
     }
@@ -136,7 +137,11 @@ public final class LightDialog {
         return button;
     }
 
-    private static void applyWindow(Dialog dialog, Context context, float landFactor, float portFactor, int maxDp) {
+    public static void applyWindow(Dialog dialog, Context context) {
+        applyWindow(dialog, context, 0.52f, 0.9f, 560);
+    }
+
+    public static void applyWindow(Dialog dialog, Context context, float landFactor, float portFactor, int maxDp) {
         Window window = dialog.getWindow();
         if (window == null) return;
         WindowManager.LayoutParams params = window.getAttributes();

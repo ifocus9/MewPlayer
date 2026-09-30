@@ -55,11 +55,10 @@ public final class PlayerOsdDialog extends DialogFragment {
         Dialog dialog = new Dialog(requireContext());
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(binding.getRoot());
-        dialog.setCanceledOnTouchOutside(false);
+        dialog.setCanceledOnTouchOutside(true);
         if (items == null) items = new String[0];
         if (checked == null) checked = new boolean[0];
         initView();
-        binding.close.setOnClickListener(view -> dismiss());
         dialog.setOnShowListener(view -> binding.recycler.post(() -> {
             if (adapter != null) adapter.focus(0);
             else binding.recycler.requestFocus();
@@ -76,15 +75,16 @@ public final class PlayerOsdDialog extends DialogFragment {
         int screenWidth = ResUtil.getScreenWidth(requireContext());
         int screenHeight = ResUtil.getScreenHeight(requireContext());
         boolean land = ResUtil.isLand(requireContext());
+        binding.recycler.setMaxHeight((int) (screenHeight * (land ? 0.76f : 0.72f)));
         WindowManager.LayoutParams params = window.getAttributes();
         params.width = (int) (screenWidth * (land ? 0.56f : 0.92f));
-        params.height = (int) (screenHeight * (land ? 0.9f : 0.72f));
+        params.height = WindowManager.LayoutParams.WRAP_CONTENT;
         params.dimAmount = 0.58f;
         window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         window.getDecorView().setPadding(0, 0, 0, 0);
         window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
         window.setAttributes(params);
-        window.setLayout(params.width, params.height);
+        window.setLayout(params.width, WindowManager.LayoutParams.WRAP_CONTENT);
     }
 
     private void initView() {
@@ -142,6 +142,7 @@ public final class PlayerOsdDialog extends DialogFragment {
             notifyItemChanged(position);
             focus(position);
             notifyChanged();
+            dismiss();
         }
 
         private void focus(int position) {

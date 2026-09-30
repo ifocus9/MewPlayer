@@ -141,13 +141,16 @@ public class QuickSearchDialog extends BaseBottomSheetDialog implements QuickAda
         return true;
     }
 
+
     @Override
     protected boolean stableOverlay() {
-        return true;
+        return false;
     }
 
     @Override
     protected void setBehavior(BottomSheetDialog dialog) {
+        super.setBehavior(dialog);
+        configureWindow(dialog);
         FrameLayout sheet = dialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
         if (sheet == null) return;
         sheet.setBackgroundColor(ResUtil.getColor(R.color.transparent));
@@ -159,14 +162,17 @@ public class QuickSearchDialog extends BaseBottomSheetDialog implements QuickAda
         behavior.setPeekHeight(height);
         behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
         behavior.setSkipCollapsed(true);
-        behavior.setDraggable(false);
+        behavior.setDraggable(true);
     }
 
     private void configureWindow(Dialog dialog) {
         if (dialog == null || dialog.getWindow() == null) return;
         Window window = dialog.getWindow();
-        window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND | WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        window.setDimAmount(0f);
+        window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+        window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        WindowManager.LayoutParams params = window.getAttributes();
+        params.dimAmount = 0.4f;
+        window.setAttributes(params);
         window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
         WindowCompat.setDecorFitsSystemWindows(window, true);
     }

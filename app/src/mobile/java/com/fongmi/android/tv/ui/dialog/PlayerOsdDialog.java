@@ -70,7 +70,6 @@ public final class PlayerOsdDialog extends DialogFragment {
         if (items == null) items = new String[0];
         if (checked == null) checked = new boolean[0];
         initView();
-        binding.close.setOnClickListener(view -> dismiss());
         return dialog;
     }
 
@@ -83,15 +82,16 @@ public final class PlayerOsdDialog extends DialogFragment {
         int screenWidth = ResUtil.getScreenWidth(requireContext());
         int screenHeight = ResUtil.getScreenHeight(requireContext());
         boolean land = ResUtil.isLand(requireContext());
+        binding.recycler.setMaxHeight((int) (screenHeight * (land ? 0.72f : 0.65f)));
         WindowManager.LayoutParams params = window.getAttributes();
         params.width = (int) (screenWidth * (land ? 0.56f : 0.92f));
-        params.height = (int) (screenHeight * (land ? 0.9f : 0.66f));
+        params.height = WindowManager.LayoutParams.WRAP_CONTENT;
         params.dimAmount = 0.58f;
         window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         window.getDecorView().setPadding(0, 0, 0, 0);
         window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
         window.setAttributes(params);
-        window.setLayout(params.width, params.height);
+        window.setLayout(params.width, WindowManager.LayoutParams.WRAP_CONTENT);
     }
 
     private void initView() {
@@ -146,6 +146,7 @@ public final class PlayerOsdDialog extends DialogFragment {
             checked[position] = !checked[position];
             notifyItemChanged(position);
             notifyChanged();
+            dismiss();
         }
 
         private class ViewHolder extends RecyclerView.ViewHolder {
