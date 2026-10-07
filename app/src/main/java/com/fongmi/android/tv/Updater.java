@@ -97,6 +97,16 @@ public class Updater implements UpdateTransfer.Callback, UpdateListener {
         return BuildConfig.FLAVOR_mode + "-" + BuildConfig.FLAVOR_abi;
     }
 
+    /**
+     * 进程启动时调用：上次下载并交给安装器的 update.apk（几十 MB）安装后不会再用到，
+     * 成功路径里没有删除它，这里在没有下载进行中时清掉。
+     */
+    public void clearStaleApk() {
+        if (downloading) return;
+        File file = getFile();
+        if (file.exists()) Task.execute(() -> Path.clear(file));
+    }
+
     public Updater force() {
         force = true;
         Notify.show(R.string.update_check);

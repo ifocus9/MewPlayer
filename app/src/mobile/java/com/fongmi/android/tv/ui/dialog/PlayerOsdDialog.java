@@ -99,6 +99,7 @@ public final class PlayerOsdDialog extends DialogFragment {
         binding.recycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         binding.recycler.setItemAnimator(null);
         binding.recycler.setAdapter(adapter);
+        binding.positive.setOnClickListener(view -> dismiss());
     }
 
     private void notifyChanged() {
@@ -146,7 +147,6 @@ public final class PlayerOsdDialog extends DialogFragment {
             checked[position] = !checked[position];
             notifyItemChanged(position);
             notifyChanged();
-            dismiss();
         }
 
         private class ViewHolder extends RecyclerView.ViewHolder {

@@ -305,7 +305,8 @@ public class ControlDialog extends BaseBottomSheetDialog implements ParseAdapter
         setLut();
         setEpisodeColumn();
         binding.decode.setVisibility(parent.control.action.decode.getVisibility());
-        binding.danmaku.setVisibility(parent.control.action.danmaku.getVisibility());
+        // 弹幕入口在设置面板里始终保留：EXO 全屏时底部操作栏的弹幕按钮会隐藏，这里仍可进入
+        binding.danmaku.setVisibility(View.VISIBLE);
         setImmersiveAudioVisible();
         setTrackVisible();
     }

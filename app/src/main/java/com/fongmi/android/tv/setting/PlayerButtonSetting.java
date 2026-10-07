@@ -65,12 +65,15 @@ public class PlayerButtonSetting {
             new Item(EPISODES, R.string.play_episodes),
             new Item(FULLSCREEN, R.string.play_fullscreen),
             new Item(CHANGE, R.string.play_change));
+    // 不在“播放器按钮设置”里展示的按钮：仍保留在内部排序中（避免 applyOrder 重排时把它甩到最前面），但不可配置、不会被隐藏
+    private static final Set<String> UNCONFIGURABLE = Set.of(DANMAKU);
 
     public static List<Item> getItems() {
         List<Item> items = new ArrayList<>();
         List<String> order = getOrder();
         Set<String> hidden = getHidden();
         for (String id : order) {
+            if (UNCONFIGURABLE.contains(id)) continue;
             Item item = find(id);
             if (item != null) items.add(item.withVisible(!hidden.contains(id)));
         }
@@ -84,7 +87,9 @@ public class PlayerButtonSetting {
     }
 
     public static int getTotalCount() {
-        return DEFAULT.size();
+        int count = 0;
+        for (Item item : DEFAULT) if (!UNCONFIGURABLE.contains(item.id())) count++;
+        return count;
     }
 
     public static boolean isVisible(String id) {
@@ -92,6 +97,7 @@ public class PlayerButtonSetting {
     }
 
     public static void putVisible(String id, boolean visible) {
+        if (UNCONFIGURABLE.contains(id)) return;
         Set<String> hidden = getHidden();
         if (visible) hidden.remove(id);
         else hidden.add(id);
@@ -109,9 +115,24 @@ public class PlayerButtonSetting {
     }
 
     public static void putOrder(List<String> ids) {
-        LinkedHashSet<String> order = new LinkedHashSet<>();
-        for (String id : ids) if (contains(id)) order.add(id);
-        for (Item item : DEFAULT) order.add(item.id());
+        List<String> previous = getOrder();
+        List<String> order = new ArrayList<>();
+        for (String id : ids) if (contains(id) && !UNCONFIGURABLE.contains(id) && !order.contains(id)) order.add(id);
+        // 设置页传入的列表不含不可配置按钮：把它们插回到原来紧跟的那个按钮后面，保持在播放栏中的相对位置
+        for (int i = 0; i < previous.size(); i++) {
+            String id = previous.get(i);
+            if (!UNCONFIGURABLE.contains(id) || order.contains(id)) continue;
+            int index = 0;
+            for (int j = i - 1; j >= 0; j--) {
+                int anchor = order.indexOf(previous.get(j));
+                if (anchor >= 0) {
+                    index = anchor + 1;
+                    break;
+                }
+            }
+            order.add(index, id);
+        }
+        for (Item item : DEFAULT) if (!order.contains(item.id())) order.add(item.id());
         Prefers.put(ORDER, join(order));
     }
 
@@ -126,12 +147,13 @@ public class PlayerButtonSetting {
             applyVisibility(views);
             return;
         }
+        // 只重排本来就在 container 里的按钮；放在其它固定区域（如右侧固定的片头/片尾/选集）的按钮保持原位
         List<View> ordered = new ArrayList<>();
         for (String id : getOrder()) {
             View view = views.get(id);
-            if (view != null) ordered.add(view);
+            if (view != null && view.getParent() == container) ordered.add(view);
         }
-        for (View view : ordered) if (view.getParent() == container) container.removeView(view);
+        for (View view : ordered) container.removeView(view);
         for (View view : ordered) container.addView(view);
         applyVisibility(views);
     }
@@ -152,7 +174,8 @@ public class PlayerButtonSetting {
 
     private static Set<String> getHidden() {
         Set<String> hidden = new HashSet<>();
-        for (String id : split(Prefers.getString(HIDDEN))) if (contains(id)) hidden.add(id);
+        // 不可配置的按钮（弹幕）忽略旧的隐藏配置，避免升级后一直被隐藏且无法在设置里恢复
+        for (String id : split(Prefers.getString(HIDDEN))) if (contains(id) && !UNCONFIGURABLE.contains(id)) hidden.add(id);
         return hidden;
     }
 

@@ -13,11 +13,9 @@ import androidx.annotation.Nullable;
 import androidx.core.os.HandlerCompat;
 
 import com.fongmi.android.tv.server.Server;
-import com.fongmi.android.tv.playback.PlaybackRemoteSyncer;
 import com.fongmi.android.tv.player.PlaybackMemoryMonitor;
 import com.fongmi.android.tv.player.PlaybackSystemConditionMonitor;
 import com.fongmi.android.tv.player.mpv.PlaybackRecoveryMonitor;
-import com.fongmi.android.tv.setting.ProxySetting;
 import com.fongmi.android.tv.setting.Setting;
 import com.fongmi.android.tv.utils.DanmakuSearchListFocusFixer;
 import com.fongmi.android.tv.utils.NsdDeviceDiscovery;
@@ -111,6 +109,7 @@ public class App extends Application implements Application.ActivityLifecycleCal
         PlaybackMemoryMonitor.process().initialize(this);
         PlaybackSystemConditionMonitor.process().initialize(this);
         Setting.applyLanguage();
+        Setting.applyTheme();
         DebugLogStore.restoreEnabled();
         if (DebugLogStore.isEnabled()) {
             PlaybackRecoveryMonitor.logPreviousResult(this);
@@ -118,7 +117,6 @@ public class App extends Application implements Application.ActivityLifecycleCal
             PreviousProcessExitLogger.log(this);
         }
         Notify.createChannel();
-        ProxySetting.apply();
         DanmakuSearchListFocusFixer.start();
         registerActivityLifecycleCallbacks(this);
         post(this::startBackgroundServices, 1200);
@@ -137,9 +135,11 @@ public class App extends Application implements Application.ActivityLifecycleCal
     }
 
     private void startBackgroundServices() {
+        // :node 进程只跑 NodeService：不要重复起本地 Server（端口扫描可能抢占 9988）、局域网广播与 Node 自启动
+        if (com.fongmi.android.tv.node.NodeBundleManager.isNodeProcess(this)) return;
         SpiderDebug.log("startup", "background services start cost=%sms", System.currentTimeMillis() - time);
         Server.get().start();
-        PlaybackRemoteSyncer.start();
+        Updater.create().clearStaleApk();
         NsdDeviceDiscovery.register();
         com.fongmi.android.tv.node.NodeBundleManager.startIfPresent(this);
         SpiderDebug.log("startup", "background services ready cost=%sms", System.currentTimeMillis() - time);

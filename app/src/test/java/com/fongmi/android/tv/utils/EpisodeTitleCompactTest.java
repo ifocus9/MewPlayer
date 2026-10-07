@@ -419,6 +419,80 @@ public class EpisodeTitleCompactTest {
         ), displays.subList(51, 57));
     }
 
+    @Test
+    public void bracketNumberedPlotTitlesAlwaysCompactToEpisodeNumbers() {
+        List<String> names = List.of(
+                "【1】连环爆炸恐怖袭击案",
+                "【2】陈利手与朱惠罗，在重案一组重逢！",
+                "【4】尚未结束的凶案阴影",
+                "第13集"
+        );
+
+        assertEquals(List.of("第1集", "第2集", "第4集", "第13集"), EpisodeTitleCompact.compact(names));
+    }
+
+    @Test
+    public void genericTitlesUseEpisodeTokensForTheWholeListOnceOneIsTooLong() {
+        List<String> names = List.of(
+                "Show EP01 短",
+                "Show EP02 一个很长很长很长很长很长的剧情标题"
+        );
+
+        assertEquals(List.of("EP01", "EP02"), EpisodeTitleCompact.compact(names));
+    }
+
+    @Test
+    public void mixedSeparatorsAfterLeadingEpisodeNumberAllCompactToTheNumber() {
+        List<String> names = List.of(
+                "01~4K.mp4【805.79 MB】",
+                "05～4K.mp4【789.96 MB】",
+                "10｜4K.mp4【900.11 MB】",
+                "11\u00A0|\u00A04K.mp4【854.48 MB】",
+                "12★4K.mp4【862.72 MB】",
+                "13-4K.mp4【931.32 MB】",
+                "14→4K.mp4【1.27 GB】",
+                "16丨4K.mp4【954.50 MB】",
+                "17 丨 4K.mp4【862.72 MB】",
+                "22 4K-.mp4【1012.12 MB】",
+                "26 4K HDR 60fps.mp4"
+        );
+
+        assertEquals(List.of("01", "05", "10", "11", "12", "13", "14", "16", "17", "22", "26"), EpisodeTitleCompact.compactForDisplay(names));
+    }
+
+    @Test
+    public void varyingNumberWithOnlyTechnicalNoiseCompactsToTheNumber() {
+        List<String> names = List.of(
+                "交锋 01 4K.mp4",
+                "交锋 02 4K HDR.mp4",
+                "交锋 03 4K 60fps.mp4",
+                "交锋 05 2160p HEVC.mp4"
+        );
+
+        assertEquals(List.of("01", "02", "03", "05"), EpisodeTitleCompact.compactForDisplay(names));
+    }
+
+    @Test
+    public void varyingNumberKeepsRealPlotTitles() {
+        List<String> names = List.of(
+                "交锋 01 重逢.mp4",
+                "交锋 02 告别.mp4",
+                "交锋 03 真相.mp4"
+        );
+
+        assertEquals(List.of("01 重逢", "02 告别", "03 真相"), EpisodeTitleCompact.compactForDisplay(names));
+    }
+
+    @Test
+    public void tildeEpisodeRangesAreNotCutToTheirFirstNumber() {
+        List<String> names = List.of(
+                "01~03.mp4",
+                "04~06.mp4"
+        );
+
+        assertEquals(List.of("01~03", "04~06"), EpisodeTitleCompact.compactForDisplay(names));
+    }
+
     private List<String> loadFixture(String resource) throws Exception {
         InputStream stream = getClass().getResourceAsStream(resource);
         assertNotNull(stream);

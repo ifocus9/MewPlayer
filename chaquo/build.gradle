@@ -1,0 +1,59 @@
+plugins {
+    alias libs.plugins.android.library
+    alias libs.plugins.chaquo.python
+}
+
+android {
+    namespace = 'com.fongmi.chaquo'
+
+    compileSdk libs.versions.compileSdk.get().toInteger()
+
+    defaultConfig {
+        minSdk libs.versions.minSdk.get().toInteger()
+        targetSdk libs.versions.targetSdk.get().toInteger()
+        ndk { abiFilters "arm64-v8a", "armeabi-v7a" }
+        python {
+            version = "3.10"
+            pip {
+                install("-r", "requirements.txt")
+            }
+        }
+    }
+
+    sourceSets {
+        main {
+            python.srcDirs = ["src/main/python"]
+        }
+    }
+
+    compileOptions {
+        coreLibraryDesugaringEnabled = true
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+}
+
+// Chaquopy 插件在「配置阶段」把 proguard-rules.pro 解压到 build/python/，并登记为 consumer ProGuard 文件。
+// 同一条命令里先跑 clean（如 `gradlew clean assembleXxxRelease`）会在执行阶段把它删掉，
+// 随后 merge*ConsumerProguardFiles 就报 "Supplied consumer proguard configuration does not exist"。
+// 这里在 clean 前后保存/恢复这份文件，让 clean 和打包可以写在同一条命令里。
+tasks.named('clean') {
+    def rulesFile = layout.buildDirectory.file('python/proguard-rules.pro')
+    byte[] saved = null
+    doFirst {
+        def f = rulesFile.get().asFile
+        saved = f.isFile() ? f.bytes : null
+    }
+    doLast {
+        if (saved != null) {
+            def f = rulesFile.get().asFile
+            f.parentFile.mkdirs()
+            f.bytes = saved
+        }
+    }
+}
+
+dependencies {
+    implementation project(':catvod')
+    coreLibraryDesugaring libs.desugar
+}

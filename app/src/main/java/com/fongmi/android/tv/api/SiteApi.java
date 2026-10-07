@@ -30,13 +30,111 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+import com.fongmi.android.tv.node.NodeBundleManager;
+import com.google.gson.JsonObject;
 
 import okhttp3.Call;
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class SiteApi {
 
     public static final String PUSH = "push_agent";
+
+    /**
+     * Node.js 标准猫源站点：api = "node:" + 站点路由（如 node:/spider/kkys/3），
+     * 各操作以 POST JSON 调用 {@code http://127.0.0.1:9988<路由>/<init|home|category|detail|play|search>}。
+     */
+    public static final String NODE_PREFIX = "node:";
+    private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+    private static final Set<String> NODE_INITED = ConcurrentHashMap.newKeySet();
+
+    public static boolean isNode(@NonNull Site site) {
+        return site.getApi().startsWith(NODE_PREFIX);
+    }
+
+    /** 配置重新加载 / Node 重启后需要重新调用各站点的 /init */
+    public static void clearNodeInit() {
+        NODE_INITED.clear();
+    }
+
+    private static String nodeUrl(@NonNull Site site, @NonNull String op) {
+        String route = site.getApi().substring(NODE_PREFIX.length()).trim();
+        if (route.startsWith("http://") || route.startsWith("https://")) return trimSlash(route) + "/" + op;
+        if (!route.startsWith("/")) route = "/" + route;
+        return NodeBundleManager.baseUrl() + trimSlash(route) + "/" + op;
+    }
+
+    private static String trimSlash(String route) {
+        while (route.endsWith("/")) route = route.substring(0, route.length() - 1);
+        return route;
+    }
+
+    private static String nodePost(@NonNull Site site, @NonNull String op, @NonNull JsonObject body) throws IOException {
+        String url = nodeUrl(site, op);
+        try (Response response = OkHttp.newCall(url, site.getHeader(), RequestBody.create(body.toString(), JSON)).execute()) {
+            String text = response.body() == null ? "" : response.body().string();
+            if (!response.isSuccessful()) throw new IOException("Node " + op + " HTTP " + response.code() + " url=" + url + " body=" + text);
+            return text;
+        }
+    }
+
+    private static String nodeCall(@NonNull Site site, @NonNull String op, @NonNull JsonObject body) throws IOException {
+        String text;
+        try {
+            nodeInit(site);
+            text = nodePost(site, op, body);
+        } catch (java.net.ConnectException e) {
+            // :node 进程被系统回收：用已下载的 bundle 拉起后重试一次（重启后各站点需重新 init）
+            if (!recoverNode()) throw e;
+            clearNodeInit();
+            nodeInit(site);
+            text = nodePost(site, op, body);
+        }
+        SpiderDebug.log("node", "site=%s op=%s body=%s result=%s", site.getKey(), op, body, text);
+        return text;
+    }
+
+    private static boolean recoverNode() {
+        SpiderDebug.log("node", "node service unreachable, restarting");
+        NodeBundleManager.startIfPresent(App.get());
+        long start = System.currentTimeMillis();
+        while (System.currentTimeMillis() - start < 10000) {
+            if (NodeBundleManager.isServiceRunning()) return true;
+            try {
+                Thread.sleep(300);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return false;
+            }
+        }
+        return false;
+    }
+
+    private static void nodeInit(@NonNull Site site) {
+        if (!NODE_INITED.add(site.getKey())) return;
+        try {
+            JsonObject body = new JsonObject();
+            if (!site.getExt().isEmpty()) body.addProperty("ext", site.getExt());
+            nodePost(site, "init", body);
+        } catch (Throwable e) {
+            // init 失败不阻断后续调用（部分爬虫没有 init），下次加载配置后会重试
+            SpiderDebug.log("node", "site=%s init failed: %s", site.getKey(), e.getMessage());
+        }
+    }
+
+    private static int toPage(String page) {
+        try {
+            int value = Integer.parseInt(page.trim());
+            return value <= 0 ? 1 : value;
+        } catch (Throwable e) {
+            return 1;
+        }
+    }
 
     public static String call(@NonNull Site site, @NonNull ArrayMap<String, String> params) throws IOException {
         if (!site.getExt().isEmpty()) params.put("extend", site.getExt());
@@ -56,7 +154,13 @@ public class SiteApi {
 
     @NonNull
     public static Result homeContent(@NonNull Site site) throws Exception {
-        if (isSpider(site)) {
+        if (isNode(site)) {
+            JsonObject body = new JsonObject();
+            body.addProperty("filter", true);
+            Result result = Result.fromJson(nodeCall(site, "home", body));
+            setTypes(site, result);
+            return result;
+        } else if (isSpider(site)) {
             Spider spider = site.recent().spider();
             boolean crash = Prefers.getBoolean("crash");
             String home = crash ? "" : spider.homeContent(true);
@@ -93,7 +197,14 @@ public class SiteApi {
     public static Result categoryContent(@NonNull String key, @NonNull String tid, @NonNull String page, boolean filter, @NonNull HashMap<String, String> extend) throws Exception {
         SpiderDebug.log("category", "key=%s,tid=%s,page=%s,filter=%s,extend=%s", key, tid, page, filter, extend);
         Site site = VodConfig.get().getSite(key);
-        if (isSpider(site)) {
+        if (isNode(site)) {
+            JsonObject body = new JsonObject();
+            body.addProperty("id", tid);
+            body.addProperty("page", toPage(page));
+            body.addProperty("filter", filter);
+            body.add("filters", App.gson().toJsonTree(extend));
+            return Result.fromJson(nodeCall(site, "category", body));
+        } else if (isSpider(site)) {
             String categoryContent = site.recent().spider().categoryContent(tid, page, filter, extend);
             SpiderDebug.log("category", categoryContent);
             return Result.fromJson(categoryContent);
@@ -124,6 +235,12 @@ public class SiteApi {
             vod.setPic(ResUtil.getString(R.string.push_image));
             Source.get().parse(vod.setFlags());
             return Result.vod(vod);
+        } else if (isNode(site)) {
+            JsonObject body = new JsonObject();
+            body.addProperty("id", id);
+            Result result = Result.fromJson(nodeCall(site, "detail", body));
+            Source.get().parse(result.getVod().setFlags());
+            return result;
         } else if (isSpider(site)) {
             String detailContent = site.recent().spider().detailContent(Arrays.asList(id));
             SpiderDebug.log("detail", detailContent);
@@ -153,7 +270,18 @@ public class SiteApi {
         Source.get().stop();
         if (WebHomeInlineVodStore.KEY.equals(key)) return WebHomeInlineVodStore.player(flag, id);
         Site site = VodConfig.get().getSite(key);
-        if (site.getType() == 3) {
+        if (isNode(site)) {
+            JsonObject body = new JsonObject();
+            body.addProperty("flag", flag);
+            body.addProperty("id", id);
+            body.add("flags", App.gson().toJsonTree(VodConfig.get().getFlags()));
+            Result result = Result.fromJson(nodeCall(site, "play", body));
+            if (result.getFlag().isEmpty()) result.setFlag(flag);
+            result.setUrl(Source.get().fetch(result, playerType));
+            result.setHeader(site.getHeader());
+            result.setKey(key);
+            return result;
+        } else if (site.getType() == 3) {
             String playerContent = site.recent().spider().playerContent(flag, id, VodConfig.get().getFlags());
             SpiderDebug.log("player", playerContent);
             Result result = Result.fromJson(playerContent);
@@ -198,7 +326,15 @@ public class SiteApi {
     public static Result searchContent(@NonNull Site site, @NonNull String keyword, boolean quick, @NonNull String page) throws Exception {
         SpiderDebug.log("search", "site=%s,keyword=%s,quick=%s,page=%s", site.getName(), keyword, quick, page);
         boolean hasPage = !page.equals("1");
-        if (isSpider(site)) {
+        if (isNode(site)) {
+            JsonObject body = new JsonObject();
+            body.addProperty("wd", keyword);
+            body.addProperty("page", toPage(page));
+            body.addProperty("quick", quick);
+            Result result = Result.fromJson(nodeCall(site, "search", body));
+            for (Vod vod : result.getList()) vod.setSite(site);
+            return result;
+        } else if (isSpider(site)) {
             String searchContent = hasPage ? site.spider().searchContent(keyword, quick, page) : site.spider().searchContent(keyword, quick);
             SpiderDebug.log("search", searchContent);
             Result result = Result.fromJson(searchContent);
@@ -222,6 +358,11 @@ public class SiteApi {
     public static Result action(@NonNull String key, @NonNull String action) throws Exception {
         Site site = VodConfig.get().getSite(key);
         SpiderDebug.log("action", "key=%s,action=%s", key, action);
+        if (isNode(site)) {
+            JsonObject body = new JsonObject();
+            body.addProperty("action", action);
+            return Result.fromJson(nodeCall(site, "action", body));
+        }
         if (site.getType() == 3) return Result.fromJson(site.recent().spider().action(action));
         if (site.getType() == 4) return Result.fromJson(OkHttp.string(action));
         return Result.empty();

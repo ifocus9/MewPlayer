@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 线路 / 画质 / 选集按钮文字：颜色随日夜模式（values / values-night 中的 detail_*） -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:color="#217AF4" android:state_activated="true" />
-    <item android:color="#217AF4" android:state_checked="true" />
-    <item android:color="#217AF4" android:state_selected="true" />
-    <item android:color="#217AF4" android:state_focused="true" />
-    <item android:color="#1A1A1A" />
+    <item android:color="@color/detail_accent" android:state_activated="true" />
+    <item android:color="@color/detail_accent" android:state_checked="true" />
+    <item android:color="@color/detail_accent" android:state_selected="true" />
+    <item android:color="@color/detail_accent" android:state_focused="true" />
+    <item android:color="@color/detail_text_primary" />
 </selector>

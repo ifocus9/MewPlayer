@@ -15,7 +15,6 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.fongmi.android.tv.R;
-import com.fongmi.android.tv.bean.Site;
 import com.fongmi.android.tv.databinding.ActivityHomeBinding;
 import com.fongmi.android.tv.setting.Setting;
 import com.fongmi.android.tv.utils.ResUtil;
@@ -50,7 +49,7 @@ final class WebHomeChromeController {
     private String previousMode;
     private int safeBottomMax;
 
-    WebHomeChromeController(HomeActivity activity, ActivityHomeBinding binding, Host host, Bundle savedInstanceState, JsonObject startupChrome) {
+    WebHomeChromeController(HomeActivity activity, ActivityHomeBinding binding, Host host, Bundle savedInstanceState) {
         this.activity = activity;
         this.binding = binding;
         this.host = host;
@@ -59,10 +58,6 @@ final class WebHomeChromeController {
             this.mode = WebHomeChrome.NORMAL;
             this.previousMode = WebHomeChrome.NORMAL;
             this.options = WebHomeChromeOptions.normal();
-        } else if (savedInstanceState == null && startupChrome != null) {
-            this.options = WebHomeChromeOptions.from(startupChrome, WebHomeChrome.EDGE);
-            this.mode = WebHomeChrome.normalize(options.mode, WebHomeChrome.EDGE);
-            this.previousMode = WebHomeChrome.IMMERSIVE.equals(mode) ? WebHomeChrome.NORMAL : mode;
         } else {
             this.mode = savedInstanceState == null ? WebHomeChrome.NORMAL : WebHomeChrome.normalize(savedInstanceState.getString(STATE_MODE), WebHomeChrome.NORMAL);
             this.previousMode = savedInstanceState == null ? WebHomeChrome.NORMAL : WebHomeChrome.normalize(savedInstanceState.getString(STATE_PREVIOUS_MODE), WebHomeChrome.NORMAL);
@@ -89,14 +84,6 @@ final class WebHomeChromeController {
         outState.putString(STATE_PREVIOUS_MODE, previousMode);
     }
 
-    void applyDefault(Site site) {
-        apply(WebHomeChromeOptions.fromSite(site));
-    }
-
-    void applyDefault(JsonObject chrome) {
-        apply(WebHomeChromeOptions.from(chrome, WebHomeChrome.EDGE));
-    }
-
     void setChrome(JsonObject payload) {
         apply(WebHomeChromeOptions.from(payload, mode));
     }
@@ -116,10 +103,13 @@ final class WebHomeChromeController {
         dispatchViewport();
     }
 
+    /**
+     * 网页 Tab 处于 edge / immersive（顶部工具栏与底部胶囊被隐藏）时，返回键先回到普通模式，
+     * 不论网页是否声明 restoreAffordance=none，避免一次返回直接离开网页 Tab。
+     */
     boolean consumeBack() {
-        if (!isActive() || !isImmersive()) return false;
-        if (WebHomeChromeOptions.RESTORE_NONE.equals(options.restoreAffordance)) return false;
-        restore();
+        if (!isActive() || !WebHomeChrome.hidesNativeChrome(mode)) return false;
+        apply(WebHomeChromeOptions.normal());
         return true;
     }
 

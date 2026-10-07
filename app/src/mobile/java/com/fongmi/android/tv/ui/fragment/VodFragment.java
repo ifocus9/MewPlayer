@@ -36,11 +36,11 @@ import com.fongmi.android.tv.impl.ConfigListener;
 import com.fongmi.android.tv.impl.FilterListener;
 import com.fongmi.android.tv.impl.SiteListener;
 import com.fongmi.android.tv.model.SiteViewModel;
-import com.fongmi.android.tv.setting.Setting;
 import com.fongmi.android.tv.ui.activity.HomeActivity;
 import com.fongmi.android.tv.ui.activity.SearchActivity;
 import com.fongmi.android.tv.ui.adapter.TypeAdapter;
 import com.fongmi.android.tv.ui.base.BaseFragment;
+import com.fongmi.android.tv.ui.base.WebChromeHost;
 import com.fongmi.android.tv.ui.dialog.FilterDialog;
 import com.fongmi.android.tv.ui.dialog.HistoryDialog;
 import com.fongmi.android.tv.ui.dialog.LinkDialog;
@@ -50,11 +50,7 @@ import com.fongmi.android.tv.ui.dialog.TypeDialog;
 import com.fongmi.android.tv.utils.ImgUtil;
 import com.fongmi.android.tv.utils.Notify;
 import com.fongmi.android.tv.utils.ResUtil;
-import com.fongmi.android.tv.web.HomeWebController;
-import com.fongmi.android.tv.web.WebHomeChrome;
-import com.fongmi.android.tv.web.WebHomeChromeStartup;
 import com.fongmi.android.tv.web.WebHomeViewport;
-import com.google.gson.JsonObject;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -64,15 +60,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-public class VodFragment extends BaseFragment implements ConfigListener, SiteListener, FilterListener, TypeAdapter.OnClickListener, HomeWebController.Listener {
+public class VodFragment extends BaseFragment implements ConfigListener, SiteListener, FilterListener, TypeAdapter.OnClickListener, WebChromeHost {
+
+    private static final int NAV_CAPSULE_MARGIN_DP = 18;
+    private static final int NAV_CAPSULE_HEIGHT_DP = 56;
+    private static final int FAB_NAV_GAP_DP = 12;
 
     private FragmentVodBinding mBinding;
     private SiteViewModel mViewModel;
-    private HomeWebController mWeb;
     private TypeAdapter mAdapter;
     private Result mResult;
-    private String mChromeMode = WebHomeChrome.NORMAL;
-    private int mHomeWebTopMargin;
+    private WebHomeViewport mViewport = WebHomeViewport.EMPTY;
 
     public static VodFragment newInstance() {
         return new VodFragment();
@@ -99,9 +97,8 @@ public class VodFragment extends BaseFragment implements ConfigListener, SiteLis
     protected void initView() {
         EventBus.getDefault().register(this);
         mBinding.title.setSelected(true);
-        mHomeWebTopMargin = ((ViewGroup.MarginLayoutParams) mBinding.homeWeb.getLayoutParams()).topMargin;
         setRecyclerView();
-        setWebView();
+        syncWebHomeViewport();
         setViewModel();
         showProgress();
         setTitle();
@@ -149,21 +146,12 @@ public class VodFragment extends BaseFragment implements ConfigListener, SiteLis
         mBinding.pager.setAdapter(new PageAdapter(getChildFragmentManager()));
     }
 
-    private void setWebView() {
-        mWeb = new HomeWebController(requireActivity(), mBinding.homeWeb, this);
-        syncWebHomeChrome();
-    }
-
     private void setViewModel() {
         mViewModel = new ViewModelProvider(this).get(SiteViewModel.class);
         mViewModel.getResult().observe(getViewLifecycleOwner(), this::setAdapter);
     }
 
     private void setAdapter(Result result) {
-        if (mWeb != null && mWeb.isVisible()) {
-            hideProgress();
-            return;
-        }
         mAdapter.addAll(mResult = result);
         notifyPagerAdapter();
         setFabVisible(0);
@@ -185,14 +173,21 @@ public class VodFragment extends BaseFragment implements ConfigListener, SiteLis
         int typeWidth = mBinding.typeBar.getWidth() - mBinding.typeBar.getPaddingStart() - mBinding.typeBar.getPaddingEnd();
         boolean visible = mAdapter.getItemCount() > 0 && mBinding.type.computeHorizontalScrollRange() > typeWidth;
         mBinding.typeMore.setVisibility(visible ? View.VISIBLE : View.GONE);
+        if (visible) mBinding.typeMore.post(this::alignTypeMore);
+    }
+
+    // 让“更多分类”图标与分类文字垂直居中对齐（文字下方有指示条和 paddingBottom，不能直接按整行居中）
+    private void alignTypeMore() {
+        if (mBinding == null || mBinding.type.getChildCount() == 0 || mBinding.typeMore.getHeight() == 0) return;
+        View text = mBinding.type.getChildAt(0).findViewById(R.id.text);
+        if (text == null || text.getHeight() == 0) return;
+        View item = mBinding.type.getChildAt(0);
+        float textCenter = mBinding.type.getTop() + item.getTop() + text.getTop() + text.getHeight() / 2f;
+        float iconCenter = mBinding.typeMore.getTop() + mBinding.typeMore.getHeight() / 2f;
+        mBinding.typeMore.setTranslationY(textCenter - iconCenter);
     }
 
     private void setFabVisible(int position) {
-        if (isNativeChromeHidden()) {
-            mBinding.top.setVisibility(View.GONE);
-            mBinding.filter.setVisibility(View.GONE);
-            return;
-        }
         if (mAdapter.getItemCount() > 0 && !mAdapter.get(position).getFilters().isEmpty()) {
             mBinding.top.setVisibility(View.INVISIBLE);
             mBinding.filter.show();
@@ -318,9 +313,7 @@ public class VodFragment extends BaseFragment implements ConfigListener, SiteLis
     }
 
     private void homeContent() {
-        requestNormalChrome();
         showProgress();
-        mBinding.homeWeb.setVisibility(View.GONE);
         updateToolbarMenu();
         clearPagerTypes();
         mBinding.pager.setAdapter(new PageAdapter(getChildFragmentManager()));
@@ -329,8 +322,6 @@ public class VodFragment extends BaseFragment implements ConfigListener, SiteLis
     }
 
     private void loadHome() {
-        Site home = getHome();
-        WebHomeChromeStartup.remember(getConfig(), home);
         setTitle();
         showNativeContent();
         homeContent();
@@ -431,11 +422,6 @@ public class VodFragment extends BaseFragment implements ConfigListener, SiteLis
 
     @Override
     public boolean canBack() {
-        if (mWeb != null && mWeb.handleBack()) return false;
-        if (isNativeChromeHidden()) {
-            requestNormalChrome();
-            return false;
-        }
         if (mBinding.pager.getAdapter() == null || mBinding.pager.getAdapter().getCount() == 0) return true;
         if (!getFragment().canBack()) return true;
         getFragment().goBack();
@@ -444,166 +430,56 @@ public class VodFragment extends BaseFragment implements ConfigListener, SiteLis
 
     @Override
     public void onDestroyView() {
-        requestNormalChrome();
-        if (mWeb != null) mWeb.destroy();
         EventBus.getDefault().unregister(this);
         super.onDestroyView();
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (mWeb != null) mWeb.onResume();
-    }
-
-    @Override
-    public void onPause() {
-        if (mWeb != null) mWeb.onPause();
-        super.onPause();
-    }
-
-    @Override
-    public void onWebLoading() {
-        showProgress();
-    }
-
-    @Override
-    public void onWebReady() {
-        hideProgress();
-    }
-
-    @Override
-    public void onWebError() {
-        requestNormalChrome();
-        showNativeContent();
-        homeContent();
-    }
-
-    @Override
-    public void setToolbar(boolean visible) {
-        if (!Setting.isWebHomeFullscreen()) {
-            applyWebHomeChrome(WebHomeChrome.NORMAL);
-            return;
-        }
-        HomeActivity activity = homeActivity();
-        if (activity != null) activity.setWebHomeLegacyToolbar(visible);
-        else applyWebHomeChrome(visible ? WebHomeChrome.NORMAL : WebHomeChrome.IMMERSIVE);
-    }
-
-    @Override
-    public void applyDefaultChrome(Site site) {
-        if (!Setting.isWebHomeFullscreen()) {
-            applyWebHomeChrome(WebHomeChrome.NORMAL);
-            return;
-        }
-        HomeActivity activity = homeActivity();
-        if (activity != null) activity.applyWebHomeDefaultChrome(site);
-    }
-
-    @Override
-    public void setChrome(JsonObject payload) {
-        if (!Setting.isWebHomeFullscreen()) {
-            applyWebHomeChrome(WebHomeChrome.NORMAL);
-            return;
-        }
-        HomeActivity activity = homeActivity();
-        if (activity != null) activity.setWebHomeChrome(payload);
-    }
-
-    @Override
-    public void restoreChrome() {
-        if (!Setting.isWebHomeFullscreen()) {
-            applyWebHomeChrome(WebHomeChrome.NORMAL);
-            return;
-        }
-        HomeActivity activity = homeActivity();
-        if (activity != null) activity.restoreWebHomeChrome();
-    }
-
-    @Override
-    public WebHomeViewport getViewport() {
-        HomeActivity activity = homeActivity();
-        return activity == null ? WebHomeViewport.EMPTY : activity.getWebHomeViewport();
-    }
-
-    @Override
-    public void openVod() {
-        HomeActivity activity = homeActivity();
-        if (activity != null) activity.openVod();
-    }
-
-    @Override
-    public void openSetting() {
-        if (getActivity() instanceof HomeActivity) ((HomeActivity) getActivity()).change(1);
-    }
-
-    private void hideNativeContent() {
-        mBinding.appBar.setExpanded(true, false);
-        boolean hidden = isNativeChromeHidden();
-        mBinding.appBar.setVisibility(hidden ? View.GONE : View.VISIBLE);
-        setHomeWebTopMargin(hidden ? 0 : mHomeWebTopMargin);
-        mBinding.type.setVisibility(View.GONE);
-        mBinding.typeMore.setVisibility(View.GONE);
-        mBinding.pager.setVisibility(View.GONE);
-        mBinding.filter.setVisibility(View.GONE);
-        mBinding.top.setVisibility(View.GONE);
-        updateToolbarMenu();
-    }
-
     private void showNativeContent() {
-        requestNormalChrome();
         mBinding.type.setVisibility(View.VISIBLE);
         updateTypeMoreVisible();
         mBinding.pager.setVisibility(View.VISIBLE);
-        mBinding.homeWeb.setVisibility(View.GONE);
         updateToolbarMenu();
     }
 
+    /**
+     * 点播页不再承载网页，chrome 模式（edge / immersive）只作用于网页 Tab，这里无需处理。
+     */
+    @Override
     public void applyWebHomeChrome(String mode) {
-        mChromeMode = WebHomeChrome.normalize(mode, WebHomeChrome.NORMAL);
-        boolean hidden = isNativeChromeHidden();
-        mBinding.appBar.setExpanded(true, false);
-        mBinding.appBar.setVisibility(hidden ? View.GONE : View.VISIBLE);
-        setHomeWebTopMargin(hidden ? 0 : mHomeWebTopMargin);
-        updateToolbarMenu();
-        if (hidden) {
-            mBinding.type.setVisibility(View.GONE);
-            mBinding.typeMore.setVisibility(View.GONE);
-            mBinding.pager.setVisibility(View.GONE);
-            mBinding.filter.setVisibility(View.GONE);
-            mBinding.top.setVisibility(View.GONE);
-        }
     }
 
+    @Override
     public void applyWebHomeViewport(WebHomeViewport viewport) {
-        if (mWeb != null) mWeb.setViewport(viewport);
+        mViewport = viewport == null ? WebHomeViewport.EMPTY : viewport;
+        setFabBottomMargin();
+    }
+
+    /**
+     * 右下角 FAB 放在底部导航胶囊（HomeActivity 的 navCard）上方，避免与胶囊重叠。
+     * navCard 的底边距 = 18dp + 系统导航栏安全区（见 WebHomeChromeController.applyLayout），高度 56dp，
+     * 这里用同一份 viewport 计算，避免手势导航/三键导航、不同分辨率下错位。
+     */
+    private void setFabBottomMargin() {
+        if (mBinding == null) return;
+        int margin = ResUtil.dp2px(NAV_CAPSULE_MARGIN_DP + NAV_CAPSULE_HEIGHT_DP + FAB_NAV_GAP_DP) + mViewport.getSafeBottom();
+        setBottomMargin(mBinding.filter, margin);
+        setBottomMargin(mBinding.top, margin);
+    }
+
+    private void setBottomMargin(View view, int margin) {
+        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
+        if (params.bottomMargin == margin) return;
+        params.bottomMargin = margin;
+        view.setLayoutParams(params);
     }
 
     public void openVodHome() {
         homeContent();
     }
 
-    private void setHomeWebTopMargin(int margin) {
-        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) mBinding.homeWeb.getLayoutParams();
-        if (params.topMargin == margin) return;
-        params.topMargin = margin;
-        mBinding.homeWeb.setLayoutParams(params);
-    }
-
-    private void requestNormalChrome() {
-        HomeActivity activity = homeActivity();
-        if (activity != null) activity.setWebHomeLegacyToolbar(true);
-        else applyWebHomeChrome(WebHomeChrome.NORMAL);
-    }
-
-    private boolean isNativeChromeHidden() {
-        return WebHomeChrome.hidesNativeChrome(mChromeMode);
-    }
-
-    private void syncWebHomeChrome() {
+    private void syncWebHomeViewport() {
         HomeActivity activity = homeActivity();
         if (activity == null) return;
-        applyWebHomeChrome(activity.getWebHomeChromeMode());
         applyWebHomeViewport(activity.getWebHomeViewport());
     }
 

@@ -2,21 +2,21 @@ package com.fongmi.android.tv.web;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
 import android.text.TextUtils;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.CookieManager;
 import android.webkit.ConsoleMessage;
 import android.webkit.WebChromeClient;
-import android.webkit.WebBackForwardList;
-import android.webkit.WebHistoryItem;
 import android.webkit.RenderProcessGoneDetail;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.ValueCallback;
@@ -28,126 +28,240 @@ import androidx.webkit.WebViewFeature;
 import com.fongmi.android.tv.App;
 import com.fongmi.android.tv.R;
 import com.github.catvod.crawler.SpiderDebug;
-import com.fongmi.android.tv.api.config.VodConfig;
-import com.fongmi.android.tv.bean.Site;
 import com.fongmi.android.tv.server.Server;
 import com.fongmi.android.tv.setting.Setting;
-import com.fongmi.android.tv.utils.KeyUtil;
 import com.fongmi.android.tv.utils.Notify;
 import com.fongmi.android.tv.utils.UrlUtil;
-import com.fongmi.android.tv.utils.Util;
 import com.fongmi.android.tv.utils.WebViewUtil;
-import com.fongmi.android.tv.web.ext.WebHomeExtension;
-import com.fongmi.android.tv.web.ext.WebHomeExtensionRegistry;
+import com.fongmi.android.tv.web.page.WebPage;
 import com.google.common.net.HttpHeaders;
 import com.google.gson.JsonObject;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 public class HomeWebController {
 
     private static final String BRIDGE = "fongmiBridge";
-    private static final int SLOW_KEY_MS = 24;
-    private static final long LOAD_TIMEOUT_MS = 15000;
-    private static final long EXTENSION_RELOAD_MIN_INTERVAL_MS = 5000;
-    private static HomeWebController active;
-    private static boolean extensionReloadRequested;
 
     private final Listener listener;
     private final Activity activity;
-    private final Set<String> injectedExtensions;
-    private final Runnable extensionReloadRunnable;
     private final boolean debugTools;
+    /*
+     * 承载底部「网页」Tab 中用户自定义的网页（{@link #loadPage(WebPage, boolean)}）：
+     *   - 只有 trusted 网页才挂载 fongmiBridge / 注入 SDK，且调用方 origin 必须与网页 origin 一致；
+     *   - 返回键只要有历史就后退；
+     *   - 加载失败回调 Listener#onWebPageError(int, String)；
+     *   - 支持文件上传、HTML5 全屏视频、下载与外部 scheme 链接。
+     */
+    private volatile WebPage page;
+    private volatile String allowedOrigin = "";
+    private volatile String currentOrigin = "";
+    private boolean bridgeAttached;
     private WebView webView;
     private final float density;
-    private ScriptHandler documentStartHandler;
-    private Site site;
-    private String documentStartKey;
+    /** trusted 网页：在 document-start 注入 SDK，保证每次导航 / 刷新后页面脚本执行前 window.fongmi 就已存在 */
+    private ScriptHandler pageSdkHandler;
+    private String pageSdkOrigin = "";
+    /** PAGE 模式切换网页：pending 在 loadPage 置位，新导航 onPageStarted 时 armed，提交后 clearHistory */
+    private boolean clearHistoryPending;
+    private boolean clearHistoryArmed;
+    /** PAGE 模式：loadPage 发起的首次加载尚未提交文档，期间的服务端 3xx 跳转视为同一个可信网页 */
+    private boolean followInitialRedirect;
     private String defaultUserAgent;
     private String homePage;
     private String lastPageUrl;
-    private WebHomeRawAdapter rawAdapter;
     private WebHomeViewport viewport = WebHomeViewport.EMPTY;
     private String lastViewportKey;
     private long pauseAt;
-    private long lastKeyAt;
-    private long lastExtensionReloadAt;
     private int inlineEvaluationCount;
-    private int loadToken;
-    private int loadTimeoutRecoveries;
-    private boolean sdkReady;
     private boolean paused;
 
-    public HomeWebController(Activity activity, WebView webView, Listener listener) {
-        this(activity, webView, listener, false);
-    }
-
-    public HomeWebController(Activity activity, WebView webView, Listener listener, boolean debugTools) {
+    private HomeWebController(Activity activity, WebView webView, Listener listener, boolean debugTools) {
         this.activity = activity;
         this.webView = webView;
         this.listener = listener;
         this.debugTools = debugTools;
         this.density = activity.getResources().getDisplayMetrics().density;
-        this.injectedExtensions = new HashSet<>();
-        this.extensionReloadRunnable = this::consumeExtensionReload;
-        active = this;
         init();
     }
 
-    public static void requestExtensionReload() {
-        extensionReloadRequested = true;
-        HomeWebController controller = active;
-        if (controller != null) App.post(controller::consumeExtensionReload);
+    /**
+     * 创建用于底部「网页」Tab 的控制器。
+     */
+    public static HomeWebController forPage(Activity activity, WebView webView, Listener listener) {
+        return new HomeWebController(activity, webView, listener, false);
     }
 
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     private void init() {
         if (debugTools) WebView.setWebContentsDebuggingEnabled(true);
         WebViewUtil.configureHome(webView);
+        configurePage();
         defaultUserAgent = webView.getSettings().getUserAgentString();
-        if (Util.isLeanback()) webView.setNextFocusUpId(R.id.title);
         webView.setBackgroundColor(Color.TRANSPARENT);
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
         webView.setOnFocusChangeListener((v, hasFocus) -> SpiderDebug.log("webhome-focus", "webview focus=%s visible=%s url=%s", hasFocus, isVisible(), webView.getUrl()));
         webView.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> injectViewport());
-        webView.addJavascriptInterface(new HomeWebBridge(this, activity, webView), BRIDGE);
+        bridgeAttached = false;
+        updateBridge();
         webView.setWebViewClient(client());
         webView.setWebChromeClient(chrome());
         WebViewUtil.logProvider("webhome");
     }
 
-    public boolean load(Site site) {
-        return load(site, false);
+    private void configurePage() {
+        WebSettings settings = webView.getSettings();
+        settings.setAllowFileAccess(false);
+        settings.setAllowContentAccess(false);
+        settings.setSupportZoom(true);
+        settings.setBuiltInZoomControls(true);
+        settings.setDisplayZoomControls(false);
+        // 不支持多窗口：window.open / target=_blank 直接在当前 WebView 中打开
+        settings.setSupportMultipleWindows(false);
+        settings.setJavaScriptCanOpenWindowsAutomatically(true);
+        webView.setDownloadListener((url, userAgent, contentDisposition, mimeType, contentLength) -> onDownload(url));
     }
 
-    public boolean load(Site site, boolean force) {
-        String customHome = Setting.getWebHomePage();
-        if ((site == null || !site.hasHomePage()) && TextUtils.isEmpty(customHome)) return false;
-        if (site == null) site = Site.get("catvod_node", "WebHome");
-        if (Setting.isWebHomeFullscreen()) listener.applyDefaultChrome(site);
-        else listener.setChrome(normalChrome());
-        Server.get().start();
-        String url = getHomePage(site);
-        if (TextUtils.isEmpty(url)) return false;
+    /**
+     * 只有 trusted 网页才挂载 bridge。
+     * add/removeJavascriptInterface 在下一次页面加载时生效，因此必须在 loadUrl 之前调用。
+     */
+    @SuppressLint({"JavascriptInterface", "AddJavascriptInterface"})
+    private void updateBridge() {
+        boolean attach = page != null && page.isTrusted();
+        if (attach == bridgeAttached) return;
+        if (attach) webView.addJavascriptInterface(new HomeWebBridge(this, activity, webView), BRIDGE);
+        else webView.removeJavascriptInterface(BRIDGE);
+        bridgeAttached = attach;
+    }
 
-        if (isLocalHostUrl(url)) {
+    public WebPage getPage() {
+        return page;
+    }
+
+    /**
+     * 主线程调用：当前主文档是否允许使用原生能力。
+     */
+    public boolean isBridgeAllowed() {
+        if (page == null || !page.isTrusted() || !bridgeAttached) return false;
+        String origin = WebPage.origin(webView.getUrl());
+        return !origin.isEmpty() && origin.equals(allowedOrigin);
+    }
+
+    /**
+     * 任意线程调用（@JavascriptInterface 同步方法）：使用主线程在导航回调中缓存的 origin。
+     */
+    public boolean isBridgeAllowedCached() {
+        WebPage current = page;
+        if (current == null || !current.isTrusted()) return false;
+        String origin = currentOrigin;
+        return !origin.isEmpty() && origin.equals(allowedOrigin);
+    }
+
+    private void updateCurrentOrigin(String url) {
+        currentOrigin = WebPage.origin(url);
+    }
+
+    /**
+     * 加载用户网页。UA / 请求头来自 WebPage。
+     */
+    public boolean loadPage(WebPage target, boolean force) {
+        if (target == null || !WebPage.isHttpUrl(target.getUrl())) return false;
+        String url = UrlUtil.convert(target.getUrl());
+        if (TextUtils.isEmpty(url)) return false;
+        boolean switched = page == null || !page.getId().equals(target.getId());
+        boolean changed = switched || page.getUpdateTime() != target.getUpdateTime();
+        // 切换到另一个网页：新网页加载后清空历史，避免返回键回到上一个网页
+        // （上一个网页的 origin 不再被信任，回去后原生能力会失效，标题也对不上）
+        if (switched) {
+            clearHistoryPending = true;
+            clearHistoryArmed = false;
+        }
+        boolean reload = force || changed || !url.equals(homePage);
+        page = target;
+        // 不重新加载（如在列表里再次选中当前网页）时保留已生效的 origin：它可能已跟随首次加载的服务端跳转更新过
+        if (reload || TextUtils.isEmpty(allowedOrigin)) allowedOrigin = WebPage.origin(url);
+        // 不能清空为 ""：同一网页不重新加载时不会触发 onPageStarted，
+        // 清空后同步桥方法（resultChunk / resourceUrl 等）会一直被拒绝，表现为原生能力丢失
+        updateCurrentOrigin(webView.getUrl());
+        updateBridge();
+        registerPageSdk();
+        Server.get().start();
+        if (isLocalHostUrl(url) && !com.fongmi.android.tv.node.NodeBundleManager.isServiceRunning()) {
             com.fongmi.android.tv.node.NodeBundleManager.startIfPresent(activity);
             if (!com.fongmi.android.tv.node.NodeBundleManager.isServiceRunning()) {
-                SpiderDebug.log("webhome", "local node service is not ready yet for url=%s, waiting...", url);
+                SpiderDebug.log("webhome", "page waits local node service url=%s", url);
                 listener.onWebLoading();
                 show();
-                waitForLocalNodeAndLoad(site, url, force);
+                waitForLocalNodeAndLoad(url, () -> {
+                    if (page == target) doLoadPage(url, true);
+                });
                 return true;
             }
         }
+        return doLoadPage(url, reload);
+    }
 
-        return doLoad(site, url, force);
+    private boolean doLoadPage(String url, boolean reload) {
+        if (reload || !url.equals(homePage)) {
+            lastViewportKey = "";
+            homePage = url;
+            followInitialRedirect = true;
+            loadUrl(url);
+        }
+        show();
+        return true;
+    }
+
+    private void notifyError(int code, String description) {
+        listener.onWebPageError(code, description == null ? "" : description);
+    }
+
+    private boolean handleExternalUrl(String url) {
+        String scheme = UrlUtil.scheme(url);
+        if (scheme.isEmpty() || "http".equals(scheme) || "https".equals(scheme) || "about".equals(scheme) || "data".equals(scheme) || "blob".equals(scheme) || "javascript".equals(scheme) || "file".equals(scheme)) return false;
+        try {
+            if ("intent".equals(scheme)) {
+                Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
+                String fallback = intent.getStringExtra("browser_fallback_url");
+                // 安全：不允许网页通过 intent:// 指定组件或 selector
+                intent.addCategory(Intent.CATEGORY_BROWSABLE);
+                intent.setComponent(null);
+                intent.setSelector(null);
+                try {
+                    activity.startActivity(intent);
+                } catch (ActivityNotFoundException e) {
+                    if (!WebPage.isHttpUrl(fallback)) throw e;
+                    webView.loadUrl(fallback);
+                }
+                return true;
+            }
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            intent.addCategory(Intent.CATEGORY_BROWSABLE);
+            activity.startActivity(intent);
+        } catch (Throwable e) {
+            SpiderDebug.log("webhome-webview", "external url failed url=%s error=%s", url, e.getMessage());
+            Notify.show(R.string.web_page_no_app);
+        }
+        return true;
+    }
+
+    private void onDownload(String url) {
+        if (!WebPage.isHttpUrl(url)) {
+            Notify.show(R.string.web_page_download_unsupported);
+            return;
+        }
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            intent.addCategory(Intent.CATEGORY_BROWSABLE);
+            activity.startActivity(intent);
+        } catch (Throwable e) {
+            Notify.show(R.string.web_page_no_app);
+        }
     }
 
     private static boolean isLocalHostUrl(String url) {
@@ -155,24 +269,7 @@ public class HomeWebController {
         return url.contains("127.0.0.1:9988") || url.contains("localhost:9988");
     }
 
-    private boolean doLoad(Site site, String url, boolean force) {
-        boolean reload = force || !url.equals(homePage);
-        this.site = site;
-        rawAdapter = WebHomeRawAdapter.create(url, site.getHeader());
-        prepareExtensions(site);
-        registerDocumentStartScripts();
-        if (reload) {
-            sdkReady = false;
-            lastViewportKey = "";
-            injectedExtensions.clear();
-            homePage = url;
-            loadUrl(force ? reloadUrl(homePage) : homePage);
-        }
-        show();
-        return true;
-    }
-
-    private void waitForLocalNodeAndLoad(Site site, String url, boolean force) {
+    private void waitForLocalNodeAndLoad(String url, Runnable onReady) {
         final long start = System.currentTimeMillis();
         new Thread(() -> {
             boolean ready = false;
@@ -192,55 +289,39 @@ public class HomeWebController {
                 if (activity == null || activity.isFinishing() || activity.isDestroyed()) return;
                 if (isReady) {
                     SpiderDebug.log("webhome", "local node service is now ready, loading url=%s", url);
-                    doLoad(site, url, force);
+                    onReady.run();
                 } else {
-                    SpiderDebug.log("webhome", "local node service wait timed out, falling back to native");
-                    hide();
-                    listener.onWebError();
+                    SpiderDebug.log("webhome", "local node service wait timed out");
+                    notifyError(-6, "local node service is not ready");
                 }
             });
         }).start();
     }
 
     public void reload() {
-        if (TextUtils.isEmpty(homePage)) {
-            webView.reload();
-        } else {
-            webView.clearCache(false);
-            loadUrl(reloadUrl(homePage));
+        // 刷新当前页面（而不是回到首页）
+        String current = webView.getUrl();
+        if (isEmptyDocumentUrl(current) && !TextUtils.isEmpty(homePage)) loadUrl(homePage);
+        else webView.reload();
+    }
+
+    private void loadUrl(String rawUrl) {
+        String url = com.fongmi.android.tv.node.NodeBundleManager.localUrl(rawUrl);
+        if (!TextUtils.equals(url, rawUrl)) {
+            // 本地 Node 服务因 9988 被其它应用占用换了端口：跟随实际端口，受信任的 origin 一并迁移
+            if (WebPage.origin(rawUrl).equals(allowedOrigin)) allowedOrigin = WebPage.origin(url);
         }
-    }
-
-    public void reloadExtensions() {
-        extensionReloadRequested = true;
-        consumeExtensionReload();
-    }
-
-    private void loadUrl(String url) {
-        Map<String, String> headers = site == null ? Collections.emptyMap() : site.getHeader();
-        String userAgent = header(headers, HttpHeaders.USER_AGENT);
+        WebPage current = page;
+        Map<String, String> headers = current == null ? Collections.<String, String>emptyMap() : current.getHeaders();
+        String userAgent = current != null && !TextUtils.isEmpty(current.getUa()) ? current.getUa() : header(headers, HttpHeaders.USER_AGENT);
         if (!TextUtils.isEmpty(userAgent)) webView.getSettings().setUserAgentString(userAgent);
         else if (!TextUtils.isEmpty(defaultUserAgent)) webView.getSettings().setUserAgentString(defaultUserAgent);
         Map<String, String> requestHeaders = requestHeaders(url, headers);
         lastPageUrl = url;
-        int token = ++loadToken;
         SpiderDebug.log("webhome-webview", "load url=%s ua=%s headers=%s", url, !TextUtils.isEmpty(userAgent), requestHeaders.keySet());
+        // 不做超时重建：用户网页加载慢是常态，错误由 WebView 自身回调
         if (requestHeaders.isEmpty()) webView.loadUrl(url);
         else webView.loadUrl(url, requestHeaders);
-        webView.postDelayed(() -> handleLoadTimeout(token, url), LOAD_TIMEOUT_MS);
-    }
-
-    private void handleLoadTimeout(int token, String url) {
-        if (token != loadToken || !isVisible() || activity.isFinishing() || activity.isDestroyed()) return;
-        SpiderDebug.log("webhome-webview", "load timeout url=%s current=%s title=%s recoveries=%s", url, webView.getUrl(), webView.getTitle(), loadTimeoutRecoveries);
-        if (TextUtils.isEmpty(homePage) || loadTimeoutRecoveries++ > 0) {
-            listener.onWebError();
-            return;
-        }
-        String target = !TextUtils.isEmpty(lastPageUrl) && !isEmptyDocumentUrl(lastPageUrl) ? lastPageUrl : homePage;
-        recreateWebView();
-        listener.onWebLoading();
-        loadUrl(reloadUrl(target, true));
     }
 
     private Map<String, String> requestHeaders(String url, Map<String, String> headers) {
@@ -284,10 +365,8 @@ public class HomeWebController {
     }
 
     public void show() {
-        active = this;
         webView.setVisibility(View.VISIBLE);
         focusWebView("show");
-        consumeExtensionReload();
     }
 
     public void hide() {
@@ -301,84 +380,9 @@ public class HomeWebController {
     public boolean handleBack() {
         if (!isVisible()) return false;
         if (!webView.canGoBack()) return false;
-        String current = webView.getUrl();
-        if (samePage(current, homePage)) {
-            SpiderDebug.log("webhome-webview", "back home boundary current=%s", current);
-            return false;
-        }
-        String previous = previousHistoryUrl();
-        if (!sameSite(current, previous)) {
-            SpiderDebug.log("webhome-webview", "back boundary current=%s previous=%s", current, previous);
-            return false;
-        }
+        // 用户自由浏览：只要有历史就后退，不受「首页 / 跨域」边界限制
         webView.goBack();
         return true;
-    }
-
-    private String previousHistoryUrl() {
-        try {
-            WebBackForwardList list = webView.copyBackForwardList();
-            int index = list.getCurrentIndex() - 1;
-            WebHistoryItem item = index >= 0 ? list.getItemAtIndex(index) : null;
-            return item == null ? "" : item.getUrl();
-        } catch (Throwable e) {
-            SpiderDebug.log("webhome-webview", "back history unavailable error=%s", e.getMessage());
-            return "";
-        }
-    }
-
-    private boolean sameSite(String current, String target) {
-        if (TextUtils.isEmpty(current) || TextUtils.isEmpty(target)) return false;
-        Uri currentUri = Uri.parse(current);
-        Uri targetUri = Uri.parse(target);
-        String currentScheme = UrlUtil.scheme(currentUri);
-        String targetScheme = UrlUtil.scheme(targetUri);
-        String currentHost = UrlUtil.host(currentUri);
-        String targetHost = UrlUtil.host(targetUri);
-        if (currentHost.isEmpty() || targetHost.isEmpty()) return current.equals(target);
-        return currentScheme.equals(targetScheme) && currentHost.equals(targetHost) && port(currentUri) == port(targetUri);
-    }
-
-    private boolean samePage(String current, String target) {
-        if (!sameSite(current, target)) return false;
-        Uri currentUri = Uri.parse(current);
-        Uri targetUri = Uri.parse(target);
-        return path(currentUri).equals(path(targetUri))
-                && cleanQuery(currentUri).equals(cleanQuery(targetUri))
-                && fragment(currentUri).equals(fragment(targetUri));
-    }
-
-    private String path(Uri uri) {
-        String path = uri.getEncodedPath();
-        return TextUtils.isEmpty(path) ? "/" : path;
-    }
-
-    private String fragment(Uri uri) {
-        String fragment = uri.getEncodedFragment();
-        return fragment == null ? "" : fragment;
-    }
-
-    private String cleanQuery(Uri uri) {
-        String query = uri.getEncodedQuery();
-        if (TextUtils.isEmpty(query)) return "";
-        StringBuilder result = new StringBuilder();
-        for (String part : query.split("&")) {
-            int index = part.indexOf('=');
-            String name = index >= 0 ? part.substring(0, index) : part;
-            if ("_fm_reload".equals(name) || "_fm_restore".equals(name)) continue;
-            if (result.length() > 0) result.append('&');
-            result.append(part);
-        }
-        return result.toString();
-    }
-
-    private int port(Uri uri) {
-        int port = uri.getPort();
-        if (port >= 0) return port;
-        String scheme = UrlUtil.scheme(uri);
-        if ("http".equals(scheme)) return 80;
-        if ("https".equals(scheme)) return 443;
-        return -1;
     }
 
     public void setToolbar(boolean visible) {
@@ -436,7 +440,6 @@ public class HomeWebController {
         webView.onResume();
         webView.resumeTimers();
         recoverAfterResume();
-        consumeExtensionReload();
     }
 
     public void onPause() {
@@ -477,31 +480,10 @@ public class HomeWebController {
     }
 
     public void destroy() {
-        removeDocumentStartScripts();
-        rawAdapter = null;
+        removePageSdk();
         webView.stopLoading();
         webView.destroy();
         if (debugTools) WebView.setWebContentsDebuggingEnabled(false);
-        if (active == this) active = null;
-    }
-
-    private void consumeExtensionReload() {
-        if (!extensionReloadRequested || paused || !isVisible() || site == null || TextUtils.isEmpty(homePage)) return;
-        long now = System.currentTimeMillis();
-        long wait = EXTENSION_RELOAD_MIN_INTERVAL_MS - (now - lastExtensionReloadAt);
-        if (wait > 0) {
-            webView.removeCallbacks(extensionReloadRunnable);
-            webView.postDelayed(extensionReloadRunnable, wait);
-            return;
-        }
-        extensionReloadRequested = false;
-        lastExtensionReloadAt = now;
-        Site current = site;
-        WebHomeExtensionRegistry.get().refresh(current, () -> {
-            if (site == null || !current.getKey().equals(site.getKey())) return;
-            registerDocumentStartScripts();
-            reload();
-        });
     }
 
     private void recreateWebView() {
@@ -512,7 +494,7 @@ public class HomeWebController {
         int visibility = webView.getVisibility();
         ViewGroup.LayoutParams params = webView.getLayoutParams();
         try {
-            removeDocumentStartScripts();
+            removePageSdk();
             webView.stopLoading();
             parent.removeView(webView);
             webView.destroy();
@@ -523,7 +505,7 @@ public class HomeWebController {
         webView.setVisibility(visibility);
         parent.addView(webView, Math.max(0, index), params);
         init();
-        registerDocumentStartScripts();
+        registerPageSdk();
     }
 
     private void recoverAfterResume() {
@@ -546,10 +528,8 @@ public class HomeWebController {
         String target = !TextUtils.isEmpty(lastPageUrl) && !isEmptyDocumentUrl(lastPageUrl) ? lastPageUrl : homePage;
         SpiderDebug.log("webhome-webview", "restore reload reason=empty-url current=%s target=%s", current, target);
         listener.onWebLoading();
-        sdkReady = false;
         lastViewportKey = "";
-        injectedExtensions.clear();
-        loadUrl(reloadUrl(target, true));
+        loadUrl(target);
         return true;
     }
 
@@ -575,33 +555,6 @@ public class HomeWebController {
         }, 50);
     }
 
-    public boolean dispatchKeyEvent(KeyEvent event) {
-        if (!isVisible() || !Util.isLeanback() || !isRemoteKey(event)) return false;
-        long start = System.currentTimeMillis();
-        long gap = lastKeyAt > 0 ? start - lastKeyAt : -1;
-        lastKeyAt = start;
-        focusWebView("key");
-        boolean handled = webView.dispatchKeyEvent(event);
-        long cost = System.currentTimeMillis() - start;
-        if (cost >= SLOW_KEY_MS || (KeyUtil.isActionDown(event) && event.getRepeatCount() > 0 && cost >= 12)) {
-            SpiderDebug.log("webhome-key", "slow action=%s key=%s repeat=%s handled=%s cost=%sms gap=%sms focus=%s url=%s",
-                    event.getAction(), event.getKeyCode(), event.getRepeatCount(), handled, cost, gap, webView.hasFocus(), webView.getUrl());
-        }
-        return handled;
-    }
-
-    public boolean requestFocus(String reason) {
-        return focusWebView(reason);
-    }
-
-    private boolean isRemoteKey(KeyEvent event) {
-        return KeyUtil.isUpKey(event)
-                || KeyUtil.isDownKey(event)
-                || KeyUtil.isLeftKey(event)
-                || KeyUtil.isRightKey(event)
-                || KeyUtil.isEnterKey(event);
-    }
-
     private boolean focusWebView(String reason) {
         if (webView.hasFocus()) return true;
         boolean ok = webView.requestFocus();
@@ -621,24 +574,48 @@ public class HomeWebController {
                 super.onPageStarted(view, url, favicon);
                 SpiderDebug.log("webhome-webview", "page started url=%s", url);
                 listener.onWebRequest("PAGE", url, true);
+                updateCurrentOrigin(url);
+                if (clearHistoryPending) {
+                    clearHistoryPending = false;
+                    clearHistoryArmed = true;
+                }
                 lastPageUrl = url;
-                sdkReady = false;
                 lastViewportKey = "";
-                injectedExtensions.clear();
-                markDocumentStartInjected();
                 listener.onWebLoading();
+            }
+
+            @Override
+            public void onPageCommitVisible(WebView view, String url) {
+                super.onPageCommitVisible(view, url);
+                // 兜底：比 onPageFinished 更早（不等图片等子资源），不支持 document-start 时尽早补上 SDK
+                updateCurrentOrigin(view.getUrl());
+                if (isBridgeAllowed()) injectSdk();
             }
 
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 SpiderDebug.log("webhome-webview", "page finished url=%s title=%s", url, view.getTitle());
-                loadToken++;
-                loadTimeoutRecoveries = 0;
                 lastPageUrl = url;
-                injectSdk();
+                updateCurrentOrigin(view.getUrl());
+                if (isBridgeAllowed()) injectSdk();
+                else injectViewport();
                 focusWebView("page-finished");
                 listener.onWebReady();
+            }
+
+            @Override
+            public void doUpdateVisitedHistory(WebView view, String url, boolean isReload) {
+                super.doUpdateVisitedHistory(view, url, isReload);
+                updateCurrentOrigin(url);
+                // 首次加载的文档已提交，之后的跳转（含 JS 跳转 / 用户点击）不再自动扩展可信 origin
+                followInitialRedirect = false;
+                if (clearHistoryArmed) {
+                    // 新网页的文档已提交：丢弃切换前网页的历史
+                    clearHistoryArmed = false;
+                    view.clearHistory();
+                    SpiderDebug.log("webhome", "page switched, history cleared url=%s", url);
+                }
             }
 
             @Override
@@ -647,27 +624,24 @@ public class HomeWebController {
                 SpiderDebug.log("webhome-webview", "resource error main=%s code=%s desc=%s url=%s", request.isForMainFrame(), error.getErrorCode(), error.getDescription(), request.getUrl());
                 listener.onWebConsole("ERROR " + error.getErrorCode() + " " + error.getDescription() + " " + request.getUrl());
                 if (request.isForMainFrame()) {
-                    loadToken++;
-                    homePage = null;
-                    rawAdapter = null;
-                    CharSequence desc = error != null ? error.getDescription() : "";
-                    if (desc != null && !desc.toString().contains("ERR_CONNECTION_REFUSED")) {
-                        Notify.show(desc.toString());
-                    }
-                    listener.onWebError();
+                    // 保留 homePage，便于错误页「重试」时重新加载
+                    listener.onWebPageError(error.getErrorCode(), String.valueOf(error.getDescription()));
                 }
             }
 
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                if (!request.isForMainFrame()) return false;
+                String target = request.getUrl().toString();
+                if (handleExternalUrl(target)) return true;
+                followTrustedRedirect(request, target);
                 return false;
             }
 
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 listener.onWebRequest(request.getMethod(), request.getUrl().toString(), request.isForMainFrame(), request.getRequestHeaders());
-                WebResourceResponse raw = rawAdapter == null ? null : rawAdapter.intercept(request);
-                return raw == null ? super.shouldInterceptRequest(view, request) : raw;
+                return super.shouldInterceptRequest(view, request);
             }
 
             @Override
@@ -676,9 +650,9 @@ public class HomeWebController {
                 recreateWebView();
                 if (!TextUtils.isEmpty(homePage)) {
                     listener.onWebLoading();
-                    loadUrl(reloadUrl(homePage, true));
+                    loadUrl(homePage);
                 } else {
-                    listener.onWebError();
+                    notifyError(-1, "render process gone");
                 }
                 return true;
             }
@@ -696,72 +670,88 @@ public class HomeWebController {
                 }
                 return super.onConsoleMessage(message);
             }
+
+            @Override
+            public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
+                return listener.onShowFileChooser(callback, params);
+            }
+
+            @Override
+            public void onShowCustomView(View view, CustomViewCallback callback) {
+                listener.onShowCustomView(view, callback);
+            }
+
+            @Override
+            public void onHideCustomView() {
+                listener.onHideCustomView();
+            }
         };
     }
 
     private void injectSdk() {
         injectViewport();
-        webView.evaluateJavascript(getSdk(), value -> {
-            sdkReady = true;
-            injectExtensions(WebHomeExtension.RUN_AT_END);
-            webView.postDelayed(() -> injectExtensions(WebHomeExtension.RUN_AT_IDLE), 600);
-        });
+        webView.evaluateJavascript(getSdk(), null);
     }
 
-    private void prepareExtensions(Site site) {
-        String key = site.getKey();
-        WebHomeExtensionRegistry.get().prepare(site, () -> {
-            if (this.site == null || !key.equals(this.site.getKey())) return;
-            registerDocumentStartScripts();
-            injectExtensions(WebHomeExtension.RUN_AT_END);
-            webView.postDelayed(() -> injectExtensions(WebHomeExtension.RUN_AT_IDLE), 600);
-        });
-    }
-
-    private void registerDocumentStartScripts() {
-        removeDocumentStartScripts();
-        if (site == null || !isDocumentStartSupported()) return;
-        String script = documentStartScript();
-        if (TextUtils.isEmpty(script)) return;
+    /**
+     * trusted 网页把 SDK 注册为 document-start 脚本，仅对该网页 origin 生效。
+     * onPageFinished 在图片多 / 网络慢时会很晚才回调，页面脚本启动时检测不到 window.fongmi 就会退化为非原生模式；
+     * document-start 让每次加载（含刷新、前进后退、JS 跳转）都在页面脚本之前就具备原生能力。
+     * 不支持该特性的 WebView 仍走 onPageCommitVisible / onPageFinished 注入兜底。
+     */
+    private void registerPageSdk() {
+        WebPage current = page;
+        String origin = current != null && current.isTrusted() && bridgeAttached ? allowedOrigin : "";
+        if (pageSdkHandler != null && origin.equals(pageSdkOrigin)) return;
+        removePageSdk();
+        if (TextUtils.isEmpty(origin) || !isDocumentStartSupported()) return;
+        String rule = originRule(origin);
+        if (TextUtils.isEmpty(rule)) return;
         try {
-            documentStartHandler = WebViewCompat.addDocumentStartJavaScript(webView, script, Collections.singleton("*"));
-            documentStartKey = site.getKey();
-            SpiderDebug.log("webhome-ext", "document-start registered site=%s", documentStartKey);
+            pageSdkHandler = WebViewCompat.addDocumentStartJavaScript(webView, getSdk(), Collections.singleton(rule));
+            pageSdkOrigin = origin;
+            SpiderDebug.log("webhome", "page sdk document-start registered rule=%s", rule);
         } catch (Throwable e) {
-            documentStartHandler = null;
-            documentStartKey = "";
-            SpiderDebug.log("webhome-ext", "document-start register failed site=%s error=%s", site.getKey(), e.getMessage());
+            pageSdkHandler = null;
+            pageSdkOrigin = "";
+            SpiderDebug.log("webhome", "page sdk document-start register failed rule=%s error=%s", rule, e.getMessage());
         }
     }
 
-    private void removeDocumentStartScripts() {
+    /**
+     * trusted 网页首次加载时的服务端 3xx 跳转（如 http→https、example.com→www.example.com、/→/app/ 到另一个端口）
+     * 仍视为用户添加的那个网页：把可信 origin 更新为跳转目标，否则切换到这类网页后原生能力始终不生效。
+     * 只在首次文档提交前生效；JS 跳转、用户点击链接都不会扩展可信范围。
+     */
+    private void followTrustedRedirect(WebResourceRequest request, String target) {
+        if (!followInitialRedirect || !request.isRedirect()) return;
+        WebPage current = page;
+        if (current == null || !current.isTrusted()) return;
+        String origin = WebPage.origin(target);
+        if (origin.isEmpty() || origin.equals(allowedOrigin)) return;
+        SpiderDebug.log("webhome", "trusted page redirect origin %s -> %s", allowedOrigin, origin);
+        allowedOrigin = origin;
+        registerPageSdk();
+    }
+
+    private void removePageSdk() {
         try {
-            if (documentStartHandler != null) documentStartHandler.remove();
+            if (pageSdkHandler != null) pageSdkHandler.remove();
         } catch (Throwable e) {
-            SpiderDebug.log("webhome-ext", "document-start remove failed error=%s", e.getMessage());
+            SpiderDebug.log("webhome", "page sdk document-start remove failed error=%s", e.getMessage());
         }
-        documentStartHandler = null;
-        documentStartKey = "";
+        pageSdkHandler = null;
+        pageSdkOrigin = "";
     }
 
-    private String documentStartScript() {
-        if (site == null) return "";
-        StringBuilder script = new StringBuilder();
-        for (WebHomeExtension extension : WebHomeExtensionRegistry.get().get(site.getKey())) {
-            if (!WebHomeExtension.RUN_AT_START.equals(extension.getRunAt())) continue;
-            if (script.length() == 0) script.append(getSdk());
-            script.append('\n').append(extension.script(site.getKey()));
-        }
-        return script.toString();
-    }
-
-    private void markDocumentStartInjected() {
-        if (site == null || TextUtils.isEmpty(documentStartKey) || !documentStartKey.equals(site.getKey())) return;
-        for (WebHomeExtension extension : WebHomeExtensionRegistry.get().get(site.getKey())) {
-            if (!WebHomeExtension.RUN_AT_START.equals(extension.getRunAt())) continue;
-            injectedExtensions.add(extension.getId());
-            WebHomeExtensionRegistry.get().recordInject(extension, site.getKey(), WebHomeExtension.RUN_AT_START);
-        }
+    /**
+     * WebPage.origin 总是带端口（默认端口也补齐），document-start 的 origin 规则里去掉默认端口更稳妥。
+     */
+    private static String originRule(String origin) {
+        if (TextUtils.isEmpty(origin)) return "";
+        if (origin.startsWith("http://") && origin.endsWith(":80")) return origin.substring(0, origin.length() - 3);
+        if (origin.startsWith("https://") && origin.endsWith(":443")) return origin.substring(0, origin.length() - 4);
+        return origin;
     }
 
     private boolean isDocumentStartSupported() {
@@ -769,19 +759,6 @@ public class HomeWebController {
             return WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT);
         } catch (Throwable e) {
             return false;
-        }
-    }
-
-    private void injectExtensions(String runAt) {
-        if (!sdkReady || site == null || !isVisible()) return;
-        for (WebHomeExtension extension : WebHomeExtensionRegistry.get().get(site.getKey())) {
-            if (!extension.shouldInjectAt(runAt)) continue;
-            if (!injectedExtensions.add(extension.getId())) continue;
-            if (WebHomeExtension.RUN_AT_START.equals(extension.getRunAt())) SpiderDebug.log("webhome-ext", "document-start downgraded id=%s site=%s", extension.getId(), site.getKey());
-            SpiderDebug.log("webhome-ext", "inject id=%s runAt=%s target=%s site=%s", extension.getId(), extension.getRunAt(), runAt, site.getKey());
-            WebHomeExtensionRegistry.get().recordInject(extension, site.getKey(), runAt);
-            if (debugTools) dispatchDebugConsole("EXT", "inject id=" + extension.getId() + " runAt=" + extension.getRunAt() + " target=" + runAt);
-            webView.evaluateJavascript(extension.script(site.getKey()), null);
         }
     }
 
@@ -794,33 +771,10 @@ public class HomeWebController {
         webView.post(() -> webView.evaluateJavascript(script, null));
     }
 
-    private String reloadUrl(String url) {
-        return reloadUrl(url, false);
-    }
-
-    private String reloadUrl(String url, boolean restore) {
-        try {
-            Uri.Builder builder = Uri.parse(url).buildUpon().appendQueryParameter("_fm_reload", String.valueOf(System.currentTimeMillis()));
-            if (restore) builder.appendQueryParameter("_fm_restore", "1");
-            return builder.build().toString();
-        } catch (Throwable e) {
-            return url + (url.contains("?") ? "&" : "?") + "_fm_reload=" + System.currentTimeMillis() + (restore ? "&_fm_restore=1" : "");
-        }
-    }
-
-    private String getHomePage(Site site) {
-        String customHome = Setting.getWebHomePage();
-        if (!TextUtils.isEmpty(customHome)) return UrlUtil.convert(customHome);
-        String url = site != null ? site.getHomePage() : "";
-        if (TextUtils.isEmpty(url)) url = Setting.DEFAULT_WEB_HOME_URL;
-        if (UrlUtil.scheme(url).isEmpty()) url = UrlUtil.resolve(VodConfig.getUrl(), url);
-        return UrlUtil.convert(url);
-    }
-
     private String getSdk() {
         return String.format(Locale.ROOT, """
                 (function(){
-                  if(window.fm&&window.fongmi){window.dispatchEvent(new CustomEvent('fmsdk'));return;}
+                  if(window.fm&&window.fongmi){if(document&&document.documentElement)document.documentElement.classList.add('fm-native');window.dispatchEvent(new CustomEvent('fmsdk'));return;}
                   if(document&&document.documentElement)document.documentElement.classList.add('fm-native');
                   window.fongmiClient={mode:'%s',isLeanback:%s};
                   const callbacks={};
@@ -892,7 +846,6 @@ public class HomeWebController {
                       search:(keyword,options)=>invoke('app.search',Object.assign({},options||{},{keyword})),
                       openVod:()=>invoke('app.openVod',{}),
                       openLive:()=>invoke('app.openLive',{}),
-                      openKeep:()=>invoke('app.openKeep',{}),
                       openSetting:()=>invoke('app.openSetting',{}),
                       history:()=>invoke('app.history',{})
                     },
@@ -919,7 +872,6 @@ public class HomeWebController {
                     search:window.fongmi.app.search,
                     openVod:window.fongmi.app.openVod,
                     openLive:window.fongmi.app.openLive,
-                    openKeep:window.fongmi.app.openKeep,
                     openSetting:window.fongmi.app.openSetting,
                     history:window.fongmi.app.history,
                     pan,
@@ -1025,12 +977,29 @@ public class HomeWebController {
 
         void onWebReady();
 
-        void onWebError();
+        /**
+         * 主文档加载失败（含本地服务等待超时、渲染进程崩溃）。
+         */
+        void onWebPageError(int code, String description);
 
-        default void setToolbar(boolean visible) {
+        /**
+         * 文件上传。返回 true 表示已接管，并且之后必须调用 callback.onReceiveValue(...)。
+         */
+        default boolean onShowFileChooser(ValueCallback<Uri[]> callback, WebChromeClient.FileChooserParams params) {
+            return false;
         }
 
-        default void applyDefaultChrome(Site site) {
+        /**
+         * HTML5 全屏视频。默认不支持，立即通知网页退出全屏。
+         */
+        default void onShowCustomView(View view, WebChromeClient.CustomViewCallback callback) {
+            if (callback != null) callback.onCustomViewHidden();
+        }
+
+        default void onHideCustomView() {
+        }
+
+        default void setToolbar(boolean visible) {
         }
 
         default void setChrome(JsonObject payload) {

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 字幕/音轨/视轨/偏移弹窗背景：与全屏 LUT 快捷面板（LutQuickPanel）同色的近黑半透明底，无描边 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#E6101118" />
+
+    <corners
+        android:topLeftRadius="22dp"
+        android:topRightRadius="22dp" />
+</shape>

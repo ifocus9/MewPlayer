@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 选集网格“正在播放”标记：三根高低不等的竖条 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="14dp"
+    android:height="14dp"
+    android:viewportWidth="14"
+    android:viewportHeight="14">
+    <path
+        android:fillColor="@color/detail_accent"
+        android:pathData="M1.5,6h2.5v7h-2.5z" />
+    <path
+        android:fillColor="@color/detail_accent"
+        android:pathData="M5.75,1h2.5v12h-2.5z" />
+    <path
+        android:fillColor="@color/detail_accent"
+        android:pathData="M10,8h2.5v5h-2.5z" />
+</vector>

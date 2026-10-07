@@ -81,10 +81,7 @@
         android:gravity="center"
         android:maxLines="1"
         android:textColor="?attr/colorOnSurface"
-        app:autoSizeMaxTextSize="13.5sp"
-        app:autoSizeMinTextSize="10sp"
-        app:autoSizeStepGranularity="0.5sp"
-        app:autoSizeTextType="uniform"
+        android:textSize="13.5sp"
         tools:text="年会不能停！2" />
 
 </RelativeLayout>

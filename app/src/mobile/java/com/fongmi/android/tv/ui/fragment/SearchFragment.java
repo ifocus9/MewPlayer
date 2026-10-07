@@ -20,6 +20,7 @@ import androidx.core.view.MenuProvider;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Lifecycle;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewbinding.ViewBinding;
 
@@ -144,8 +145,10 @@ public class SearchFragment extends BaseFragment implements MenuProvider, WordAd
 
     private void setHotRecycler(RecyclerView recyclerView, HotWordAdapter adapter) {
         recyclerView.setHasFixedSize(false);
+        recyclerView.setItemAnimator(null);
         recyclerView.setAdapter(adapter);
-        recyclerView.setLayoutManager(new FlexboxLayoutManager(getContext(), FlexDirection.ROW));
+        // 榜单按两列排行展示（1 2 / 3 4 …），比自适应胶囊更疏朗、易扫读
+        recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
     }
 
     @Override

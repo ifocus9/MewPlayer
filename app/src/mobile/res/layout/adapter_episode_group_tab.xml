@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 选集分段标签（文字 + 下划线）：详情页抽屉直接使用；全屏选集面板在 EpisodeListDialog 里换成深色配色 -->
+<com.google.android.material.textview.MaterialTextView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/text"
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:layout_marginEnd="4dp"
+    android:background="@drawable/selector_episode_group_tab"
+    android:ellipsize="end"
+    android:gravity="center"
+    android:minWidth="48dp"
+    android:paddingHorizontal="10dp"
+    android:paddingBottom="4dp"
+    android:singleLine="true"
+    android:textColor="@color/selector_episode_group_tab_text"
+    android:textSize="14sp"
+    tools:text="1-20" />

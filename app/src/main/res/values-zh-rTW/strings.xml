@@ -23,10 +23,6 @@
     <string name="detail_content">簡介：<xliff:g name="name">%s</xliff:g></string>
     <string name="detail_desc">簡介</string>
 
-    <!-- Keep -->
-    <string name="keep">收藏</string>
-    <string name="keep_add">已加入收藏</string>
-    <string name="keep_del">已取消收藏</string>
     <string name="exit_confirm_title">確定退出應用？</string>
     <string name="exit_confirm_message">目前頁面將關閉；如果正在播放，會繼續留在後台。</string>
     <string name="exit_confirm_positive">確認退出</string>
@@ -138,12 +134,15 @@
     <string name="dialog_cancel">取消</string>
     <string name="dialog_confirm">確認</string>
     <string name="setting_web_home">首頁配置</string>
-    <string name="viewing_record_sync_entry_summary">%1$s · 遠端 %2$d/%3$d · Webhook %4$d/%5$d</string>
-    <string name="setting_custom_csp_permission_required">站點注入需要檔案存取權限。</string>
-    <string name="setting_custom_csp_save_failed">站點注入保存失敗：%1$s</string>
+    <string name="web_page_no_app">沒有可以開啟此連結的應用程式</string>
+    <string name="web_page_download_unsupported">不支援此類型的下載</string>
     <string name="setting_incognito">無痕模式</string>
     <string name="dialog_close">關閉</string>
     <string name="setting_doh">DoH</string>
+    <string name="setting_theme">主題</string>
+    <string name="setting_theme_system">跟隨系統</string>
+    <string name="setting_theme_light">淺色</string>
+    <string name="setting_theme_dark">深色</string>
     <string name="setting_cache">暫存</string>
     <string name="setting_backup">備份</string>
     <string name="setting_restore">還原</string>
@@ -168,9 +167,7 @@
     <string name="device_select">選擇設備</string>
     <string name="device_offline">設備已離線</string>
     <string name="cast_not_ready">播放資訊尚未就緒，請稍後重試</string>
-    <string name="sync_failed">同步失敗</string>
     <string name="history_watched_time">已看 %1$s</string>
-    <string name="sync_receive_success">已接收同步資料</string>
     <string name="apk_push_url_busy">已有 APK 連結下載工作正在進行</string>
     <string name="apk_push_url_schedule_failed">無法啟動 APK 連結下載</string>
     <string name="apk_push_url_install_ready">APK 已下載，請確認安裝</string>
@@ -457,20 +454,16 @@
 
     <!-- Hint -->
     <string name="copied">已複製</string>
-    <string name="debug_log_dialog_message">調試日誌服務已啟動。\n\n局域網地址：\n%1$s\n\n本機地址：\n%2$s\n\n電視端沒有瀏覽器也沒關係，請在同一局域網的電腦或手機瀏覽器中打開局域網地址。</string>
+    <string name="debug_log_status_ready">調試日誌服務已啟動</string>
+    <string name="debug_log_lan_url">局域網地址</string>
+    <string name="debug_log_local_url">本機地址</string>
+    <string name="debug_log_lan_hint">電視端沒有瀏覽器也沒關係，在同一局域網的電腦或手機瀏覽器中打開局域網地址即可。</string>
+    <string name="debug_log_section_category">記錄分類</string>
+    <string name="debug_log_section_diagnose">故障診斷</string>
     <string name="debug_log_open_browser">打開瀏覽器</string>
     <string name="debug_log_copy_url">複製地址</string>
     <string name="debug_log_no_browser">未找到可打開網頁的應用，請使用局域網地址訪問</string>
     <string name="debug_log_url_copied">調試日誌地址已複製</string>
-    <string name="manage_page_stop">停止頁面</string>
-    <string name="manage_page_notification_title">管理頁面運行中</string>
-    <string name="manage_page_battery_guide_vivo">vivo/iQOO：設定 → 電池 → 後台耗電管理/後台高耗電 → 找到本應用 → 改為「允許後台高耗電」。如果不能直達，請在系統設定裡搜尋「後台耗電管理」。</string>
-    <string name="manage_page_battery_guide_xiaomi">小米/Redmi/POCO：設定 → 應用設定 → 授權管理 → 自啟動管理 → 允許本應用；再到應用電池用量中選擇無限制。</string>
-    <string name="manage_page_battery_guide_oppo">OPPO/realme/一加：設定 → 應用 → 自啟動/關聯啟動 → 允許本應用；再到電池 → 應用耗電管理中允許後台運行。</string>
-    <string name="manage_page_battery_guide_huawei">華為/榮耀：手機管家或設定 → 應用啟動管理 → 找到本應用 → 關閉自動管理，並允許自啟動、關聯啟動、後台活動。</string>
-    <string name="manage_page_battery_guide_samsung">三星：設定 → 應用 → 本應用 → 電池 → 選擇不受限制；同時在電池 → 後台使用限制中不要加入休眠應用。</string>
-    <string name="manage_page_battery_guide_meizu">魅族：手機管家 → 權限管理/後台管理 → 找到本應用 → 允許後台運行；再到電量管理中把本應用設為不限制。</string>
-    <string name="manage_page_battery_guide_default">設定 → 應用 → 本應用 → 電池 → 選擇不受限制/不最佳化；如果有自啟動或後台運行選項，也請允許本應用。</string>
 
     <!-- UNIT -->
     <string name="all">全部</string>

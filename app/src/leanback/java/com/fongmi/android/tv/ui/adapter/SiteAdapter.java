@@ -13,7 +13,6 @@ import com.fongmi.android.tv.api.config.VodConfig;
 import com.fongmi.android.tv.bean.Site;
 import com.fongmi.android.tv.databinding.AdapterSiteBinding;
 import com.fongmi.android.tv.databinding.AdapterSiteSwitchBinding;
-import com.fongmi.android.tv.setting.Setting;
 import com.fongmi.android.tv.setting.SiteHealthStore;
 import com.github.catvod.crawler.SpiderDebug;
 
@@ -76,11 +75,6 @@ public class SiteAdapter extends RecyclerView.Adapter<SiteAdapter.ViewHolder> {
         long collectStart = System.currentTimeMillis();
         for (Site site : VodConfig.get().getSites()) if (!site.isHide()) allItems.add(site);
         log("collect sites cost=%sms visible=%s", cost(collectStart), allItems.size());
-        if (Setting.isSiteHealthDialogSort()) {
-            long sortStart = System.currentTimeMillis();
-            SiteHealthStore.sortSites(allItems);
-            log("health sort cost=%sms visible=%s", cost(sortStart), allItems.size());
-        }
         mItems.addAll(allItems);
     }
 

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- mobile 覆盖 main 同名资源（leanback 仍用 main 版）：
+     弹幕设置浮层背景，与全屏 LUT 快捷面板（LutQuickPanel）同色的近黑半透明底，无描边 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#E6101118" />
+
+    <corners android:radius="22dp" />
+</shape>

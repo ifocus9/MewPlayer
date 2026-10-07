@@ -14,11 +14,6 @@
         android:importantForAccessibility="no"
         android:visibility="gone" />
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@drawable/shape_dialog_control_glass_scrim" />
-
     <androidx.core.widget.NestedScrollView
         android:id="@+id/controlScroll"
         android:layout_width="match_parent"

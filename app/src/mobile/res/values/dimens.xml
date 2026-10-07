@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 首页底栏单个 Tab 宽度：4 个 Tab + 8dp 内边距，窄屏（<360dp）约 296dp -->
+    <dimen name="nav_item_width">72dp</dimen>
+</resources>

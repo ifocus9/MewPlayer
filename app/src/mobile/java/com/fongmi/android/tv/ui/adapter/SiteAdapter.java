@@ -13,7 +13,6 @@ import com.fongmi.android.tv.R;
 import com.fongmi.android.tv.api.config.VodConfig;
 import com.fongmi.android.tv.bean.Site;
 import com.fongmi.android.tv.databinding.AdapterSiteBinding;
-import com.fongmi.android.tv.setting.Setting;
 import com.fongmi.android.tv.setting.SiteHealthStore;
 import com.fongmi.android.tv.setting.SiteBlockSetting;
 import com.fongmi.android.tv.setting.SiteOrderStore;
@@ -88,7 +87,6 @@ public class SiteAdapter extends RecyclerView.Adapter<SiteAdapter.ViewHolder> {
 
     private void addAll() {
         mAllItems.addAll(SiteBlockSetting.filter(VodConfig.get().getSites(), block));
-        if (Setting.isSiteHealthDialogSort()) SiteHealthStore.sortSites(mAllItems);
         SiteOrderStore.sortSites(mAllItems);
         filter(group, keyword);
     }

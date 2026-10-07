@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 400dp 以上（含横屏 / 平板）：底栏约 360dp，居中，不再继续拉宽 -->
+    <dimen name="nav_item_width">88dp</dimen>
+</resources>

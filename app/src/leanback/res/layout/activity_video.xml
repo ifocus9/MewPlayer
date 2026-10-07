@@ -448,12 +448,6 @@
                             android:text="@string/play_cast" />
 
                         <com.google.android.material.textview.MaterialTextView
-                            android:id="@+id/audioKeepAction"
-                            style="@style/VideoActionButton"
-                            android:layout_marginEnd="4dp"
-                            android:text="@string/keep" />
-
-                        <com.google.android.material.textview.MaterialTextView
                             android:id="@+id/audioSettingAction"
                             style="@style/VideoActionButton"
                             android:layout_marginEnd="4dp"
@@ -716,24 +710,6 @@
             android:textColor="@color/white"
             android:textSize="16sp"
             app:drawableStartCompat="@drawable/ic_action_search" />
-
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/keep"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:background="@drawable/selector_video_item"
-            android:drawablePadding="6dp"
-            android:focusable="true"
-            android:focusableInTouchMode="true"
-            android:gravity="center"
-            android:nextFocusUp="@id/actor"
-            android:nextFocusDown="@id/flag"
-            android:singleLine="true"
-            android:text="@string/keep"
-            android:textColor="@color/white"
-            android:textSize="16sp"
-            app:drawableStartCompat="@drawable/ic_detail_keep_off" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/change1"

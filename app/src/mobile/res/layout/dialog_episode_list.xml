@@ -1,30 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 全屏选集面板（右侧）：配色与 LUT 调色面板（LutQuickPanel）一致——近黑半透明底、白色粗体标题、
+     半透明深灰细边胶囊 / 卡片、选中蓝底白边。
+     线路（标题 + 共N条 + 线路按钮）+ 选集头部（选集 / 全N集 / 精简 / 倒序）+ 分段标签 + 可滚动网格。
+     线路 / 分段 / 剧集按钮的布局与详情页共用，背景和文字颜色在 EpisodeListDialog 里换成本面板配色 -->
 <androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/shape_dialog_glass_panel"
-    android:clipToPadding="false"
+    android:background="@drawable/shape_episode_panel_bg"
     android:orientation="vertical"
-    android:paddingStart="14dp"
-    android:paddingTop="12dp"
-    android:paddingEnd="14dp"
-    android:paddingBottom="12dp">
+    android:padding="12dp">
 
-    <com.google.android.material.textview.MaterialTextView
-        android:layout_width="wrap_content"
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/flagHeader"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/detail_flag"
-        android:textColor="@color/white"
-        android:textSize="15sp"
-        android:textStyle="bold" />
+        android:gravity="center_vertical"
+        android:minHeight="32dp"
+        android:orientation="horizontal">
+
+        <com.google.android.material.textview.MaterialTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/detail_flag"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/flagCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:textColor="@color/selector_player_panel_tab_text"
+            android:textSize="12sp"
+            tools:text="共 2 条" />
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/flag"
         android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:layout_marginTop="6dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
         android:clipChildren="false"
         android:clipToPadding="false"
         android:orientation="horizontal"
@@ -33,38 +57,95 @@
         tools:itemCount="3"
         tools:listitem="@layout/adapter_flag" />
 
-    <com.google.android.material.textview.MaterialTextView
-        android:layout_width="wrap_content"
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/header"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:text="@string/detail_episode"
-        android:textColor="@color/white"
-        android:textSize="15sp"
-        android:textStyle="bold" />
+        android:layout_marginTop="16dp"
+        android:gravity="center_vertical"
+        android:minHeight="32dp"
+        android:orientation="horizontal">
+
+        <com.google.android.material.textview.MaterialTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/detail_episode"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:singleLine="true"
+            android:textColor="@color/selector_player_panel_tab_text"
+            android:textSize="12sp"
+            tools:text="全40集" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/compact"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
+            android:background="@drawable/selector_player_panel_group_tab"
+            android:gravity="center"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="6dp"
+            android:singleLine="true"
+            android:text="@string/detail_compact_title"
+            android:textColor="@color/selector_player_panel_action_text"
+            android:textSize="13sp" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/reverse"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
+            android:background="@drawable/selector_player_panel_group_tab"
+            android:drawablePadding="2dp"
+            android:gravity="center"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="6dp"
+            android:singleLine="true"
+            android:text="@string/play_reverse"
+            android:textColor="@color/selector_player_panel_action_text"
+            android:textSize="13sp"
+            app:drawableStartCompat="@drawable/ic_detail_reverse"
+            app:drawableTint="@color/selector_player_panel_action_text" />
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/group"
         android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:layout_marginTop="6dp"
+        android:layout_height="34dp"
+        android:layout_marginTop="10dp"
         android:clipChildren="false"
         android:clipToPadding="false"
         android:orientation="horizontal"
         android:overScrollMode="never"
+        android:visibility="gone"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         tools:itemCount="4"
-        tools:listitem="@layout/adapter_episode_group" />
+        tools:listitem="@layout/adapter_episode_group_tab"
+        tools:visibility="visible" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/episode"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="10dp"
         android:layout_weight="1"
-        android:clipChildren="false"
         android:clipToPadding="false"
         android:overScrollMode="never"
-        android:paddingBottom="8dp"
+        android:paddingBottom="4dp"
         app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
         app:spanCount="4"
         tools:itemCount="28"

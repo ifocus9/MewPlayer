@@ -20,8 +20,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/play_timer"
-            android:textColor="@color/white_70"
-            android:textSize="16sp" />
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 
@@ -111,8 +112,11 @@
             android:singleLine="true"
             android:text="@string/timer_delay"
             android:textColor="@color/white"
-            app:backgroundTint="@color/selector_dialog_glass_button_tint"
-            app:rippleColor="#33FFFFFF" />
+            app:backgroundTint="@color/selector_player_sheet_button_tint"
+            app:cornerRadius="6dp"
+            app:rippleColor="#33FFFFFF"
+            app:strokeColor="#33FFFFFF"
+            app:strokeWidth="1dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/reset"
@@ -122,8 +126,10 @@
             android:layout_marginBottom="24dp"
             android:singleLine="true"
             android:text="@string/timer_cancel"
-            android:textColor="@color/white_90"
-            app:strokeColor="#66FFFFFF" />
+            android:textColor="@color/white"
+            app:cornerRadius="6dp"
+            app:rippleColor="#33FFFFFF"
+            app:strokeColor="#33FFFFFF" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 </androidx.appcompat.widget.LinearLayoutCompat>

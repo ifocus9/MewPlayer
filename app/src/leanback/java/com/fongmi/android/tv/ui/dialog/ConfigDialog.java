@@ -104,7 +104,7 @@ public class ConfigDialog extends BaseAlertDialog {
         Config config = getConfig();
         binding.name.setText(edit ? config.getName() : "");
         url = config.getUrl();
-        if (type == 3 && TextUtils.isEmpty(url)) url = com.fongmi.android.tv.setting.Setting.DEFAULT_WEB_HOME_URL;
+        if (type == 3 && TextUtils.isEmpty(url)) url = "";
         binding.text.setText(url);
         binding.text.setSelection(TextUtils.isEmpty(url) ? 0 : url.length());
         binding.positive.setText(edit ? R.string.dialog_edit : R.string.dialog_positive);

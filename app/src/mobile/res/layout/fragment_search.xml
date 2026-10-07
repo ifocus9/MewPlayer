@@ -106,31 +106,31 @@
                 android:clipChildren="false"
                 android:clipToPadding="false"
                 android:orientation="vertical"
+                android:paddingTop="4dp"
+                android:paddingBottom="24dp"
                 android:visibility="gone"
                 tools:visibility="visible">
 
+                <!-- 三个榜单：标题 + 两列排行列表（条目见 adapter_search_hot_word），段与段之间留 20dp -->
                 <com.google.android.material.textview.MaterialTextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
                     android:layout_marginEnd="16dp"
-                    android:layout_marginBottom="8dp"
+                    android:layout_marginBottom="4dp"
                     android:text="@string/search_hot_tv"
                     android:textColor="?attr/colorOnSurface"
-                    android:textSize="18sp" />
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/hotTvRecycler"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="-8dp"
-                    android:clipChildren="false"
-                    android:clipToPadding="false"
                     android:nestedScrollingEnabled="false"
                     android:overScrollMode="never"
                     android:paddingStart="8dp"
                     android:paddingEnd="8dp"
-                    android:paddingBottom="8dp"
                     tools:itemCount="10"
                     tools:listitem="@layout/adapter_search_hot_word" />
 
@@ -138,25 +138,22 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="20dp"
                     android:layout_marginEnd="16dp"
-                    android:layout_marginBottom="8dp"
+                    android:layout_marginBottom="4dp"
                     android:text="@string/search_hot_movie"
                     android:textColor="?attr/colorOnSurface"
-                    android:textSize="18sp" />
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/hotMovieRecycler"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="-8dp"
-                    android:clipChildren="false"
-                    android:clipToPadding="false"
                     android:nestedScrollingEnabled="false"
                     android:overScrollMode="never"
                     android:paddingStart="8dp"
                     android:paddingEnd="8dp"
-                    android:paddingBottom="8dp"
                     tools:itemCount="10"
                     tools:listitem="@layout/adapter_search_hot_word" />
 
@@ -164,25 +161,22 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="20dp"
                     android:layout_marginEnd="16dp"
-                    android:layout_marginBottom="8dp"
+                    android:layout_marginBottom="4dp"
                     android:text="@string/search_hot_variety"
                     android:textColor="?attr/colorOnSurface"
-                    android:textSize="18sp" />
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/hotVarietyRecycler"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="-8dp"
-                    android:clipChildren="false"
-                    android:clipToPadding="false"
                     android:nestedScrollingEnabled="false"
                     android:overScrollMode="never"
                     android:paddingStart="8dp"
                     android:paddingEnd="8dp"
-                    android:paddingBottom="8dp"
                     tools:itemCount="10"
                     tools:listitem="@layout/adapter_search_hot_word" />
 

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 全屏选集面板按钮文字（含“正在播放”图标着色）：深色面板上固定用浅色，选中为浅青色 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="#FFA8EEFF" android:state_activated="true" />
+    <item android:color="#FFA8EEFF" android:state_checked="true" />
+    <item android:color="#FFA8EEFF" android:state_selected="true" />
+    <item android:color="#FFFFFFFF" android:state_focused="true" />
+    <item android:color="#E6FFFFFF" />
+</selector>

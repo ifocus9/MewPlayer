@@ -38,7 +38,6 @@ import com.fongmi.android.tv.player.exo.PlaybackAnalyticsListener;
 import com.fongmi.android.tv.setting.PlaybackPerformanceSetting;
 import com.fongmi.android.tv.setting.PlayerSetting;
 import com.fongmi.android.tv.setting.PreloadSetting;
-import com.fongmi.android.tv.setting.Setting;
 import com.fongmi.android.tv.utils.Util;
 
 import java.text.DecimalFormat;
@@ -929,7 +928,7 @@ public class PlayerOsdController {
     }
 
     private String getNetworkEnvironmentText() {
-        return join(" / ", getActiveNetworkText(), getSystemProxyText(), getAppProxyText());
+        return join(" / ", getActiveNetworkText(), getSystemProxyText());
     }
 
     private String getActiveNetworkText() {
@@ -954,12 +953,6 @@ public class PlayerOsdController {
         String host = System.getProperty("http.proxyHost");
         String port = System.getProperty("http.proxyPort");
         return TextUtils.isEmpty(host) ? "system proxy 关" : "system proxy " + host + (TextUtils.isEmpty(port) ? "" : ":" + port);
-    }
-
-    private String getAppProxyText() {
-        if (!Setting.isShellProxy()) return "app proxy 关";
-        String url = Setting.getShellProxyUrl();
-        return "app proxy 开" + (TextUtils.isEmpty(url) ? "" : " " + shortText(url, 36));
     }
 
     private String getHevcDecoderText() {

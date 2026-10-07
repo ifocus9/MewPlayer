@@ -7,6 +7,27 @@
     <string name="nav_vod">發現</string>
     <string name="nav_keep">追劇</string>
     <string name="nav_setting">設定</string>
+    <string name="nav_web">網頁</string>
+
+    <!-- Web Tab -->
+    <string name="web_page_empty">還沒有新增網頁</string>
+    <string name="web_page_add">新增網頁</string>
+    <string name="web_page_edit">編輯網頁</string>
+    <string name="web_page_list">網頁列表</string>
+    <string name="web_page_name">名稱</string>
+    <string name="web_page_url">網址（http/https）</string>
+    <string name="web_page_trusted">允許原生能力（window.fongmi）</string>
+    <string name="web_page_trusted_hint">僅對信任的網頁開啟：頁面將可發起原生網路請求、讀取設定資訊、啟動播放器。</string>
+    <string name="web_page_url_invalid">請輸入以 http:// 或 https:// 開頭的網址</string>
+    <string name="web_page_error">網頁載入失敗</string>
+    <string name="web_page_retry">重試</string>
+    <string name="web_page_fullscreen">全螢幕</string>
+    <string name="web_page_refresh">重新整理</string>
+    <string name="web_page_set_default">設為預設</string>
+    <string name="web_page_default">預設</string>
+    <string name="web_page_move_up">上移</string>
+    <string name="web_page_move_down">下移</string>
+    <string name="web_page_delete_confirm">刪除「%s」？</string>
 
     <!-- Menu -->
     <string name="menu_delete">刪除</string>
@@ -21,7 +42,13 @@
     <string name="detail_flag">線路</string>
     <string name="detail_episode">選集</string>
     <string name="detail_quality">畫質</string>
+    <string name="detail_flag_count">共 <xliff:g name="count">%d</xliff:g> 條</string>
+    <string name="detail_episode_count">全<xliff:g name="count">%d</xliff:g>集</string>
+    <string name="detail_compact_title">精簡</string>
+    <string name="detail_episode_more">更多</string>
+    <string name="detail_content_more">展開</string>
     <string name="detail_content">簡介</string>
+    <string name="detail_poster">海報</string>
     <string name="detail_search">快搜「<xliff:g name="name">%s</xliff:g>」</string>
 
     <!-- Device -->

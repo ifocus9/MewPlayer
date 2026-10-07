@@ -1,5 +1,6 @@
 package com.fongmi.android.tv.ui.fragment;
 
+import android.os.Build;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -67,6 +68,11 @@ public class SettingFragment extends BaseFragment implements ConfigListener, Sit
         return list.toArray(new String[0]);
     }
 
+    /** 顺序与 Setting.THEME_FOLLOW_SYSTEM / THEME_LIGHT / THEME_DARK 一致 */
+    private String[] getThemeList() {
+        return new String[]{getString(R.string.setting_theme_system), getString(R.string.setting_theme_light), getString(R.string.setting_theme_dark)};
+    }
+
     private HomeActivity getRoot() {
         return (HomeActivity) requireActivity();
     }
@@ -81,11 +87,16 @@ public class SettingFragment extends BaseFragment implements ConfigListener, Sit
         EventBus.getDefault().register(this);
         mBinding.vodUrl.setText(VodConfig.getDesc());
         mBinding.versionText.setText(AppVersion.fullName());
+        // 深色靠系统强制深色实现，Android 10 以下没有该能力，不提供主题选项
+        boolean themeSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;
+        mBinding.theme.setVisibility(themeSupported ? View.VISIBLE : View.GONE);
+        mBinding.themeDivider.setVisibility(themeSupported ? View.VISIBLE : View.GONE);
         setOtherText();
         setCacheText();
     }
 
     private void setOtherText() {
+        mBinding.themeText.setText(getThemeList()[Setting.getTheme()]);
         mBinding.dohText.setText(getDohList()[getDohIndex()]);
         mBinding.incognitoText.setText(getSwitch(Setting.isIncognito()));
         mBinding.debugLogText.setText(getSwitch(Setting.isDebugLog()));
@@ -104,6 +115,7 @@ public class SettingFragment extends BaseFragment implements ConfigListener, Sit
     protected void initEvent() {
         mBinding.vod.setOnClickListener(this::onVod);
         mBinding.doh.setOnClickListener(this::setDoh);
+        mBinding.theme.setOnClickListener(this::setTheme);
         mBinding.cache.setOnClickListener(this::onCache);
         mBinding.backup.setOnClickListener(this::onBackup);
         mBinding.debugLog.setOnClickListener(this::setDebugLog);
@@ -201,8 +213,17 @@ public class SettingFragment extends BaseFragment implements ConfigListener, Sit
         mBinding.incognitoText.setText(getSwitch(Setting.isIncognito()));
     }
 
+    private void setTheme(View view) {
+        ChoiceDialog.showSingleNoCancel(this, R.string.setting_theme, getThemeList(), Setting.getTheme(), which -> {
+            if (which == Setting.getTheme()) return;
+            mBinding.themeText.setText(getThemeList()[which]);
+            // 深浅实际变化时 AppCompat 会重建所有 Activity；与当前外观相同（如跟随系统→浅色且系统为浅色）则不重建
+            Setting.putTheme(which);
+        });
+    }
+
     private void setDoh(View view) {
-        ChoiceDialog.showSingle(this, R.string.setting_doh, getDohList(), getDohIndex(), which -> {
+        ChoiceDialog.showSingleNoCancel(this, R.string.setting_doh, getDohList(), getDohIndex(), which -> {
             setDoh(VodConfig.get().getDoh().get(which));
         });
     }

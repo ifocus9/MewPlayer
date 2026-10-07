@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 字幕/音轨/视轨列表项文字：与全屏 LUT 快捷面板（LutQuickPanel）一致，统一纯白 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:alpha="0.45" android:color="@color/white" android:state_enabled="false" />
+    <item android:color="@color/white" />
+</selector>

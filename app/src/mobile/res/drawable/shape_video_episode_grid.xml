@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 选集网格按钮：默认浅灰填充；选中（当前集）浅蓝底，不再加描边，靠底色 + 蓝字 + 加粗 + 播放图标区分 -->
 <ripple xmlns:android="http://schemas.android.com/apk/res/android"
     android:color="?attr/colorControlHighlight">
     <item>
@@ -6,31 +7,25 @@
             <item android:state_activated="true">
                 <shape android:shape="rectangle">
                     <corners android:radius="8dp" />
-                    <solid android:color="#E3F2FD" />
-                    <stroke
-                        android:width="1dp"
-                        android:color="#217AF4" />
+                    <solid android:color="@color/detail_chip_selected" />
                 </shape>
             </item>
             <item android:state_selected="true">
                 <shape android:shape="rectangle">
                     <corners android:radius="8dp" />
-                    <solid android:color="#E3F2FD" />
-                    <stroke
-                        android:width="1dp"
-                        android:color="#217AF4" />
+                    <solid android:color="@color/detail_chip_selected" />
                 </shape>
             </item>
             <item android:state_focused="true">
                 <shape android:shape="rectangle">
                     <corners android:radius="8dp" />
-                    <solid android:color="#F0F2F5" />
+                    <solid android:color="@color/detail_chip_focused" />
                 </shape>
             </item>
             <item>
                 <shape android:shape="rectangle">
                     <corners android:radius="8dp" />
-                    <solid android:color="@color/white" />
+                    <solid android:color="@color/detail_chip" />
                 </shape>
             </item>
         </selector>

@@ -22,8 +22,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/dialog_select_title"
-            android:textColor="@color/white_70"
-            android:textSize="16sp" />
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 

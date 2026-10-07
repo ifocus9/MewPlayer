@@ -3,55 +3,37 @@ package com.fongmi.android.tv.server.process;
 import android.text.TextUtils;
 
 import com.fongmi.android.tv.App;
-import com.fongmi.android.tv.Constant;
 import com.fongmi.android.tv.R;
-import com.fongmi.android.tv.api.config.VodConfig;
-import com.fongmi.android.tv.bean.Backup;
 import com.fongmi.android.tv.bean.Config;
 import com.fongmi.android.tv.bean.Device;
 import com.fongmi.android.tv.bean.History;
-import com.fongmi.android.tv.bean.Keep;
-import com.fongmi.android.tv.bean.SyncOptions;
 import com.fongmi.android.tv.bean.Vod;
 import com.fongmi.android.tv.event.CastEvent;
 import com.fongmi.android.tv.event.RefreshEvent;
 import com.fongmi.android.tv.event.ServerEvent;
-import com.fongmi.android.tv.impl.Callback;
 import com.fongmi.android.tv.server.Nano;
 import com.fongmi.android.tv.server.Server;
 import com.fongmi.android.tv.server.impl.Process;
 import com.fongmi.android.tv.service.PlaybackService;
 import com.fongmi.android.tv.utils.FileUtil;
-import com.fongmi.android.tv.utils.LoginStateSync;
-import com.fongmi.android.tv.utils.MpvConfigSync;
 import com.fongmi.android.tv.utils.Notify;
-import com.fongmi.android.tv.utils.ProgressRequestBody;
 import com.fongmi.android.tv.utils.ResUtil;
-import com.fongmi.android.tv.utils.SyncFiles;
 import com.fongmi.android.tv.utils.Task;
-import com.github.catvod.net.OkHttp;
 import com.github.catvod.crawler.SpiderDebug;
 import com.github.catvod.utils.Path;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.security.MessageDigest;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import fi.iki.elonen.NanoHTTPD.IHTTPSession;
 import fi.iki.elonen.NanoHTTPD.Response;
-import okhttp3.FormBody;
-import okhttp3.MediaType;
-import okhttp3.MultipartBody;
-import okhttp3.RequestBody;
 
 public class Action implements Process {
 
-    private static final MediaType ZIP = MediaType.parse("application/zip");
     private static final String APK_PART = "apk";
 
     @Override
@@ -81,7 +63,6 @@ public class Action implements Process {
                 onCast(params);
                 yield Nano.ok();
             }
-            case "sync" -> onSync(params, files);
             case "apk" -> onApk(params, files);
             case "apk_url" -> onApkUrl(params);
             case "search" -> {
@@ -181,30 +162,6 @@ public class Action implements Process {
         CastEvent.post(Config.find(config), device, history);
     }
 
-    private Response onSync(Map<String, String> params, Map<String, String> files) {
-        try {
-            String type = params.get("type");
-            boolean force = Objects.equals(params.get("force"), "true");
-            String mode = Objects.requireNonNullElse(params.get("mode"), "0");
-            boolean success = true;
-            if (params.get("device") != null && (mode.equals("0") || mode.equals("2"))) {
-                Device device = Device.objectFrom(params.get("device"));
-                if ("history".equals(type)) success = sendHistory(device, params);
-                else if ("keep".equals(type)) success = sendKeep(device);
-                else if ("backup".equals(type)) success = sendBackup(device, params);
-            }
-            if (mode.equals("0") || mode.equals("1")) {
-                if ("history".equals(type)) syncHistory(params, force);
-                else if ("keep".equals(type)) syncKeep(params, force);
-                else if ("backup".equals(type)) syncBackup(params, files, force);
-            }
-            return success ? Nano.ok() : Nano.error(ResUtil.getString(R.string.sync_failed));
-        } catch (Exception e) {
-            SpiderDebug.log("sync", e);
-            return Nano.error(Notify.getError(R.string.sync_failed, e));
-        }
-    }
-
     private Response onApk(Map<String, String> params, Map<String, String> files) {
         File target = null;
         try {
@@ -282,176 +239,5 @@ public class Action implements Process {
         StringBuilder result = new StringBuilder();
         for (byte value : digest.digest()) result.append(String.format(Locale.ROOT, "%02x", value));
         return result.toString();
-    }
-
-    private boolean post(Device device, String type, FormBody.Builder body) {
-        return post(device, type, body.build());
-    }
-
-    private boolean post(Device device, String type, RequestBody body) {
-        try {
-            try (okhttp3.Response response = OkHttp.newCall(OkHttp.client(Constant.TIMEOUT_SYNC_TRANSFER), device.getIp().concat("/action?do=sync&mode=0&type=" + type), body).execute()) {
-                if (response.isSuccessful()) return true;
-                throw new IllegalStateException(response.message());
-            }
-        } catch (Exception e) {
-            App.post(() -> Notify.show(e.getMessage()));
-            return false;
-        }
-    }
-
-    private boolean sendHistory(Device device, Map<String, String> params) {
-        try {
-            Config config = Config.find(Config.objectFrom(params.get("config")));
-            if (config.getUrl() == null) config = Config.vod();
-            FormBody.Builder body = new FormBody.Builder();
-            body.add("config", config.toString());
-            body.add("targets", App.gson().toJson(History.get(config.getId())));
-            return post(device, "history", body);
-        } catch (Exception e) {
-            App.post(() -> Notify.show(e.getMessage()));
-            return false;
-        }
-    }
-
-    private boolean sendKeep(Device device) {
-        try {
-            FormBody.Builder body = new FormBody.Builder();
-            body.add("targets", App.gson().toJson(Keep.getVod()));
-            body.add("configs", App.gson().toJson(Config.findUrls()));
-            return post(device, "keep", body);
-        } catch (Exception e) {
-            App.post(() -> Notify.show(e.getMessage()));
-            return false;
-        }
-    }
-
-    private boolean sendBackup(Device device, Map<String, String> params) {
-        try {
-            SyncOptions options = SyncOptions.objectFrom(params.get("options"));
-            SyncFiles.Archive archive = SyncFiles.hasPaths(options) ? SyncFiles.createArchive(SyncFiles.getPaths(options)) : null;
-            MpvConfigSync.Archive mpvArchive = options.isMpvConfig() ? MpvConfigSync.createArchive() : null;
-            LoginStateSync.Archive loginArchive = options.isLoginState() ? LoginStateSync.createArchive() : null;
-            try {
-                return post(device, "backup", getBackupBody(options, archive, mpvArchive, loginArchive));
-            } finally {
-                if (archive != null) archive.delete();
-                if (mpvArchive != null) mpvArchive.delete();
-                if (loginArchive != null) loginArchive.delete();
-            }
-        } catch (Exception e) {
-            App.post(() -> Notify.show(e.getMessage()));
-            return false;
-        }
-    }
-
-    private RequestBody getBackupBody(SyncOptions options, SyncFiles.Archive archive, MpvConfigSync.Archive mpvArchive, LoginStateSync.Archive loginArchive) {
-        if (archive == null && mpvArchive == null && loginArchive == null) {
-            FormBody.Builder body = new FormBody.Builder();
-            body.add("options", options.toString());
-            body.add("backup", Backup.create(options).toString());
-            return body.build();
-        }
-        MultipartBody.Builder body = new MultipartBody.Builder().setType(MultipartBody.FORM);
-        body.addFormDataPart("options", options.toString());
-        body.addFormDataPart("backup", Backup.create(options).toString());
-        if (archive != null) body.addFormDataPart(SyncFiles.PART_NAME, archive.getFile().getName(), new ProgressRequestBody(archive.getFile(), ZIP, null));
-        if (mpvArchive != null) body.addFormDataPart(MpvConfigSync.PART_NAME, mpvArchive.getFile().getName(), new ProgressRequestBody(mpvArchive.getFile(), ZIP, null));
-        if (loginArchive != null) body.addFormDataPart(LoginStateSync.PART_NAME, loginArchive.getFile().getName(), new ProgressRequestBody(loginArchive.getFile(), ZIP, null));
-        return body.build();
-    }
-
-    private void syncBackup(Map<String, String> params, Map<String, String> files, boolean force) {
-        Backup backup = Backup.objectFrom(params.get("backup"));
-        SyncOptions options = SyncOptions.objectFrom(params.get("options"));
-        if (SyncFiles.hasPaths(options) && files.containsKey(SyncFiles.PART_NAME)) {
-            File archive = new File(files.get(SyncFiles.PART_NAME));
-            try {
-                SyncFiles.restoreArchive(archive);
-            } catch (Exception e) {
-                throw new IllegalStateException(e);
-            } finally {
-                Path.clear(archive);
-            }
-        }
-        if (options.isMpvConfig() && files.containsKey(MpvConfigSync.PART_NAME)) {
-            File archive = new File(files.get(MpvConfigSync.PART_NAME));
-            try {
-                MpvConfigSync.restoreArchive(archive);
-            } catch (Exception e) {
-                throw new IllegalStateException(e);
-            } finally {
-                Path.clear(archive);
-            }
-        }
-        if (options.isLoginState() && files.containsKey(LoginStateSync.PART_NAME)) {
-            File archive = new File(files.get(LoginStateSync.PART_NAME));
-            try {
-                LoginStateSync.restoreArchive(archive);
-            } catch (Exception e) {
-                throw new IllegalStateException(e);
-            } finally {
-                Path.clear(archive);
-            }
-        }
-        backup.restore(options, force);
-        App.post(() -> Notify.show(R.string.sync_receive_success));
-    }
-
-    public void syncHistory(Map<String, String> params, boolean force) {
-        Config config = Config.find(Config.objectFrom(params.get("config")));
-        List<History> targets = History.arrayFrom(params.get("targets"));
-        if (config.getUrl() == null) return;
-        if (config.getUrl().equals(VodConfig.getUrl())) {
-            if (force) History.delete(config.getId());
-            History.sync(targets);
-            RefreshEvent.history();
-        } else {
-            VodConfig.load(config, getCallback(targets, force, config.getId()));
-        }
-    }
-
-    private Callback getCallback(List<History> targets, boolean force, int cid) {
-        return new Callback() {
-            @Override
-            public void success() {
-                if (force) History.delete(cid);
-                History.sync(targets);
-                RefreshEvent.history();
-            }
-
-            @Override
-            public void error(String msg) {
-                Notify.show(msg);
-            }
-        };
-    }
-
-    private void syncKeep(Map<String, String> params, boolean force) {
-        List<Keep> targets = Keep.arrayFrom(params.get("targets"));
-        List<Config> configs = Config.arrayFrom(params.get("configs"));
-        if (TextUtils.isEmpty(VodConfig.getUrl()) && !configs.isEmpty()) {
-            VodConfig.load(Config.find(configs.get(0)), getCallback(configs, targets, force));
-        } else {
-            if (force) Keep.deleteAll();
-            Keep.sync(configs, targets);
-            RefreshEvent.keep();
-        }
-    }
-
-    private Callback getCallback(List<Config> configs, List<Keep> targets, boolean force) {
-        return new Callback() {
-            @Override
-            public void success() {
-                if (force) Keep.deleteAll();
-                Keep.sync(configs, targets);
-                RefreshEvent.keep();
-            }
-
-            @Override
-            public void error(String msg) {
-                Notify.show(msg);
-            }
-        };
     }
 }

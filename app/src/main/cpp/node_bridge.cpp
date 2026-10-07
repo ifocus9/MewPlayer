@@ -1,4 +1,5 @@
 #include <jni.h>
+#include <cstring>
 #include <string>
 #include <vector>
 #include <unistd.h>
@@ -63,8 +64,17 @@ Java_com_fongmi_android_tv_node_NodeRunner_startNodeWithArguments(
         }
     }
 
+    // libuv 的 uv_setup_args / process.title 假定 argv 字符串在内存中连续（与 nodejs-mobile 一致），
+    // 分散的 std::string 缓冲会让 process.title 写越界，这里打包成一块连续内存。
+    size_t total = 0;
+    for (const auto &s : arg_strings) total += s.size() + 1;
+    std::vector<char> arg_buffer(total > 0 ? total : 1);
+    char *cursor = arg_buffer.data();
     for (size_t i = 0; i < arg_strings.size(); i++) {
-        argv[i] = const_cast<char*>(arg_strings[i].c_str());
+        size_t len = arg_strings[i].size() + 1;
+        memcpy(cursor, arg_strings[i].c_str(), len);
+        argv[i] = cursor;
+        cursor += len;
     }
     argv[argc] = nullptr;
 

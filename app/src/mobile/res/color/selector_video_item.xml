@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 线路 / 画质 / 横向选集按钮底色：默认浅灰填充，选中浅蓝，在白色页面上边界清晰 -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:color="#E3F2FD" android:state_activated="true" />
-    <item android:color="#E3F2FD" android:state_checked="true" />
-    <item android:color="#E3F2FD" android:state_selected="true" />
-    <item android:color="#F0F2F5" android:state_focused="true" />
-    <item android:color="@color/white" />
+    <item android:color="@color/detail_chip_selected" android:state_activated="true" />
+    <item android:color="@color/detail_chip_selected" android:state_checked="true" />
+    <item android:color="@color/detail_chip_selected" android:state_selected="true" />
+    <item android:color="@color/detail_chip_focused" android:state_focused="true" />
+    <item android:color="@color/detail_chip" />
 </selector>

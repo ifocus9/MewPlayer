@@ -52,13 +52,6 @@
         </com.fongmi.android.tv.ui.custom.ProgressLayout>
     </androidx.appcompat.widget.LinearLayoutCompat>
 
-    <FrameLayout
-        android:id="@+id/webOverlay"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone"
-        tools:visibility="gone" />
-
     <androidx.appcompat.widget.LinearLayoutCompat
         android:id="@+id/toolbar"
         android:layout_width="match_parent"

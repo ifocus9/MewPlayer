@@ -10,18 +10,16 @@ import com.fongmi.android.tv.setting.Setting;
 import com.fongmi.android.tv.api.SiteApi;
 import com.fongmi.android.tv.api.config.VodConfig;
 import com.fongmi.android.tv.bean.History;
-import com.fongmi.android.tv.bean.Site;
 import com.fongmi.android.tv.bean.drive.DriveCheckRequest;
 import com.fongmi.android.tv.server.Server;
 import com.fongmi.android.tv.service.DriveCheckService;
 import com.fongmi.android.tv.service.PlaybackService;
-import com.fongmi.android.tv.ui.activity.KeepActivity;
 import com.fongmi.android.tv.ui.activity.SearchActivity;
 import com.fongmi.android.tv.ui.activity.VideoActivity;
 import com.fongmi.android.tv.utils.ImgUtil;
 import com.fongmi.android.tv.utils.Notify;
 import com.fongmi.android.tv.utils.Task;
-import com.fongmi.android.tv.web.ext.WebHomeExtensionRegistry;
+import com.fongmi.android.tv.web.page.WebPage;
 import com.github.catvod.crawler.SpiderDebug;
 import com.github.catvod.utils.Json;
 import com.github.catvod.utils.Prefers;
@@ -58,21 +56,36 @@ public class HomeWebBridge {
 
     @JavascriptInterface
     public void invoke(String requestId, String method, String payload) {
-        Task.execute(() -> handle(requestId, method, WebCall.object(payload)));
+        // 回到主线程用 webView.getUrl() 校验当前主文档 origin，跳转到其它域的页面一律拒绝
+        App.post(() -> {
+            if (!controller.isBridgeAllowed()) {
+                SpiderDebug.log("webhome", "invoke rejected method=%s url=%s", method, webView.getUrl());
+                reject(requestId, "forbidden origin");
+                return;
+            }
+            Task.execute(() -> handle(requestId, method, WebCall.object(payload)));
+        });
     }
 
     @JavascriptInterface
     public void console(String level, String message) {
+        if (!controller.isBridgeAllowedCached()) return;
         controller.dispatchDebugConsole(level, message);
     }
 
     @JavascriptInterface
     public void network(String type, String method, String url, int status, long durationMs, String detail) {
+        if (!controller.isBridgeAllowedCached()) return;
         controller.dispatchDebugNetwork(type, method, url, status, durationMs, detail);
     }
 
     @JavascriptInterface
     public String resourceUrl(String url, String options) {
+        if (!controller.isBridgeAllowedCached()) return "";
+        return buildResourceUrl(url, options);
+    }
+
+    private String buildResourceUrl(String url, String options) {
         JsonObject object = WebCall.object(options);
         StringBuilder builder = new StringBuilder(Server.get().getAddress("/webResource?url=")).append(encode(url));
         if (object.has("headers")) builder.append("&headers=").append(encode(object.get("headers").toString()));
@@ -82,12 +95,14 @@ public class HomeWebBridge {
 
     @JavascriptInterface
     public int resultLength(String id) {
+        if (!controller.isBridgeAllowedCached()) return 0;
         String result = results.get(id);
         return result == null ? 0 : result.length();
     }
 
     @JavascriptInterface
     public String resultChunk(String id, int start) {
+        if (!controller.isBridgeAllowedCached()) return "";
         String result = results.get(id);
         if (result == null || start < 0 || start >= result.length()) return "";
         return result.substring(start, Math.min(start + CHUNK_SIZE, result.length()));
@@ -100,6 +115,7 @@ public class HomeWebBridge {
 
     @JavascriptInterface
     public void inlineResult(String id, String payload) {
+        if (!controller.isBridgeAllowedCached()) return;
         CompletableFuture<String> future = inlineResults.remove(id);
         if (future != null) future.complete(payload);
     }
@@ -109,7 +125,7 @@ public class HomeWebBridge {
             SpiderDebug.log("webhome", "invoke method=%s payload=%s", method, payload);
             String result = switch (method) {
                 case "net.request" -> WebCall.request(payload, controller);
-                case "net.resourceUrl" -> quote(resourceUrl(Json.safeString(payload, "url"), payload.toString()));
+                case "net.resourceUrl" -> quote(buildResourceUrl(Json.safeString(payload, "url"), payload.toString()));
                 case "player.playUrl" -> playUrl(payload);
                 case "player.playVod" -> playVod(payload);
                 case "player.playVodInline" -> playVodInline(payload);
@@ -119,7 +135,6 @@ public class HomeWebBridge {
                 case "app.search" -> search(payload);
                 case "app.openVod" -> openVod();
                 case "app.openLive" -> openLive();
-                case "app.openKeep" -> openKeep();
                 case "app.openSetting" -> openSetting();
                 case "app.history" -> history();
                 case "pan.check" -> checkLinks(payload);
@@ -153,7 +168,7 @@ public class HomeWebBridge {
         String pic = Json.safeString(payload, "pic");
         String wall = wallPic(payload);
         String content = content(payload);
-        if (payload.has("headers") || "include".equals(Json.safeString(payload, "credentials"))) url = resourceUrl(url, payload.toString());
+        if (payload.has("headers") || "include".equals(Json.safeString(payload, "credentials"))) url = buildResourceUrl(url, payload.toString());
         final String playUrl = url;
         final String playTitle = TextUtils.isEmpty(title) ? playUrl : title;
         final String playPic = pic;
@@ -310,11 +325,6 @@ public class HomeWebBridge {
         return "{}";
     }
 
-    private String openKeep() {
-        App.post(() -> KeepActivity.start(activity));
-        return "{}";
-    }
-
     private String openSetting() {
         App.post(controller::openSetting);
         return "{}";
@@ -367,7 +377,10 @@ public class HomeWebBridge {
     private String cacheKey(JsonObject payload) {
         String rule = Json.safeString(payload, "rule");
         String key = Json.safeString(payload, "key");
-        return "cache_" + (TextUtils.isEmpty(rule) ? "" : rule + "_") + key;
+        // 按网页隔离命名空间，避免与爬虫共用的 cache_* 键互相覆盖
+        WebPage page = controller.getPage();
+        String prefix = page == null ? "cache_" : "cache_web_" + page.getId() + "_";
+        return prefix + (TextUtils.isEmpty(rule) ? "" : rule + "_") + key;
     }
 
     private String device() {
@@ -377,16 +390,7 @@ public class HomeWebBridge {
     }
 
     private String site() {
-        Site site = VodConfig.get().getHome();
-        JsonObject object = new JsonObject();
-        object.addProperty("key", site.getKey());
-        object.addProperty("name", site.getName());
-        object.addProperty("homePage", site.getHomePage());
-        object.addProperty("chromeMode", site.getChromeMode());
-        object.add("webHomeChrome", site.getWebHomeChrome());
-        object.addProperty("type", site.getType());
-        object.add("header", App.gson().toJsonTree(site.getHeader()));
-        return object.toString();
+        return pageInfo();
     }
 
     private String config() {
@@ -398,21 +402,35 @@ public class HomeWebBridge {
         return object.toString();
     }
 
-    private String extInfo() {
+    /**
+     * site.info：返回当前网页信息，不返回请求头（可能含 Cookie / token）。
+     */
+    private String pageInfo() {
+        WebPage page = controller.getPage();
         JsonObject object = new JsonObject();
-        Site site = VodConfig.get().getHome();
-        object.addProperty("siteKey", site.getKey());
-        object.addProperty("siteName", site.getName());
-        object.addProperty("homePage", site.getHomePage());
-        WebHomeExtensionRegistry.Snapshot snapshot = WebHomeExtensionRegistry.get().snapshot();
-        object.addProperty("enabled", snapshot.enabled);
-        object.addProperty("matched", snapshot.matchedCount);
-        object.addProperty("ready", snapshot.readyCount);
+        object.addProperty("key", page == null ? "" : page.getKey());
+        object.addProperty("id", page == null ? "" : page.getId());
+        object.addProperty("name", page == null ? "" : page.getDisplayName());
+        object.addProperty("homePage", page == null ? "" : page.getUrl());
+        object.addProperty("url", page == null ? "" : page.getUrl());
+        object.addProperty("type", "webpage");
+        return object.toString();
+    }
+
+    private String extInfo() {
+        // 扩展脚本已移除：保留 ext.info 接口兼容旧网页，固定返回未启用
+        JsonObject object = new JsonObject();
+        WebPage page = controller.getPage();
+        object.addProperty("siteKey", page == null ? "" : page.getKey());
+        object.addProperty("siteName", page == null ? "" : page.getDisplayName());
+        object.addProperty("homePage", page == null ? "" : page.getUrl());
+        object.addProperty("enabled", false);
+        object.addProperty("matched", 0);
+        object.addProperty("ready", 0);
         return object.toString();
     }
 
     private String extLog(JsonObject payload) {
-        WebHomeExtensionRegistry.get().recordScriptLog(payload);
         SpiderDebug.log("webhome-ext", "script message=%s data=%s", Json.safeString(payload, "message"), payload.has("data") ? payload.get("data") : "");
         return "{}";
     }

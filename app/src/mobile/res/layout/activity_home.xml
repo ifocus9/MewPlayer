@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?attr/colorSurface">
@@ -10,139 +11,123 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <!-- Telegram（v12.4 Liquid Glass）风格底栏：半透明悬浮胶囊 + 等宽 Tab + 滑动选中气泡
+         forceDarkAllowed=false：底栏及子 View 不参与系统强制深色，深色模式直接用 values-night 里的 nav_* 颜色。
+         否则强制深色会把半透明白色气泡（#24FFFFFF）当成浅色背景压暗，在深色胶囊上看不见。 -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/navCard"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginStart="32dp"
-        android:layout_marginEnd="32dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
         android:layout_marginBottom="18dp"
+        android:forceDarkAllowed="false"
         android:theme="@style/ThemeOverlay.WebHTV.NavCapsule"
-        app:cardBackgroundColor="@color/white"
-        app:cardCornerRadius="30dp"
-        app:cardElevation="8dp"
-        app:cardMaxElevation="10dp"
+        tools:targetApi="q"
+        app:cardBackgroundColor="@color/nav_capsule_bg"
+        app:cardCornerRadius="28dp"
+        app:cardElevation="6dp"
+        app:cardMaxElevation="8dp"
         app:strokeColor="@color/nav_capsule_stroke"
-        app:strokeWidth="0dp">
+        app:strokeWidth="0.5dp">
 
-        <LinearLayout
+        <!-- 高度 56dp 与 VodFragment / WebTabFragment / FAB 中的胶囊尺寸常量保持一致 -->
+        <FrameLayout
             android:id="@+id/navigation"
             android:layout_width="wrap_content"
-            android:layout_height="56dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="4dp"
-            android:paddingTop="4dp"
-            android:paddingEnd="4dp"
-            android:paddingBottom="4dp">
+            android:layout_height="56dp">
+
+            <!-- 选中气泡：位置由 HomeActivity.moveNavIndicator() 通过 translationX 控制 -->
+            <View
+                android:id="@+id/navIndicator"
+                android:layout_width="@dimen/nav_item_width"
+                android:layout_height="match_parent"
+                android:layout_gravity="left"
+                android:layout_marginLeft="4dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="4dp"
+                android:background="@drawable/shape_nav_indicator"
+                android:importantForAccessibility="no"
+                android:visibility="invisible"
+                tools:ignore="RtlHardcoded" />
 
             <LinearLayout
-                android:id="@+id/navVod"
+                android:id="@+id/navItems"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:layout_gravity="center_vertical"
-                android:background="@drawable/selector_nav_item"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:minWidth="66dp"
-                android:orientation="vertical"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp">
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="4dp">
 
-                <ImageView
-                    android:id="@+id/navVodIcon"
-                    android:layout_width="22dp"
-                    android:layout_height="22dp"
-                    android:duplicateParentState="true"
-                    android:src="@drawable/ic_nav_vod"
-                    app:tint="@color/selector_nav_capsule" />
+                <LinearLayout
+                    android:id="@+id/navVod"
+                    style="@style/NavItem">
 
-                <TextView
-                    android:id="@+id/navVodText"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:duplicateParentState="true"
-                    android:includeFontPadding="false"
-                    android:text="@string/nav_vod"
-                    android:textColor="@color/selector_nav_capsule"
-                    android:textSize="11sp" />
+                    <ImageView
+                        android:id="@+id/navVodIcon"
+                        style="@style/NavItemIcon"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_nav_vod" />
+
+                    <TextView
+                        android:id="@+id/navVodText"
+                        style="@style/NavItemText"
+                        android:text="@string/nav_vod" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/navKeep"
+                    style="@style/NavItem">
+
+                    <ImageView
+                        android:id="@+id/navKeepIcon"
+                        style="@style/NavItemIcon"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_nav_keep" />
+
+                    <TextView
+                        android:id="@+id/navKeepText"
+                        style="@style/NavItemText"
+                        android:text="@string/nav_keep" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/navWeb"
+                    style="@style/NavItem">
+
+                    <ImageView
+                        android:id="@+id/navWebIcon"
+                        style="@style/NavItemIcon"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_nav_web" />
+
+                    <TextView
+                        android:id="@+id/navWebText"
+                        style="@style/NavItemText"
+                        android:text="@string/nav_web" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/navSetting"
+                    style="@style/NavItem">
+
+                    <ImageView
+                        android:id="@+id/navSettingIcon"
+                        style="@style/NavItemIcon"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_nav_setting" />
+
+                    <TextView
+                        android:id="@+id/navSettingText"
+                        style="@style/NavItemText"
+                        android:text="@string/nav_setting" />
+                </LinearLayout>
+
             </LinearLayout>
 
-            <LinearLayout
-                android:id="@+id/navKeep"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_gravity="center_vertical"
-                android:layout_marginStart="4dp"
-                android:background="@drawable/selector_nav_item"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:minWidth="66dp"
-                android:orientation="vertical"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp">
-
-                <ImageView
-                    android:id="@+id/navKeepIcon"
-                    android:layout_width="22dp"
-                    android:layout_height="22dp"
-                    android:duplicateParentState="true"
-                    android:src="@drawable/ic_nav_keep"
-                    app:tint="@color/selector_nav_capsule" />
-
-                <TextView
-                    android:id="@+id/navKeepText"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:duplicateParentState="true"
-                    android:includeFontPadding="false"
-                    android:text="@string/nav_keep"
-                    android:textColor="@color/selector_nav_capsule"
-                    android:textSize="11sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/navSetting"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_gravity="center_vertical"
-                android:layout_marginStart="4dp"
-                android:background="@drawable/selector_nav_item"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:minWidth="66dp"
-                android:orientation="vertical"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp">
-
-                <ImageView
-                    android:id="@+id/navSettingIcon"
-                    android:layout_width="22dp"
-                    android:layout_height="22dp"
-                    android:duplicateParentState="true"
-                    android:src="@drawable/ic_nav_setting"
-                    app:tint="@color/selector_nav_capsule" />
-
-                <TextView
-                    android:id="@+id/navSettingText"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:duplicateParentState="true"
-                    android:includeFontPadding="false"
-                    android:text="@string/nav_setting"
-                    android:textColor="@color/selector_nav_capsule"
-                    android:textSize="11sp" />
-            </LinearLayout>
-
-        </LinearLayout>
+        </FrameLayout>
 
     </com.google.android.material.card.MaterialCardView>
 

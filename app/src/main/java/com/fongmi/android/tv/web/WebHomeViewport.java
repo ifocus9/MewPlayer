@@ -63,6 +63,15 @@ public final class WebHomeViewport {
         return new WebHomeViewport(safeTop, safeRight, safeBottom, safeLeft, safeBottomMax, gestureLeft, gestureRight, gestureBottom, statusBarHeight, navigationBarHeight, keyboardBottom, mode, hidden);
     }
 
+    /**
+     * 叠加原生悬浮层（如底部胶囊导航）遮挡的高度：WebView 铺满到屏幕底部时，
+     * 网页可通过 --fm-safe-bottom / --fm-safe-bottom-max 让出这部分空间。
+     */
+    public WebHomeViewport withBottomOverlay(int overlay) {
+        if (overlay <= 0) return this;
+        return new WebHomeViewport(safeTop, safeRight, safeBottom + overlay, safeLeft, safeBottomMax + overlay, gestureLeft, gestureRight, gestureBottom, statusBarHeight, navigationBarHeight, keyboardBottom, chromeMode, systemBarsHidden);
+    }
+
     public int getSafeTop() {
         return safeTop;
     }

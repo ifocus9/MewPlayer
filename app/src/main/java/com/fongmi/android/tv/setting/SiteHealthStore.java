@@ -89,19 +89,16 @@ public class SiteHealthStore {
     }
 
     public static void sortSites(List<Site> sites) {
-        if (!Setting.isSiteHealthSort()) return;
         if (sites == null || sites.size() < 2) return;
         sites.sort((a, b) -> Double.compare(score(b.getKey()), score(a.getKey())));
     }
 
     public static void sortVods(List<Vod> vods) {
-        if (!Setting.isSiteHealthSort()) return;
         if (vods == null || vods.size() < 2) return;
         vods.sort(SiteHealthStore::compareVods);
     }
 
     public static int compareVods(Vod a, Vod b) {
-        if (!Setting.isSiteHealthSort()) return 0;
         return Double.compare(score(b.getSiteKey()), score(a.getSiteKey()));
     }
 

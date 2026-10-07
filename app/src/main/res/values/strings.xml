@@ -23,10 +23,6 @@
     <string name="detail_content">Summary: <xliff:g name="name">%s</xliff:g></string>
     <string name="detail_desc">Summary</string>
 
-    <!-- Keep -->
-    <string name="keep">Keep</string>
-    <string name="keep_add">Added</string>
-    <string name="keep_del">Removed</string>
     <string name="exit_confirm_title">Exit app?</string>
     <string name="exit_confirm_message">The current page will close. Background playback will continue if it is running.</string>
     <string name="exit_confirm_positive">Exit</string>
@@ -139,12 +135,15 @@
     <string name="dialog_cancel">Cancel</string>
     <string name="dialog_confirm">Confirm</string>
     <string name="setting_web_home">WebHome Config</string>
-    <string name="viewing_record_sync_entry_summary">%1$s · Remote %2$d/%3$d · Webhook %4$d/%5$d</string>
-    <string name="setting_custom_csp_permission_required">Site injection needs file access permission.</string>
-    <string name="setting_custom_csp_save_failed">Site injection save failed: %1$s</string>
+    <string name="web_page_no_app">No app can open this link</string>
+    <string name="web_page_download_unsupported">This download is not supported</string>
     <string name="setting_incognito">Incognito mode</string>
     <string name="dialog_close">Close</string>
     <string name="setting_doh">DoH</string>
+    <string name="setting_theme">Theme</string>
+    <string name="setting_theme_system">Follow system</string>
+    <string name="setting_theme_light">Light</string>
+    <string name="setting_theme_dark">Dark</string>
     <string name="setting_cache">Cache</string>
     <string name="setting_backup">Backup</string>
     <string name="setting_restore">Restore</string>
@@ -169,9 +168,7 @@
     <string name="device_select">Select devices</string>
     <string name="device_offline">Device is offline</string>
     <string name="cast_not_ready">Playback information is not ready. Try again shortly.</string>
-    <string name="sync_failed">Sync failed</string>
     <string name="history_watched_time">Watched %1$s</string>
-    <string name="sync_receive_success">Sync data received</string>
     <string name="apk_push_url_busy">Another APK link download is already active</string>
     <string name="apk_push_url_schedule_failed">Unable to start the APK link download</string>
     <string name="apk_push_url_install_ready">APK downloaded. Confirm installation.</string>
@@ -459,20 +456,16 @@
 
     <!-- Hint -->
     <string name="copied">Copied</string>
-    <string name="debug_log_dialog_message">Debug log service is running.\n\nLAN URL:\n%1$s\n\nLocal URL:\n%2$s\n\nIf this TV has no browser, open the LAN URL from a computer or phone on the same network.</string>
+    <string name="debug_log_status_ready">Debug log service is running</string>
+    <string name="debug_log_lan_url">LAN URL</string>
+    <string name="debug_log_local_url">Local URL</string>
+    <string name="debug_log_lan_hint">If this TV has no browser, open the LAN URL from a computer or phone on the same network.</string>
+    <string name="debug_log_section_category">Log categories</string>
+    <string name="debug_log_section_diagnose">Diagnostics</string>
     <string name="debug_log_open_browser">Open browser</string>
     <string name="debug_log_copy_url">Copy URL</string>
     <string name="debug_log_no_browser">No browser app found. Use the LAN URL from another device.</string>
     <string name="debug_log_url_copied">Debug log URL copied</string>
-    <string name="manage_page_stop">Stop page</string>
-    <string name="manage_page_notification_title">Management page running</string>
-    <string name="manage_page_battery_guide_vivo">vivo/iQOO: Settings > Battery > Background power consumption management / High background power consumption > find this app > set it to allow high background power usage. If the direct page fails, search system Settings for Background power consumption management.</string>
-    <string name="manage_page_battery_guide_xiaomi">Xiaomi/Redmi/POCO: Settings > Apps > Permissions > Autostart > allow this app. Then set this app battery usage to unrestricted.</string>
-    <string name="manage_page_battery_guide_oppo">OPPO/realme/OnePlus: Settings > Apps > Autostart or associated launch > allow this app. Then allow background running in Battery > App battery management.</string>
-    <string name="manage_page_battery_guide_huawei">Huawei/Honor: Phone Manager or Settings > App launch > this app > disable automatic management, then allow autostart, secondary launch, and background running.</string>
-    <string name="manage_page_battery_guide_samsung">Samsung: Settings > Apps > this app > Battery > Unrestricted. Also make sure this app is not in sleeping/deep sleeping apps.</string>
-    <string name="manage_page_battery_guide_meizu">Meizu: Phone Manager > Permission/background management > this app > allow background running. Then set this app to unrestricted in power management.</string>
-    <string name="manage_page_battery_guide_default">Settings > Apps > this app > Battery > choose unrestricted or not optimized. If autostart/background running options exist, allow them for this app.</string>
 
     <!-- UNIT -->
     <string name="all">All</string>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 详情页选集分段（1-20 / 21-40）：纯文字标签，选中时底部一条短下划线 -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="?attr/colorControlHighlight">
+    <item>
+        <selector>
+            <item android:state_selected="true">
+                <layer-list>
+                    <item
+                        android:width="20dp"
+                        android:height="3dp"
+                        android:bottom="2dp"
+                        android:gravity="bottom|center_horizontal">
+                        <shape android:shape="rectangle">
+                            <corners android:radius="1.5dp" />
+                            <solid android:color="@color/detail_accent" />
+                        </shape>
+                    </item>
+                </layer-list>
+            </item>
+            <item android:drawable="@color/transparent" />
+        </selector>
+    </item>
+    <item android:id="@android:id/mask">
+        <shape android:shape="rectangle">
+            <corners android:radius="8dp" />
+            <solid android:color="@color/white" />
+        </shape>
+    </item>
+</ripple>

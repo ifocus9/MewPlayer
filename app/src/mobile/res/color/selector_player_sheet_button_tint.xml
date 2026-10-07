@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 播放器弹窗里 MaterialButton 的底色（偏移重置 / 定时延长）：与全屏 LUT 快捷面板（LutQuickPanel.applyBg）同色 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="#FF2F80ED" android:state_checked="true" />
+    <item android:color="#FF2F80ED" android:state_selected="true" />
+    <item android:color="#55FFFFFF" android:state_focused="true" />
+    <item android:color="#55FFFFFF" android:state_pressed="true" />
+    <item android:color="#22FFFFFF" />
+</selector>

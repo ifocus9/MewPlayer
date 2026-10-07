@@ -9,6 +9,27 @@
     <string name="nav_vod">Discover</string>
     <string name="nav_keep">Watchlist</string>
     <string name="nav_setting">Setting</string>
+    <string name="nav_web">Web</string>
+
+    <!-- Web Tab -->
+    <string name="web_page_empty">No web pages yet</string>
+    <string name="web_page_add">Add web page</string>
+    <string name="web_page_edit">Edit web page</string>
+    <string name="web_page_list">Web pages</string>
+    <string name="web_page_name">Name</string>
+    <string name="web_page_url">URL (http/https)</string>
+    <string name="web_page_trusted">Allow native capabilities (window.fongmi)</string>
+    <string name="web_page_trusted_hint">Only enable for pages you trust: the page will be able to send native network requests, read config info and launch the player.</string>
+    <string name="web_page_url_invalid">Please enter a URL starting with http:// or https://</string>
+    <string name="web_page_error">Failed to load the page</string>
+    <string name="web_page_retry">Retry</string>
+    <string name="web_page_fullscreen">Fullscreen</string>
+    <string name="web_page_refresh">Refresh</string>
+    <string name="web_page_set_default">Set as default</string>
+    <string name="web_page_default">Default</string>
+    <string name="web_page_move_up">Move up</string>
+    <string name="web_page_move_down">Move down</string>
+    <string name="web_page_delete_confirm">Delete \"%s\"?</string>
 
     <!-- Menu -->
     <string name="menu_delete">Delete</string>
@@ -23,7 +44,13 @@
     <string name="detail_flag">Flag</string>
     <string name="detail_episode">Episode</string>
     <string name="detail_quality">Quality</string>
+    <string name="detail_flag_count"><xliff:g name="count">%d</xliff:g> sources</string>
+    <string name="detail_episode_count"><xliff:g name="count">%d</xliff:g> episodes</string>
+    <string name="detail_compact_title">Compact</string>
+    <string name="detail_episode_more">More</string>
+    <string name="detail_content_more">More</string>
     <string name="detail_content">Summary</string>
+    <string name="detail_poster">Poster</string>
     <string name="detail_search">Searching <xliff:g name="name">%s</xliff:g></string>
 
     <!-- Device -->

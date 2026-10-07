@@ -35,6 +35,7 @@ import com.fongmi.android.tv.setting.PlaybackPerformanceSetting;
 import com.fongmi.android.tv.setting.PlayerSetting;
 import com.fongmi.android.tv.setting.PreloadSetting;
 import com.fongmi.android.tv.utils.FileUtil;
+import com.fongmi.android.tv.utils.Task;
 import com.fongmi.android.tv.utils.UrlUtil;
 import com.github.catvod.crawler.SpiderDebug;
 import com.github.catvod.net.OkHttp;
@@ -54,6 +55,9 @@ public class MediaSourceFactory implements MediaSource.Factory {
     private static final String CONCAT_DURATION_SEPARATOR_REGEX = "\\|\\|\\|";
     private static final PriorityTaskManager PLAYBACK_PRIORITY_MANAGER = new PriorityTaskManager();
     private static final CacheCapacityState CACHE_CAPACITY_STATE = new CacheCapacityState();
+    /** 与 Path.exo() 的子目录名一致 */
+    private static final String EXO_DIR_NAME = "exo";
+    private static final String EXO_TRASH_PREFIX = "exo-trash-";
 
     private static StandaloneDatabaseProvider databaseProvider;
     private static Cache cache;
@@ -102,15 +106,59 @@ public class MediaSourceFactory implements MediaSource.Factory {
     }
 
     public static synchronized void acquireCacheSession() {
-        DiskCacheCapacityPolicy.Decision decision = refreshPendingCacheCapacity();
-        if (isReliable(decision) && CACHE_CAPACITY_STATE.canReleasePending()) rebuildCacheLocked("next-player-session");
+        // 没有任何播放会话时，cache/exo 里只可能是上一次播放（或上次进程被杀时）留下的预载数据，
+        // 开播前清掉；SimpleCache 会在下次 getCache() 时按最新配额重新创建，所以不再需要单独的容量重建。
+        if (CACHE_CAPACITY_STATE.activeSessions() == 0) purgeCacheLocked("next-player-session");
         CACHE_CAPACITY_STATE.acquireSession();
     }
 
     public static synchronized void releaseCacheSession() {
         CACHE_CAPACITY_STATE.releaseSession();
-        DiskCacheCapacityPolicy.Decision decision = refreshPendingCacheCapacity();
-        if (isReliable(decision) && CACHE_CAPACITY_STATE.canReleasePending()) rebuildCacheLocked("last-player-release");
+        // 预载数据只服务于正在播放的那个视频，最后一个播放会话结束后就没有保留价值，直接清掉。
+        // 调用时 PreCache 的下载线程已停止（见 PreCache.release 的 completion 时序）。
+        if (CACHE_CAPACITY_STATE.activeSessions() == 0) purgeCacheLocked("last-player-release");
+    }
+
+    /**
+     * 释放 SimpleCache 并删除 cache/exo 下的全部预载数据及其数据库索引。
+     * 主线程上只做 release + 目录改名（很快），真正的文件删除放到后台线程，
+     * 新会话拿到的是一个全新的空 exo 目录，不会和后台删除互相干扰。
+     */
+    private static void purgeCacheLocked(String reason) {
+        if (cache != null && !releaseCacheLocked(reason)) return;
+        StandaloneDatabaseProvider provider = getDatabaseProvider();
+        File dir = new File(Path.cache(), EXO_DIR_NAME);
+        File[] children = dir.listFiles();
+        if (children != null && children.length > 0) {
+            File trash = new File(Path.cache(), EXO_TRASH_PREFIX + System.currentTimeMillis());
+            if (!dir.renameTo(trash)) {
+                // 改名失败时只能同步删文件，保证下次 getCache() 前目录已清空；
+                // 旧 uid 的数据库索引表会残留，体积很小且不会被新目录复用
+                Path.clear(dir);
+                if (SpiderDebug.isEnabled()) SpiderDebug.log("exo-cache", "purged-inline reason=%s", reason);
+            }
+        }
+        Task.execute(() -> sweepTrash(provider, reason));
+    }
+
+    private static void sweepTrash(StandaloneDatabaseProvider provider, String reason) {
+        File[] files = Path.cache().listFiles();
+        if (files == null) return;
+        for (File file : files) {
+            if (file.isDirectory() && file.getName().startsWith(EXO_TRASH_PREFIX)) deleteCacheDir(file, provider, reason);
+        }
+    }
+
+    private static void deleteCacheDir(File dir, StandaloneDatabaseProvider provider, String reason) {
+        long bytes = SpiderDebug.isEnabled() ? FileUtil.getDirectorySize(dir) : 0;
+        try {
+            // 同时删除 StandaloneDatabaseProvider 中该目录 uid 对应的索引表
+            SimpleCache.delete(dir, provider);
+        } catch (Throwable e) {
+            if (SpiderDebug.isEnabled()) SpiderDebug.log("exo-cache", "purge-index-failed reason=%s error=%s", reason, e.getClass().getSimpleName());
+        }
+        if (dir.exists()) Path.clear(dir);
+        if (SpiderDebug.isEnabled()) SpiderDebug.log("exo-cache", "purged reason=%s dir=%s bytes=%d", reason, dir.getName(), bytes);
     }
 
     private static StandaloneDatabaseProvider getDatabaseProvider() {
@@ -154,15 +202,6 @@ public class MediaSourceFactory implements MediaSource.Factory {
 
     private static boolean isReliable(DiskCacheCapacityPolicy.Decision decision) {
         return decision.state() != DiskCacheCapacityPolicy.State.UNAVAILABLE;
-    }
-
-    private static void rebuildCacheLocked(String reason) {
-        if (!releaseCacheLocked(reason)) return;
-        try {
-            getCache();
-        } catch (RuntimeException e) {
-            if (SpiderDebug.isEnabled()) SpiderDebug.log("exo-cache", "rebuild-failed reason=%s error=%s", reason, e.getClass().getSimpleName());
-        }
     }
 
     private static boolean releaseCacheLocked(String reason) {

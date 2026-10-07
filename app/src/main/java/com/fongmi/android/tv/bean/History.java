@@ -16,7 +16,6 @@ import com.fongmi.android.tv.api.SiteApi;
 import com.fongmi.android.tv.api.config.VodConfig;
 import com.fongmi.android.tv.db.AppDatabase;
 import com.fongmi.android.tv.impl.Diffable;
-import com.fongmi.android.tv.playback.PlaybackProgressWriter;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 
@@ -137,8 +136,10 @@ public class History implements Diffable<History> {
         AppDatabase.get().getHistoryDao().delete(cid);
     }
 
+    /** 用户在历史页「清空」：删除该接口下全部历史及对应的轨道记录。 */
     public static void deleteAndSync(int cid) {
-        PlaybackProgressWriter.deleteAllFromUser(cid);
+        for (History item : AppDatabase.get().getHistoryDao().findAll(cid)) AppDatabase.get().getTrackDao().delete(item.getKey());
+        AppDatabase.get().getHistoryDao().delete(cid);
     }
 
     public static void sync(List<History> targets) {
@@ -413,8 +414,10 @@ public class History implements Diffable<History> {
         return this;
     }
 
+    /** 用户在历史页删除单条记录：按记录自身的 cid 删除，并清理对应的轨道记录。 */
     public History deleteAndSync() {
-        PlaybackProgressWriter.deleteFromUser(this);
+        AppDatabase.get().getHistoryDao().delete(getCid(), getKey());
+        AppDatabase.get().getTrackDao().delete(getKey());
         return this;
     }
 

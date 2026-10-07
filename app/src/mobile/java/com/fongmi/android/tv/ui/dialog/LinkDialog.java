@@ -1,8 +1,10 @@
 package com.fongmi.android.tv.ui.dialog;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.Bundle;
 import android.text.InputFilter;
 import android.text.TextUtils;
 import android.view.View;
@@ -10,6 +12,8 @@ import android.view.inputmethod.EditorInfo;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.viewbinding.ViewBinding;
 
@@ -27,6 +31,15 @@ public class LinkDialog extends BaseAlertDialog {
 
     public static void show(Fragment fragment) {
         new LinkDialog().show(fragment.getChildFragmentManager(), null);
+    }
+
+    @Override
+    @NonNull
+    public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+        Dialog dialog = LightDialog.create(requireContext(), getString(R.string.play), getBinding().getRoot(), getString(R.string.dialog_positive), view -> onPositive(null, 0), getString(R.string.dialog_negative), view -> dismiss());
+        initView();
+        initEvent();
+        return dialog;
     }
 
     @Override

@@ -118,16 +118,8 @@ public class Group {
         return !TextUtils.isEmpty(getPass());
     }
 
-    public boolean isKeep() {
-        return getName().equals(ResUtil.getString(R.string.keep));
-    }
-
     public boolean isEmpty() {
         return getChannel().isEmpty();
-    }
-
-    public boolean skip() {
-        return isKeep();
     }
 
     public int find(int number) {

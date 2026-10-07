@@ -1,6 +1,10 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
     <style name="Theme.Base" parent="Theme.Material3.Light.NoActionBar">
+        <!-- 应用只有浅色主题：显式允许系统强制深色（Android 10+）。
+             不写时默认值取系统属性 debug.hwui.force_dark（原生为 false），只有厂商白名单（如 MIUI on Android 11）才会变暗，
+             新系统 / 不在白名单时系统深色模式对本应用不生效。 -->
+        <item name="android:forceDarkAllowed" tools:targetApi="q">true</item>
         <item name="android:statusBarColor">@color/transparent</item>
         <item name="android:navigationBarColor">@color/transparent</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
@@ -40,7 +44,8 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_marginTop">13dp</item>
         <item name="android:layout_marginBottom">7dp</item>
-        <item name="android:textColor">@color/white_70</item>
+        <!-- 与全屏 LUT 快捷面板（LutQuickPanel）一致：白色粗体 -->
+        <item name="android:textColor">@color/white</item>
         <item name="android:textSize">13sp</item>
         <item name="android:textStyle">bold</item>
     </style>
@@ -71,6 +76,49 @@
         <item name="android:textSize">12sp</item>
     </style>
 
+    <!-- 播放详情页分区（线路 / 画质 / 选集）统一样式 -->
+    <style name="DetailSectionHeader">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">16dp</item>
+        <item name="android:layout_marginTop">24dp</item>
+        <item name="android:layout_marginEnd">16dp</item>
+        <item name="android:minHeight">32dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+    </style>
+
+    <style name="DetailSectionTitle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/detail_text_primary</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="DetailSectionMeta">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:textColor">@color/detail_text_meta</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <style name="DetailSectionAction">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">4dp</item>
+        <item name="android:minHeight">36dp</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingEnd">8dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
+        <item name="android:drawablePadding">2dp</item>
+        <item name="android:textColor">@color/selector_detail_action_text</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+
     <style name="AudioActionButton" parent="Video.ContextText">
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">46dp</item>
@@ -87,6 +135,12 @@
     <style name="ShapeAppearance.WebHTV.AudioCover" parent="">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">50%</item>
+    </style>
+
+    <!-- 播放详情页左侧海报：四角统一小圆角 -->
+    <style name="ShapeAppearance.WebHTV.DetailPoster" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">8dp</item>
     </style>
 
     <style name="ToolbarTextAppearance" parent="TextAppearance.Material3.TitleLarge">
@@ -132,18 +186,59 @@
 
     <style name="Widget.WebHTV.FloatingActionButton" parent="Widget.Material3.FloatingActionButton.Surface">
         <item name="shapeAppearanceOverlay">@style/ShapeAppearance.WebHTV.Circle</item>
-        <item name="backgroundTint">@color/white</item>
-        <item name="tint">#217AF4</item>
-        <item name="rippleColor">#1A217AF4</item>
-        <item name="elevation">6dp</item>
-        <item name="hoveredFocusedTranslationZ">8dp</item>
-        <item name="pressedTranslationZ">3dp</item>
-        <item name="fabCustomSize">46dp</item>
-        <item name="maxImageSize">22dp</item>
+        <!-- 配色跟首页底部导航胶囊（activity_home.xml 的 navCard）一致：胶囊同色底 + 胶囊未选中图标色。
+             底色用不透明的 fab_capsule_bg，而不是胶囊的 90% 半透明色：半透明底会透出按钮正下方的系统阴影，
+             小圆的阴影被系统近似成多边形，透出来就是按钮中间一块六边形色块。
+             同时关闭 M3 的 elevation overlay，否则高度会叠一层 colorPrimary 导致底色偏蓝。
+             颜色已按日夜模式分别给出（values-night），因此关闭强制深色。 -->
+        <item name="materialThemeOverlay">@style/ThemeOverlay.WebHTV.NavCapsule</item>
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
+        <item name="backgroundTint">@color/fab_capsule_bg</item>
+        <item name="tint">@color/nav_item_unselected</item>
+        <item name="rippleColor">@color/nav_indicator_color</item>
+        <item name="elevation">3dp</item>
+        <item name="hoveredFocusedTranslationZ">2dp</item>
+        <item name="pressedTranslationZ">1dp</item>
+        <item name="fabCustomSize">44dp</item>
+        <item name="maxImageSize">20dp</item>
     </style>
 
 
     <style name="ThemeOverlay.WebHTV.NavCapsule" parent="">
         <item name="elevationOverlayEnabled">false</item>
+    </style>
+
+    <!-- 首页底栏（Telegram 风格）：等宽 Tab，图标在上、文字在下 -->
+    <style name="NavItem">
+        <item name="android:layout_width">@dimen/nav_item_width</item>
+        <item name="android:layout_height">match_parent</item>
+        <!-- 不用 ripple：按压反馈只靠图标回弹 + 气泡滑动，避免点击处先冒出一个气泡 -->
+        <item name="android:background">@null</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:gravity">center</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:paddingStart">4dp</item>
+        <item name="android:paddingEnd">4dp</item>
+    </style>
+
+    <style name="NavItemIcon">
+        <item name="android:layout_width">24dp</item>
+        <item name="android:layout_height">24dp</item>
+        <item name="android:duplicateParentState">true</item>
+        <item name="tint">@color/selector_nav_capsule</item>
+    </style>
+
+    <style name="NavItemText">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">2dp</item>
+        <item name="android:duplicateParentState">true</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textColor">@color/selector_nav_capsule</item>
+        <item name="android:textSize">11sp</item>
     </style>
 </resources>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- mobile 覆盖 main 同名样式（leanback 仍用 main 版）：
+     蓝光菜单遥控按钮，与全屏 LUT 快捷面板（LutQuickPanel.applyBg）同色 -->
+<resources>
+    <style name="DiscMenuButton" parent="Widget.MaterialComponents.Button">
+        <item name="android:layout_width">48dp</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:padding">0dp</item>
+        <item name="android:insetTop">2dp</item>
+        <item name="android:insetBottom">2dp</item>
+        <item name="android:insetLeft">2dp</item>
+        <item name="android:insetRight">2dp</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="backgroundTint">@color/selector_player_sheet_button_tint</item>
+        <item name="strokeColor">#33FFFFFF</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="cornerRadius">6dp</item>
+        <item name="rippleColor">#33FFFFFF</item>
+        <!-- 半透明底会透出按钮阴影，关掉抬升 -->
+        <item name="android:stateListAnimator">@null</item>
+        <item name="elevation">0dp</item>
+    </style>
+</resources>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 详情页 / 快速搜索结果卡片：颜色随日夜模式（detail_*） -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="?attr/colorControlHighlight">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/detail_chip" />
+            <corners android:radius="12dp" />
+        </shape>
+    </item>
+</ripple>

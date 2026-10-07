@@ -1,83 +1,138 @@
 <?xml version="1.0" encoding="utf-8"?>
-<HorizontalScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:fillViewport="true"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
     android:paddingStart="8dp"
-    android:paddingEnd="8dp"
-    android:scrollbars="none">
+    android:paddingEnd="8dp">
 
+    <!-- 可滑动区域：其余按钮从左往右排列，超出宽度时横向滑动 -->
+    <HorizontalScrollView
+        android:id="@+id/actionScroll"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:fillViewport="true"
+        android:scrollbars="none">
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:id="@+id/container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/player"
+                style="@style/Control"
+                android:text="@string/play_exo" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/decode"
+                style="@style/Control"
+                android:text="@string/play_decode" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/playParams"
+                style="@style/Control"
+                android:text="@string/play_params" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/speed"
+                style="@style/Control"
+                android:fontFeatureSettings="tnum"
+                android:text="@string/play_speed" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/scale"
+                style="@style/Control"
+                android:text="@string/play_scale" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/lut"
+                style="@style/Control"
+                android:text="@string/play_lut" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/karaoke"
+                style="@style/Control"
+                android:text="@string/player_karaoke_mode"
+                android:visibility="gone" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/reset"
+                style="@style/Control"
+                android:text="@string/play_reset" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/repeat"
+                style="@style/Control"
+                android:text="@string/play_repeat" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/text"
+                style="@style/Control"
+                android:tag="3"
+                android:text="@string/play_track_text" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/audio"
+                style="@style/Control"
+                android:tag="1"
+                android:text="@string/play_track_audio" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/video"
+                style="@style/Control"
+                android:tag="2"
+                android:text="@string/play_track_video" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/danmaku"
+                style="@style/Control"
+                android:text="@string/danmaku"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/title"
+                style="@style/Control"
+                android:text="@string/play_title"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/discMenu"
+                style="@style/Control"
+                android:contentDescription="@string/disc_menu_open_hint"
+                android:text="@string/disc_menu_open"
+                android:visibility="gone" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/prev"
+                style="@style/Control"
+                android:text="@string/play_prev" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/next"
+                style="@style/Control"
+                android:text="@string/play_next" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/change2"
+                style="@style/Control"
+                android:text="@string/play_change" />
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+    </HorizontalScrollView>
+
+    <!-- 固定区域：片头、片尾、选集始终停在右侧，不随左侧滑动 -->
     <androidx.appcompat.widget.LinearLayoutCompat
-        android:id="@+id/container"
+        android:id="@+id/fixed"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
-
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/player"
-            style="@style/Control"
-            android:text="@string/play_exo" />
-
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/decode"
-            style="@style/Control"
-            android:text="@string/play_decode" />
-
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/playParams"
-            style="@style/Control"
-            android:text="@string/play_params" />
-
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/speed"
-            style="@style/Control"
-            android:fontFeatureSettings="tnum"
-            android:text="@string/play_speed" />
-
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/scale"
-            style="@style/Control"
-            android:text="@string/play_scale" />
-
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/lut"
-            style="@style/Control"
-            android:text="@string/play_lut" />
-
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/karaoke"
-            style="@style/Control"
-            android:text="@string/player_karaoke_mode"
-            android:visibility="gone" />
-
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/reset"
-            style="@style/Control"
-            android:text="@string/play_reset" />
-
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/repeat"
-            style="@style/Control"
-            android:text="@string/play_repeat" />
-
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/text"
-            style="@style/Control"
-            android:tag="3"
-            android:text="@string/play_track_text" />
-
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/audio"
-            style="@style/Control"
-            android:tag="1"
-            android:text="@string/play_track_audio" />
-
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/video"
-            style="@style/Control"
-            android:tag="2"
-            android:text="@string/play_track_video" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/opening"
@@ -90,45 +145,9 @@
             android:text="@string/play_ed" />
 
         <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/danmaku"
-            style="@style/Control"
-            android:text="@string/danmaku"
-            android:visibility="gone"
-            tools:visibility="visible" />
-
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/title"
-            style="@style/Control"
-            android:text="@string/play_title"
-            android:visibility="gone"
-            tools:visibility="visible" />
-
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/discMenu"
-            style="@style/Control"
-            android:text="@string/disc_menu_open"
-            android:contentDescription="@string/disc_menu_open_hint"
-            android:visibility="gone" />
-
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/prev"
-            style="@style/Control"
-            android:text="@string/play_prev" />
-
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/next"
-            style="@style/Control"
-            android:text="@string/play_next" />
-
-        <com.google.android.material.textview.MaterialTextView
             android:id="@+id/episodes"
             style="@style/Control"
             android:text="@string/detail_episode" />
 
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/change2"
-            style="@style/Control"
-            android:text="@string/play_change" />
-
     </androidx.appcompat.widget.LinearLayoutCompat>
-</HorizontalScrollView>
+</androidx.appcompat.widget.LinearLayoutCompat>

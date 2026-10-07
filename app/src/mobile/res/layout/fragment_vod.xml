@@ -25,43 +25,49 @@
             <androidx.appcompat.widget.LinearLayoutCompat
                 android:id="@+id/siteCapsule"
                 android:layout_width="wrap_content"
-                android:layout_height="36dp"
+                android:layout_height="34dp"
                 android:background="@drawable/shape_site_capsule"
                 android:clickable="true"
+                android:elevation="3dp"
                 android:focusable="true"
+                android:forceDarkAllowed="false"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingStart="8dp"
-                android:paddingEnd="10dp">
+                android:paddingStart="6dp"
+                android:paddingEnd="10dp"
+                tools:targetApi="q">
 
-                <androidx.appcompat.widget.AppCompatImageView
+                <!-- 圆形裁切：远程 logo 已由 Glide circleCrop，这里保证 error 兜底的 ic_logo 也是圆的 -->
+                <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/logo"
                     android:layout_width="22dp"
                     android:layout_height="22dp"
                     android:layout_marginEnd="6dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/ic_logo" />
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_logo"
+                    app:shapeAppearanceOverlay="@style/ShapeAppearance.WebHTV.Circle" />
 
                 <com.google.android.material.textview.MaterialTextView
                     android:id="@+id/title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:ellipsize="end"
+                    android:fontFamily="sans-serif-medium"
                     android:maxLines="1"
                     android:maxWidth="160dp"
                     android:text="@string/app_name"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
+                    android:textColor="@color/site_capsule_text"
+                    android:textSize="15sp" />
 
                 <androidx.appcompat.widget.AppCompatImageView
                     android:id="@+id/siteArrow"
                     android:layout_width="16dp"
                     android:layout_height="16dp"
                     android:layout_marginStart="4dp"
-                    android:scaleType="centerInside"
-                    app:srcCompat="@drawable/ic_arrow_drop_down"
-                    app:tint="?attr/colorOnSurfaceVariant" />
+                    android:importantForAccessibility="no"
+                    android:scaleType="fitCenter"
+                    app:srcCompat="@drawable/ic_expand_more"
+                    app:tint="@color/site_capsule_icon" />
 
             </androidx.appcompat.widget.LinearLayoutCompat>
 
@@ -119,15 +125,6 @@
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
-    <WebView
-        android:id="@+id/homeWeb"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="?attr/actionBarSize"
-        android:focusable="true"
-        android:focusableInTouchMode="true"
-        android:visibility="gone" />
-
     <include
         android:id="@+id/progress"
         layout="@layout/view_progress"
@@ -139,7 +136,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="23dp"
+        android:layout_marginBottom="86dp"
         android:visibility="gone"
         app:layout_anchor="@id/pager"
         app:layout_anchorGravity="end|bottom"
@@ -153,7 +150,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="23dp"
+        android:layout_marginBottom="86dp"
         android:tag="top"
         android:visibility="invisible"
         app:layout_anchor="@id/pager"

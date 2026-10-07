@@ -1,12 +1,15 @@
 package com.fongmi.android.tv.ui.adapter;
 
+import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.fongmi.android.tv.databinding.AdapterEpisodeGroupBinding;
+import com.fongmi.android.tv.databinding.AdapterEpisodeGroupTabBinding;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,10 +18,17 @@ public class EpisodeGroupAdapter extends RecyclerView.Adapter<EpisodeGroupAdapte
 
     private final OnClickListener listener;
     private final List<Group> items;
+    // true：文字 + 下划线标签（详情页抽屉、全屏选集面板）；false：胶囊按钮
+    private final boolean tab;
 
     public EpisodeGroupAdapter(OnClickListener listener) {
+        this(listener, false);
+    }
+
+    public EpisodeGroupAdapter(OnClickListener listener, boolean tab) {
         this.listener = listener;
         this.items = new ArrayList<>();
+        this.tab = tab;
     }
 
     public interface OnClickListener {
@@ -58,15 +68,18 @@ public class EpisodeGroupAdapter extends RecyclerView.Adapter<EpisodeGroupAdapte
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        return new ViewHolder(AdapterEpisodeGroupBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
+        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+        if (tab) return new ViewHolder(AdapterEpisodeGroupTabBinding.inflate(inflater, parent, false).text);
+        return new ViewHolder(AdapterEpisodeGroupBinding.inflate(inflater, parent, false).text);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Group item = items.get(position);
-        holder.binding.text.setText(item.name);
-        holder.binding.text.setSelected(item.selected);
-        holder.binding.text.setOnClickListener(v -> listener.onItemClick(item));
+        holder.text.setText(item.name);
+        holder.text.setSelected(item.selected);
+        if (tab) holder.text.setTypeface(Typeface.DEFAULT, item.selected ? Typeface.BOLD : Typeface.NORMAL);
+        holder.text.setOnClickListener(v -> listener.onItemClick(item));
     }
 
     public static List<Group> build(int size, int selectedIndex, boolean reverse) {
@@ -111,13 +124,13 @@ public class EpisodeGroupAdapter extends RecyclerView.Adapter<EpisodeGroupAdapte
         }
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    public static class ViewHolder extends RecyclerView.ViewHolder {
 
-        private final AdapterEpisodeGroupBinding binding;
+        private final TextView text;
 
-        ViewHolder(@NonNull AdapterEpisodeGroupBinding binding) {
-            super(binding.getRoot());
-            this.binding = binding;
+        ViewHolder(@NonNull TextView text) {
+            super(text);
+            this.text = text;
         }
     }
 }

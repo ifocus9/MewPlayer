@@ -13,6 +13,7 @@ import android.os.LocaleList;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
 
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
 
 import com.fongmi.android.tv.App;
@@ -42,6 +43,12 @@ public class Setting {
     public static final int LANGUAGE_SIMPLIFIED = 1;
     public static final int LANGUAGE_TRADITIONAL = 2;
     private static final int[] LANGUAGE_OPTIONS = {LANGUAGE_FOLLOW_SYSTEM, LANGUAGE_SIMPLIFIED, LANGUAGE_TRADITIONAL};
+
+    /** 主题选项顺序即设置页选择列表顺序 */
+    public static final int THEME_FOLLOW_SYSTEM = 0;
+    public static final int THEME_LIGHT = 1;
+    public static final int THEME_DARK = 2;
+    private static final int[] THEME_OPTIONS = {THEME_FOLLOW_SYSTEM, THEME_LIGHT, THEME_DARK};
 
     public static final int CSP_WARMUP_DISABLED = 0;
     public static final int CSP_WARMUP_DEFAULT = 1;
@@ -173,60 +180,41 @@ public class Setting {
         Prefers.put("site_column", column);
     }
 
-    public static int getSyncMode() {
-        return Prefers.getInt("sync_mode");
-    }
-
-    public static void putSyncMode(int mode) {
-        Prefers.put("sync_mode", mode);
-    }
-
-    public static String getSyncPaths() {
-        return Prefers.getString("sync_paths", "TV\nTVBox\nTVData");
-    }
-
-    public static void putSyncPaths(String paths) {
-        Prefers.put("sync_paths", paths);
-    }
-
-    public static String getLoginStatePaths() {
-        return Prefers.getString("login_state_paths");
-    }
-
-    public static void putLoginStatePaths(String paths) {
-        Prefers.put("login_state_paths", paths);
-    }
-
-    public static String getLoginStatePendingPaths() {
-        return Prefers.getString("login_state_pending_paths");
-    }
-
-    public static void putLoginStatePendingPaths(String paths) {
-        Prefers.put("login_state_pending_paths", paths);
-    }
-
-    public static String getLoginStateSnapshot() {
-        return Prefers.getString("login_state_snapshot");
-    }
-
-    public static void putLoginStateSnapshot(String snapshot) {
-        Prefers.put("login_state_snapshot", snapshot);
-    }
-
-    public static String getLoginStateFindings() {
-        return Prefers.getString("login_state_findings");
-    }
-
-    public static void putLoginStateFindings(String findings) {
-        Prefers.put("login_state_findings", findings);
-    }
-
     public static boolean isIncognito() {
         return Prefers.getBoolean("incognito");
     }
 
     public static void putIncognito(boolean incognito) {
         Prefers.put("incognito", incognito);
+    }
+
+    public static int getTheme() {
+        int theme = Prefers.getInt("theme", THEME_FOLLOW_SYSTEM);
+        for (int option : THEME_OPTIONS) if (option == theme) return theme;
+        return THEME_FOLLOW_SYSTEM;
+    }
+
+    public static void putTheme(int theme) {
+        Prefers.put("theme", theme);
+        applyTheme();
+    }
+
+    /**
+     * 深色依赖系统强制深色（Android 10+，见 mobile Theme.Base 的 forceDarkAllowed）与 values-night 资源，
+     * 两者都按 Activity 的 uiMode 判断：AppCompat 夜间模式覆盖 uiMode，变化时自动重建所有 AppCompatActivity。
+     * Android 10 以下没有强制深色，固定跟随系统（即浅色）。
+     */
+    public static void applyTheme() {
+        int theme = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ? getTheme() : THEME_FOLLOW_SYSTEM;
+        int mode = switch (theme) {
+            case THEME_LIGHT -> AppCompatDelegate.MODE_NIGHT_NO;
+            case THEME_DARK -> AppCompatDelegate.MODE_NIGHT_YES;
+            default -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
+        };
+        int current = AppCompatDelegate.getDefaultNightMode();
+        // 启动时选的是跟随系统：保持 AppCompat 默认（未指定，同样跟随系统），不额外覆盖 uiMode
+        if (mode == AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM && current == AppCompatDelegate.MODE_NIGHT_UNSPECIFIED) return;
+        if (current != mode) AppCompatDelegate.setDefaultNightMode(mode);
     }
 
     public static int getLanguage() {
@@ -317,22 +305,9 @@ public class Setting {
         Prefers.put("compact_episode_title", compact);
     }
 
-    public static boolean isSiteHealthSort() {
-        return Prefers.getBoolean("site_health_sort", true);
-    }
-
-    public static boolean isSiteHealthDialogSort() {
-        return Prefers.getBoolean("site_health_dialog_sort");
-    }
-
-    public static boolean isWebHomeExtension() {
-        return Prefers.getBoolean("web_home_extension", true);
-    }
-
-    public static final String DEFAULT_WEB_HOME_URL = "";
-
+    /** 旧版自定义首页地址（已无设置入口），仅供 WebPageManager 一次性迁移为「网页」Tab 页面。 */
     public static String getWebHomePage() {
-        return Prefers.getString("web_home_page", DEFAULT_WEB_HOME_URL);
+        return Prefers.getString("web_home_page", "");
     }
 
     public static boolean isWebHomeFullscreen() {
@@ -420,34 +395,6 @@ public class Setting {
                 Build.PRODUCT,
                 String.join(",", Build.SUPPORTED_ABIS));
         WebViewUtil.logProvider("debug-env");
-    }
-
-    public static boolean isShellProxy() {
-        return Prefers.getBoolean("shell_proxy");
-    }
-
-    public static void putShellProxy(boolean shellProxy) {
-        Prefers.put("shell_proxy", shellProxy);
-        ProxySetting.apply();
-    }
-
-    public static String getShellProxyRules() {
-        return Prefers.getString("shell_proxy_rules");
-    }
-
-    public static void putShellProxyConfig(String url, String rules) {
-        Prefers.put("shell_proxy_url", url);
-        Prefers.put("shell_proxy_rules", rules);
-        Prefers.put("shell_proxy_hosts", "*");
-        ProxySetting.apply();
-    }
-
-    public static String getShellProxyUrl() {
-        return Prefers.getString("shell_proxy_url");
-    }
-
-    public static String getShellProxyHosts() {
-        return Prefers.getString("shell_proxy_hosts", "*");
     }
 
     public static boolean getUpdate() {

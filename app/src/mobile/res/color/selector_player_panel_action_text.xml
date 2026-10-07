@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 全屏选集面板按钮文字 / 图标：与 LUT 调色面板一致，所有状态都是白色（选中靠蓝底区分） -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="#FFFFFFFF" />
+</selector>

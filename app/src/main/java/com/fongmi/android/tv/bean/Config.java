@@ -75,10 +75,6 @@ public class Config {
         return AppDatabase.get().getConfigDao().findByType(type);
     }
 
-    public static List<Config> findUrls() {
-        return AppDatabase.get().getConfigDao().findUrlByType(0);
-    }
-
     public static void delete(String url) {
         AppDatabase.get().getConfigDao().delete(url);
     }
@@ -275,7 +271,6 @@ public class Config {
     public void delete() {
         AppDatabase.get().getConfigDao().delete(getUrl(), getType());
         History.delete(getId());
-        Keep.delete(getId());
     }
 
     @NonNull

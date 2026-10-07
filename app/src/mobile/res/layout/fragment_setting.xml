@@ -157,6 +157,49 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
+                    <!-- 主题：跟随系统 / 浅色 / 深色（Android 10 以下隐藏） -->
+                    <androidx.appcompat.widget.LinearLayoutCompat
+                        android:id="@+id/theme"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp">
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/setting_theme"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="16sp" />
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/themeText"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="6dp"
+                            android:layout_weight="1"
+                            android:gravity="end"
+                            android:textColor="#8E8E93"
+                            android:textSize="15sp"
+                            tools:text="@string/setting_theme_system" />
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_chevron_right" />
+
+                    </androidx.appcompat.widget.LinearLayoutCompat>
+
+                    <View
+                        android:id="@+id/themeDivider"
+                        android:layout_width="match_parent"
+                        android:layout_height="0.6dp"
+                        android:layout_marginStart="16dp"
+                        android:background="#EFEFEF" />
+
                     <!-- 调试日志 -->
                     <androidx.appcompat.widget.LinearLayoutCompat
                         android:id="@+id/debugLog"

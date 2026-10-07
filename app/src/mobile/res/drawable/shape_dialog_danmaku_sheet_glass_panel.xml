@@ -1,16 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 弹幕选择弹窗背景：与全屏 LUT 快捷面板（LutQuickPanel）同色的近黑半透明底，无描边 -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <gradient
-        android:angle="315"
-        android:centerColor="#D6282955"
-        android:endColor="#CC303463"
-        android:startColor="#E62F315E" />
+    <solid android:color="#E6101118" />
 
     <corners
         android:topLeftRadius="22dp"
         android:topRightRadius="22dp" />
-
-    <stroke
-        android:width="1dp"
-        android:color="#66FFFFFF" />
 </shape>

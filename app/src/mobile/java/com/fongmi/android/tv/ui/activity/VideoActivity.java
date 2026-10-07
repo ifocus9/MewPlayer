@@ -19,6 +19,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.text.InputType;
+import android.text.Layout;
 import android.text.TextUtils;
 import android.text.style.ClickableSpan;
 import android.util.Log;
@@ -46,8 +47,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
@@ -60,6 +63,7 @@ import androidx.media3.common.VideoSize;
 import androidx.media3.mpvplayer.MpvPlayer;
 import androidx.media3.ui.PlayerView;
 import androidx.palette.graphics.Palette;
+import androidx.recyclerview.widget.ConcatAdapter;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -79,7 +83,6 @@ import com.fongmi.android.tv.bean.Danmaku;
 import com.fongmi.android.tv.bean.Episode;
 import com.fongmi.android.tv.bean.Flag;
 import com.fongmi.android.tv.bean.History;
-import com.fongmi.android.tv.bean.Keep;
 import com.fongmi.android.tv.bean.Parse;
 import com.fongmi.android.tv.bean.Result;
 import com.fongmi.android.tv.bean.Site;
@@ -121,7 +124,8 @@ import com.fongmi.android.tv.setting.PlayerSetting;
 import com.fongmi.android.tv.setting.Setting;
 import com.fongmi.android.tv.setting.SiteHealthStore;
 import com.fongmi.android.tv.ui.adapter.EpisodeAdapter;
-import com.fongmi.android.tv.ui.adapter.EpisodeGroupAdapter;
+import com.fongmi.android.tv.ui.adapter.EpisodeMoreAdapter;
+import com.fongmi.android.tv.ui.adapter.EpisodeSizing;
 import com.fongmi.android.tv.ui.adapter.FlagAdapter;
 import com.fongmi.android.tv.ui.adapter.ParseAdapter;
 import com.fongmi.android.tv.ui.adapter.QualityAdapter;
@@ -138,7 +142,7 @@ import com.fongmi.android.tv.ui.dialog.CastDialog;
 import com.fongmi.android.tv.ui.dialog.CodecCapabilityDialog;
 import com.fongmi.android.tv.ui.dialog.ControlDialog;
 import com.fongmi.android.tv.ui.dialog.DanmakuDialog;
-import com.fongmi.android.tv.ui.dialog.EpisodeGridDialog;
+import com.fongmi.android.tv.ui.dialog.EpisodeSheetDialog;
 import com.fongmi.android.tv.ui.dialog.EpisodeListDialog;
 import com.fongmi.android.tv.ui.dialog.InfoDialog;
 import com.fongmi.android.tv.ui.dialog.LutPanelDialog;
@@ -183,9 +187,11 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class VideoActivity extends PlaybackActivity implements Clock.Callback, CustomKeyDown.Listener, TrackDialog.Listener, ControlDialog.Listener, DanmakuDialog.Host, FlagAdapter.OnClickListener, EpisodeAdapter.OnClickListener, EpisodeGroupAdapter.OnClickListener, QualityAdapter.OnClickListener, QuickAdapter.OnClickListener, ParseAdapter.OnClickListener, CastDialog.Listener, InfoDialog.Listener {
+public class VideoActivity extends PlaybackActivity implements Clock.Callback, CustomKeyDown.Listener, TrackDialog.Listener, ControlDialog.Listener, DanmakuDialog.Host, FlagAdapter.OnClickListener, EpisodeAdapter.OnClickListener, EpisodeListDialog.Host, QualityAdapter.OnClickListener, QuickAdapter.OnClickListener, ParseAdapter.OnClickListener, CastDialog.Listener, InfoDialog.Listener {
 
     private static final String SIZE_TAG = "MPV_SIZE";
+    // 剧集数达到该值时，选集横排末尾显示“更多”卡片
+    private static final int EPISODE_MORE_MIN_COUNT = 6;
     private static final long LYRICS_OFFSET_MIN_MS = -5000L;
     private static final long LYRICS_OFFSET_MAX_MS = 5000L;
     private static final long LYRICS_OFFSET_STEP_MS = 500L;
@@ -222,8 +228,8 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     private Observer<Result> mObservePlayer;
     private Observer<Result> mObserveSearch;
     private EpisodeAdapter mEpisodeAdapter;
-    private EpisodeGroupAdapter mEpisodeGroupAdapter;
-    private SpaceItemDecoration mEpisodeDecoration;
+    // 选集横排末尾的“更多”卡片（剧集数 >= EPISODE_MORE_MIN_COUNT 时显示）
+    private EpisodeMoreAdapter mEpisodeMoreAdapter;
     private QualityAdapter mQualityAdapter;
     private QuickAdapter mQuickAdapter;
     private QuickSearchDialog mQuickSearchDialog;
@@ -264,6 +270,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     private boolean mLyricsLoopLastPlaying;
     private String mPlaybackEpisodeKey;
     private String mArtworkRequestUrl;
+    private String mPosterUrl;
     private String mArtworkRequestOwner;
     private Vod mPendingDetailVod;
     private Result mPendingPlayerResult;
@@ -298,7 +305,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     private boolean playerKernelSwitchRefreshing;
     private boolean decodeSwitchRefreshing;
     private int deferredFullscreenOrientation = Configuration.ORIENTATION_UNDEFINED;
-    private int mEpisodeSpanCount;
     private int mStatusBarInset;
     private int mEpisodeBottomInset;
     private int mNavigationRightInset;
@@ -613,11 +619,16 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     protected void initView(Bundle savedInstanceState) {
         super.initView(savedInstanceState);
         mRestoringConfigurationPlayback = savedInstanceState != null;
+        applyLightStatusBarIcons();
         ViewCompat.setOnApplyWindowInsetsListener(mBinding.getRoot(), (v, insets) -> setStatusBar(insets));
         mKeyDown = CustomKeyDown.create(this, mBinding.exo);
         mFrameParams = mBinding.video.getLayoutParams();
         mFrameHeight = mFrameParams.height;
         mBinding.swipeLayout.setEnabled(false);
+        // 海报背景墙上叠一层与页面底色相同的渐变遮罩，保证文字可读。
+        // 用 Activity 上下文取色：应用内“深色/浅色”覆盖只作用于 Activity，App 上下文仍是系统模式。
+        mBinding.contextWall.setReadableScrim(ContextCompat.getColor(this, R.color.detail_bg));
+        applyDetailForceDark();
         setupAudioStageOverlay();
         configureAudioLandscapeActions();
         mObserveDetail = this::setDetail;
@@ -760,21 +771,17 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     @SuppressLint("ClickableViewAccessibility")
     protected void initEvent() {
         mBinding.name.setOnClickListener(view -> onName());
-        mBinding.more.setOnClickListener(view -> onMore());
-        mBinding.shortDisplay.setOnClickListener(view -> onShortDisplay());
-        mBinding.search.setOnClickListener(view -> onSearch());
-        mBinding.castAction.setOnClickListener(view -> onCast());
-        mBinding.settingAction.setOnClickListener(view -> onSetting());
+        mBinding.episodeCount.setOnClickListener(view -> onMore());
         mBinding.actor.setOnClickListener(view -> onActor());
         mBinding.content.setOnClickListener(view -> onContent());
-        mBinding.reverse.setOnClickListener(view -> onReverse());
+        mBinding.contentMore.setOnClickListener(view -> onContent());
+        mBinding.content.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> updateContentMore());
         mBinding.director.setOnClickListener(view -> onDirector());
         mBinding.name.setOnLongClickListener(view -> onChange());
         mBinding.content.setOnLongClickListener(view -> onCopy());
         mBinding.control.back.setOnClickListener(view -> onBack());
         mBinding.control.cast.setOnClickListener(view -> onCast());
         mBinding.control.info.setOnClickListener(view -> onInfo());
-        mBinding.control.keep.setOnClickListener(view -> onKeep());
         mBinding.control.osdDiagnostics.setOnClickListener(view -> onOsdDiagnostics());
         mBinding.control.play.setOnClickListener(view -> checkPlay());
         mBinding.control.next.setOnClickListener(view -> checkNext());
@@ -823,7 +830,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         mBinding.audioLyricsAction.setOnClickListener(view -> onLyricsSearch());
         mBinding.audioQueueAction.setOnClickListener(view -> onAudioQueue());
         mBinding.audioCastAction.setOnClickListener(view -> onCast());
-        mBinding.audioKeepAction.setOnClickListener(view -> onKeep());
         mBinding.audioSettingAction.setOnClickListener(view -> onSetting());
         mBinding.audioKaraokeAction.setOnClickListener(view -> onKaraokeMode());
         mBinding.audioBackgroundAction.setOnClickListener(view -> randomizeAudioBackgroundMix(false));
@@ -840,6 +846,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
                 (!isVisible(mBinding.control.getRoot()) && dispatchDiscMenuTouch(event))
                         || mKeyDown.onTouchEvent(event));
         mBinding.control.action.getRoot().setOnTouchListener(this::onActionTouch);
+        mBinding.control.action.actionScroll.setOnTouchListener(this::onActionTouch);
         mBinding.swipeLayout.setOnRefreshListener(this::onSwipeRefresh);
     }
 
@@ -855,6 +862,11 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         mBinding.statusBar.setLayoutParams(lp);
         setEpisodeBottomInset(bottom);
         return insets;
+    }
+
+    // 播放页顶部是黑色状态栏占位 + 视频区域，状态栏图标固定用白色（BaseActivity 的 SystemBarStyle.auto 在浅色主题下会给深色图标）
+    private void applyLightStatusBarIcons() {
+        WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView()).setAppearanceLightStatusBars(false);
     }
 
     private void applyStatusBarSpacer() {
@@ -922,7 +934,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
                 || isPointInside(mBinding.audioKaraokeAction, event)
                 || isPointInside(mBinding.audioMoreAction, event)
                 || isPointInside(mBinding.audioCastAction, event)
-                || isPointInside(mBinding.audioKeepAction, event)
                 || isPointInside(mBinding.audioSettingAction, event)
                 || isPointInside(mBinding.audioTrackAction, event)
                 || isPointInside(mBinding.audioSubtitleAction, event)
@@ -950,22 +961,15 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         mBinding.flag.addItemDecoration(new SpaceItemDecoration(8));
         mBinding.flag.setAdapter(mFlagAdapter = new FlagAdapter(this));
         mBinding.quick.setAdapter(mQuickAdapter = new QuickAdapter(this));
-        mBinding.episodeGroup.setHasFixedSize(true);
-        mBinding.episodeGroup.setItemAnimator(null);
-        mBinding.episodeGroup.setAdapter(mEpisodeGroupAdapter = new EpisodeGroupAdapter(this));
-        mEpisodeSpanCount = getEpisodeSpanCount();
+        // 选集：横向一排（全部剧集 + 末尾“更多”卡片），完整列表在抽屉 EpisodeSheetDialog 里
         mBinding.episode.setNestedScrollingEnabled(false);
         mBinding.episode.setHasFixedSize(false);
         mBinding.episode.setItemAnimator(null);
-        mBinding.episode.setLayoutManager(new GridLayoutManager(this, mEpisodeSpanCount));
-        mBinding.episode.addItemDecoration(mEpisodeDecoration = new SpaceItemDecoration(mEpisodeSpanCount, 8));
-        mBinding.episode.setAdapter(mEpisodeAdapter = new EpisodeAdapter(this, ViewType.GRID));
-        mBinding.episode.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
-                syncEpisodeGroupByScroll();
-            }
-        });
+        mBinding.episode.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        mBinding.episode.addItemDecoration(new SpaceItemDecoration(8));
+        mEpisodeAdapter = new EpisodeAdapter(this, ViewType.ROW);
+        mEpisodeMoreAdapter = new EpisodeMoreAdapter(this::onMore);
+        mBinding.episode.setAdapter(new ConcatAdapter(mEpisodeAdapter, mEpisodeMoreAdapter));
         mBinding.quality.setHasFixedSize(true);
         mBinding.quality.setItemAnimator(null);
         mBinding.quality.addItemDecoration(new SpaceItemDecoration(8));
@@ -976,7 +980,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         mBinding.control.parse.setAdapter(mParseAdapter = new ParseAdapter(this, ViewType.DARK));
     }
 
-    private int getEpisodeSpanCount() {
+    private int getEpisodeGridMaxSpan() {
         return EpisodeGridLayoutPolicy.getMaxSpan(isLand(), ResUtil.isPad());
     }
 
@@ -1194,6 +1198,12 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
 
     private void setPlayerKernel() {
         mBinding.control.action.player.setText(player().getPlayerText());
+        setDanmakuActionVisible();
+    }
+
+    // 全屏时（EXO / MPV / IJK 所有内核）底部操作栏不显示弹幕按钮（设置面板里的弹幕入口保留）
+    private void setDanmakuActionVisible() {
+        mBinding.control.action.danmaku.setVisibility(isFullscreen() ? View.GONE : View.VISIBLE);
     }
 
     private void setScale(int scale) {
@@ -1292,6 +1302,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         item.checkContent(getContent());
         mBinding.name.setText(item.getName());
         mFlagAdapter.addAll(item.getFlags());
+        updateFlagCount();
         if (mBinding.flagLayout != null) mBinding.flagLayout.setVisibility(item.getFlags().isEmpty() ? View.GONE : View.VISIBLE);
         if (mBinding.flag != null) mBinding.flag.setVisibility(item.getFlags().isEmpty() ? View.GONE : View.VISIBLE);
         App.removeCallbacks(mR4);
@@ -1299,13 +1310,12 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         setAudioStageVisible(shouldUseImmersiveAudio());
         mBinding.progressLayout.showContent();
         checkFlag(item);
-        checkKeepImg();
         setText(item);
-        updateKeep();
     }
 
     private void setText(Vod item) {
-        setText(mBinding.site, R.string.detail_site, getSite().getName());
+        // 站源以小胶囊标签展示，只显示名称
+        setText(mBinding.site, 0, getSite().getName());
         setText(mBinding.director, R.string.detail_director, item.getDirector());
         setText(mBinding.actor, R.string.detail_actor, item.getActor());
         setText(mBinding.content, 0, item.getContent());
@@ -1320,12 +1330,39 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         view.setText(Sniffer.buildClickable(resId > 0 ? getString(resId, text) : text, this::clickableSpan), TextView.BufferType.SPANNABLE);
         view.setVisibility(text.isEmpty() ? View.GONE : View.VISIBLE);
         if (view == mBinding.content) setContentVisible();
-        view.setLinkTextColor(Color.WHITE);
+        // 链接（演员/导演名等）用详情页强调色，日夜模式各自取 values / values-night 的 detail_accent
+        view.setLinkTextColor(ContextCompat.getColor(this, R.color.detail_accent));
         CustomMovement.bind(view);
     }
 
     private void setContentVisible() {
         mBinding.contentLayout.setVisibility(mBinding.content.getVisibility());
+        mBinding.content.post(this::updateContentMore);
+    }
+
+    /**
+     * 详情页的颜色全部来自 values / values-night 里的 detail_* 资源，日夜两套都是手工配好的。
+     * 这里关闭系统“强制深色”（Android 10+ 的 forceDark 自动反色），避免两套机制叠加导致颜色不可控：
+     * 浅色模式下不受影响；深色模式下直接使用 values-night 的配色。
+     * 播放器区域本身就是深色设计（黑底白字），弹窗是独立窗口，都不受这里影响。
+     */
+    private void applyDetailForceDark() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return;
+        mBinding.getRoot().setForceDarkAllowed(false);
+    }
+
+    /**
+     * 简介被截断时在末尾显示“展开”（点击打开完整简介弹窗）。
+     */
+    private void updateContentMore() {
+        if (mBinding == null) return;
+        Layout layout = mBinding.content.getLayout();
+        boolean ellipsized = false;
+        if (layout != null && layout.getLineCount() > 0) {
+            ellipsized = layout.getEllipsisCount(layout.getLineCount() - 1) > 0 || layout.getLineCount() > mBinding.content.getMaxLines();
+        }
+        int visibility = ellipsized ? View.VISIBLE : View.GONE;
+        if (mBinding.contentMore.getVisibility() != visibility) mBinding.contentMore.setVisibility(visibility);
     }
 
     private ClickableSpan clickableSpan(Result result) {
@@ -1340,12 +1377,15 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     }
 
     private void setOther(TextView view, Vod item) {
-        StringBuilder sb = new StringBuilder();
-        if (!item.getYear().isEmpty()) sb.append(getString(R.string.detail_year, item.getYear())).append("  ");
-        if (!item.getArea().isEmpty()) sb.append(getString(R.string.detail_area, item.getArea())).append("  ");
-        if (!item.getTypeName().isEmpty()) sb.append(getString(R.string.detail_type, item.getTypeName())).append("  ");
-        view.setVisibility(sb.length() == 0 ? View.GONE : View.VISIBLE);
-        view.setText(Util.substring(sb.toString(), 2));
+        // 合成一行：2026 · 大陆 · 剧情 · 全40集
+        List<String> parts = new ArrayList<>();
+        if (!item.getYear().isEmpty()) parts.add(item.getYear());
+        if (!item.getArea().isEmpty()) parts.add(item.getArea());
+        if (!item.getTypeName().isEmpty()) parts.add(item.getTypeName());
+        if (!item.getRemarks().isEmpty()) parts.add(item.getRemarks());
+        String text = TextUtils.join(" · ", parts);
+        view.setVisibility(text.isEmpty() ? View.GONE : View.VISIBLE);
+        view.setText(text);
     }
 
     private void getPlayer(Flag flag, Episode episode) {
@@ -1452,16 +1492,11 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         Flag flag = getFlag();
         if (mFlagAdapter != null) mFlagAdapter.toggle(item);
         if (flag != null) setEpisodeAdapter(flag.getEpisodes());
+        // 横排刷新后保持当前集可见（居中）
+        scrollEpisodeToSelected();
         applyAudioQueueMetadata(item);
         if (isFullscreen()) Notify.show(getString(R.string.play_ready, item.getName()));
         onRefresh();
-    }
-
-    @Override
-    public void onItemClick(EpisodeGroupAdapter.Group item) {
-        mEpisodeGroupAdapter.setSelected(item);
-        scrollEpisodeToPosition(item.start);
-        scrollToPosition(mBinding.episodeGroup, mEpisodeGroupAdapter.getPosition());
     }
 
     @Override
@@ -1496,99 +1531,98 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         applyActionButtonVisibility();
         mBinding.control.next.setVisibility(size < 2 ? View.GONE : View.VISIBLE);
         mBinding.control.prev.setVisibility(size < 2 ? View.GONE : View.VISIBLE);
-        mBinding.reverse.setVisibility(size < 2 ? View.GONE : View.VISIBLE);
+        mBinding.episodeCount.setText(getString(R.string.detail_episode_count, size));
+        mBinding.episodeCount.setVisibility(size < 2 ? View.GONE : View.VISIBLE);
         mBinding.episode.setVisibility(items.isEmpty() ? View.GONE : View.VISIBLE);
         if (mBinding.episodeLayout != null) mBinding.episodeLayout.setVisibility(items.isEmpty() ? View.GONE : View.VISIBLE);
-        mBinding.more.setVisibility(View.GONE);
-        List<EpisodeGroupAdapter.Group> groups = EpisodeGroupAdapter.build(size, getSelectedEpisodePosition(items), mHistory != null && mHistory.isRevSort());
-        mEpisodeGroupAdapter.addAll(groups);
-        mBinding.episodeGroup.setVisibility(groups.size() > 1 ? View.VISIBLE : View.GONE);
         setEpisodeItems(items);
         mBinding.episode.post(this::updateEpisodeViewportHeight);
         if (mAudioStageVisible) applyAudioPageMode(true);
         updateAudioStageControls();
+        refreshEpisodeSheet();
     }
 
     private void setEpisodeItems(List<Episode> items) {
-        updateEpisodeSpan(items);
         mEpisodeAdapter.addAll(items);
-        selectEpisodeGroupByPosition(mEpisodeAdapter.getPosition());
+        updateEpisodeRowSize();
     }
 
-    private void syncEpisodeGroupByScroll() {
+    /**
+     * 横排卡片按整列表最长标题统一宽度；只有一集时自适应宽度。
+     * 需在 addAll（会执行 EpisodeTitleCompact.apply）之后调用，保证按显示名计算。
+     */
+    private void updateEpisodeRowSize() {
+        if (mEpisodeAdapter == null) return;
+        List<Episode> items = mEpisodeAdapter.getItems();
+        int width = items.size() <= 1 ? 0 : ResUtil.dp2px(EpisodeSizing.getRowItemWidthDp(EpisodeSizing.getMaxTitleLength(items)));
+        mEpisodeAdapter.setItemWidth(width);
+        if (mEpisodeMoreAdapter == null) return;
+        mEpisodeMoreAdapter.setLongTitle(mEpisodeAdapter.isLongTitle());
+        mEpisodeMoreAdapter.setVisible(items.size() >= EPISODE_MORE_MIN_COUNT);
+    }
+
+    /**
+     * 横排滚动到指定剧集并尽量居中。index 为完整剧集列表下标（横排不分段，即适配器位置）。
+     */
+    private void scrollEpisodeToPosition(int index) {
+        if (mEpisodeAdapter == null || mEpisodeAdapter.getItemCount() == 0) return;
+        int position = Math.max(0, Math.min(index, mEpisodeAdapter.getItemCount() - 1));
         RecyclerView.LayoutManager manager = mBinding.episode.getLayoutManager();
-        if (!(manager instanceof GridLayoutManager)) return;
-        int position = getEpisodeGroupSyncPosition((GridLayoutManager) manager);
-        if (position == RecyclerView.NO_POSITION) return;
-        selectEpisodeGroupByPosition(position);
-    }
-
-    private int getEpisodeGroupSyncPosition(GridLayoutManager manager) {
-        if (!mBinding.episode.canScrollVertically(1) && mBinding.episode.canScrollVertically(-1)) {
-            return manager.findLastVisibleItemPosition();
-        }
-        return manager.findFirstVisibleItemPosition();
-    }
-
-    private void selectEpisodeGroupByPosition(int position) {
-        if (mEpisodeGroupAdapter == null || mEpisodeGroupAdapter.isEmpty()) return;
-        int current = mEpisodeGroupAdapter.getPosition();
-        List<EpisodeGroupAdapter.Group> groups = mEpisodeGroupAdapter.getItems();
-        for (int i = 0; i < groups.size(); i++) {
-            EpisodeGroupAdapter.Group group = groups.get(i);
-            if (position < group.start || position >= group.end) continue;
-            if (i != current) {
-                mEpisodeGroupAdapter.setSelected(group);
-                mBinding.episodeGroup.scrollToPosition(i);
-            }
+        if (!(manager instanceof LinearLayoutManager)) {
+            mBinding.episode.scrollToPosition(position);
             return;
         }
-    }
-
-    private void scrollEpisodeToPosition(int position) {
-        RecyclerView.LayoutManager manager = mBinding.episode.getLayoutManager();
-        if (manager instanceof GridLayoutManager) {
-            int rowStart = getEpisodeRowStart((GridLayoutManager) manager, position);
-            int offset = rowStart >= ((GridLayoutManager) manager).getSpanCount() ? -ResUtil.dp2px(4) : 0;
-            ((GridLayoutManager) manager).scrollToPositionWithOffset(rowStart, offset);
-        }
-        else mBinding.episode.scrollToPosition(position);
+        int item = mEpisodeAdapter.getItemWidth() > 0 ? mEpisodeAdapter.getItemWidth() : ResUtil.dp2px(72);
+        int visible = mBinding.episode.getWidth() - mBinding.episode.getPaddingStart() - mBinding.episode.getPaddingEnd();
+        int offset = visible > item ? (visible - item) / 2 : 0;
+        ((LinearLayoutManager) manager).scrollToPositionWithOffset(position, offset);
     }
 
     private void scrollEpisodeToSelected() {
         mBinding.episode.post(() -> scrollEpisodeToPosition(mEpisodeAdapter.getPosition()));
     }
 
-    private int getEpisodeRowStart(GridLayoutManager manager, int position) {
-        int span = Math.max(1, manager.getSpanCount());
-        return Math.max(0, position - position % span);
+    /**
+     * 抽屉打开时同步刷新（换线路、切集、倒序、精简、列数设置变化等）。
+     */
+    private void refreshEpisodeSheet() {
+        for (Fragment fragment : getSupportFragmentManager().getFragments()) {
+            if (fragment instanceof EpisodeSheetDialog dialog) dialog.refresh();
+            else if (fragment instanceof EpisodeListDialog panel) panel.refresh();
+        }
     }
 
-    private void updateEpisodeSpan(List<Episode> items) {
-        int span = getEpisodeSpan(items);
-        if (span == mEpisodeSpanCount) return;
-        mEpisodeSpanCount = span;
-        mBinding.episode.setLayoutManager(new GridLayoutManager(this, mEpisodeSpanCount));
-        if (mEpisodeDecoration != null) mBinding.episode.removeItemDecoration(mEpisodeDecoration);
-        mBinding.episode.addItemDecoration(mEpisodeDecoration = new SpaceItemDecoration(mEpisodeSpanCount, 8));
+    @Override
+    public List<Flag> getEpisodePanelFlags() {
+        return mFlagAdapter == null ? new ArrayList<>() : mFlagAdapter.getItems();
     }
 
-    private int getEpisodeSpan(List<Episode> items) {
-        EpisodeTitleCompact.apply(items);
-        if (items.size() == 1) return 1;
-        int maxLen = 0;
-        for (Episode item : items) maxLen = Math.max(maxLen, item.getDisplayName().length());
-        if (maxLen >= 12) return PlayerSetting.getEpisodeColumn();
-        int ideal = maxLen >= 10 ? 130 : maxLen >= 7 ? 104 : 80;
-        int width = EpisodeGridLayoutPolicy.getAvailableWidth(
-                mBinding.episode.getWidth(),
-                ResUtil.getScreenWidth(this),
-                ResUtil.getScreenHeight(this),
-                ResUtil.dp2px(32),
-                isLand(),
-                ResUtil.isLand(this));
-        int span = width / ResUtil.dp2px(ideal);
-        return Math.max(2, Math.min(getEpisodeSpanCount(), span));
+    @Override
+    public List<Episode> getEpisodeSheetItems() {
+        Flag flag = getFlag();
+        if (flag != null) return flag.getEpisodes();
+        return mEpisodeAdapter == null ? new ArrayList<>() : mEpisodeAdapter.getItems();
+    }
+
+    @Override
+    public boolean isEpisodeSheetReverse() {
+        return mHistory != null && mHistory.isRevSort();
+    }
+
+    @Override
+    public int getEpisodeSheetMaxSpan() {
+        return getEpisodeGridMaxSpan();
+    }
+
+    @Override
+    public void onEpisodeSheetReverse() {
+        if (mHistory == null || getFlag() == null) return;
+        onReverse();
+    }
+
+    @Override
+    public void onEpisodeSheetCompact() {
+        onShortDisplay();
     }
 
     private int getSelectedEpisodePosition(List<Episode> items) {
@@ -1604,7 +1638,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
 
     private int getEpisodeCount() {
         Flag flag = getFlag();
-        return flag == null ? mEpisodeAdapter.getItemCount() : flag.getEpisodes().size();
+        return flag == null ? mEpisodeAdapter.size() : flag.getEpisodes().size();
     }
 
     private void seamless(Flag flag) {
@@ -1778,14 +1812,15 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     }
 
     private void setShortDisplay() {
-        mBinding.shortDisplay.setSelected(Setting.isCompactEpisodeTitle());
+        // “精简”开关已移入选集抽屉，开关状态由抽屉自己读取 Setting；这里只需同步已打开的抽屉
+        refreshEpisodeSheet();
     }
 
     private void onMore() {
+        if (getEpisodeSheetItems().size() < 2) return;
         Flag flag = getFlag();
-        if (flag == null) return;
-        syncSelectedEpisode(flag);
-        EpisodeGridDialog.create().reverse(mHistory.isRevSort()).episodes(flag.getEpisodes()).show(this);
+        if (flag != null) syncSelectedEpisode(flag);
+        EpisodeSheetDialog.create().show(this);
     }
 
     private void onActor() {
@@ -1819,7 +1854,8 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
 
     private void onReverse() {
         mHistory.setRevSort(!mHistory.isRevSort());
-        reverseEpisode(false);
+        // 倒序后横排顺序整体翻转，需重新把当前集滚到可见位置
+        reverseEpisode(true);
     }
 
     private boolean onChange() {
@@ -1858,14 +1894,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
 
     private void onInfo() {
         InfoDialog.create().title(mBinding.control.title.getText()).headers(player().getHeaders()).url(player().getUrl()).show(this);
-    }
-
-    private void onKeep() {
-        Keep keep = Keep.find(getHistoryKey());
-        Notify.show(keep != null ? R.string.keep_del : R.string.keep_add);
-        if (keep != null) keep.delete();
-        else createKeep();
-        checkKeepImg();
     }
 
     private void checkPlay() {
@@ -2481,7 +2509,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     private void onAudioMore() {
         ArrayList<String> items = new ArrayList<>();
         ArrayList<Runnable> actions = new ArrayList<>();
-        addAudioMoreItem(items, actions, getString(R.string.keep), this::onKeep);
         addAudioMoreItem(items, actions, getString(R.string.nav_setting), this::onSetting);
         addAudioMoreItem(items, actions, getString(R.string.player_audio_background), this::showAudioBackgroundPanel);
         if (service() != null && !player().isEmpty()) addAudioMoreItem(items, actions, getString(R.string.player_osd), this::onInfo);
@@ -3953,7 +3980,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
 
     private void onEpisodes() {
         syncSelectedEpisode(getFlag());
-        EpisodeListDialog.create().flags(mFlagAdapter.getItems()).reverse(mHistory.isRevSort()).show(this);
+        EpisodeListDialog.create().show(this);
     }
 
     private void onChoose() {
@@ -4088,7 +4115,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         setFullscreen(false);
         if (isLand() && !player().isPortrait()) setTransition();
         setRequestedOrientation(PlaybackOrientation.getExitFullscreenOrientation(isPort()));
-        mBinding.episodeGroup.postDelayed(() -> mBinding.episodeGroup.scrollToPosition(mEpisodeGroupAdapter.getPosition()), 100);
         mBinding.episode.postDelayed(this::scrollEpisodeToSelected, 100);
         mBinding.control.title.setVisibility(View.INVISIBLE);
         setSizeText();
@@ -4158,8 +4184,8 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         mBinding.control.danmaku.setVisibility(isLock() || !player().haveDanmaku() ? View.GONE : View.VISIBLE);
         mBinding.control.setting.setVisibility(View.GONE);
         mBinding.control.right.rotate.setVisibility(isFullscreen() && !isLock() ? View.VISIBLE : View.GONE);
-        mBinding.control.fullscreen.setVisibility(isLock() ? View.GONE : View.VISIBLE);
-        mBinding.control.keep.setVisibility(mHistory == null || isFullscreen() ? View.GONE : View.VISIBLE);
+        // 全屏时不再显示进度条后的退出全屏按钮（返回键/返回手势仍可退出），进度条行随之收紧
+        mBinding.control.fullscreen.setVisibility(isLock() || isFullscreen() ? View.GONE : View.VISIBLE);
         boolean showPlayParams = PlayerButtonSetting.isVisible(PlayerButtonSetting.PLAY_PARAMS);
         mBinding.control.action.playParams.setVisibility(showPlayParams ? View.VISIBLE : View.GONE);
         mBinding.control.osdDiagnostics.setVisibility(PlayerSetting.isOsdDiagnostics() && PlayerButtonSetting.isVisible(PlayerButtonSetting.PLAY_PARAMS) && !player().isEmpty() ? View.VISIBLE : View.GONE);
@@ -4167,9 +4193,13 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         mBinding.control.action.playParams.setSelected(mOsd != null && mOsd.isDiagnosticsVisible());
         mBinding.control.parse.setVisibility(isFullscreen() && isUseParse() ? View.VISIBLE : View.GONE);
         mBinding.control.action.getRoot().setVisibility(isFullscreen() ? View.VISIBLE : View.GONE);
+        setDanmakuActionVisible();
         mBinding.control.right.lock.setVisibility(isFullscreen() ? View.VISIBLE : View.GONE);
         mBinding.control.info.setVisibility(player().isEmpty() ? View.GONE : View.VISIBLE);
-        mBinding.control.cast.setVisibility(View.GONE);
+        // 投屏入口：播放器右上角图标（详情页下方的功能按钮行已移除）
+        mBinding.control.cast.setVisibility(View.VISIBLE);
+        // 全屏隐藏了系统状态栏，在右上角补上电量和时间
+        mBinding.control.batteryTime.setVisibility(isFullscreen() ? View.VISIBLE : View.GONE);
         mBinding.control.center.setVisibility(isLock() ? View.GONE : View.VISIBLE);
         mBinding.control.bottom.setVisibility(isLock() ? View.GONE : View.VISIBLE);
         mBinding.control.back.setVisibility(isLock() ? View.GONE : View.VISIBLE);
@@ -4234,6 +4264,16 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         if (mHistory != null) mHistory.setVodPic(url);
         loadArtwork(url, mPlaybackEpisodeKey);
         setContextWall(getContextWall());
+        setPoster(url);
+    }
+
+    // 详情头部左侧海报：用影片级封面（vod_pic），不跟随单集/音频队列封面变化；无图或加载失败时显示片名首字占位
+    private void setPoster(String url) {
+        String pic = Objects.toString(url, "");
+        if (!pic.isEmpty() && TextUtils.equals(mPosterUrl, pic)) return;
+        mPosterUrl = pic;
+        CharSequence name = mBinding.name.getText();
+        ImgUtil.load(name == null ? "" : name.toString(), pic, mBinding.poster, ResUtil.dp2px(150), ResUtil.dp2px(225));
     }
 
     private void setArtwork() {
@@ -4491,12 +4531,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         if (isVisible(mBinding.control.getRoot())) showControl();
     }
 
-    private void checkKeepImg() {
-        boolean kept = Keep.find(getHistoryKey()) != null;
-        mBinding.control.keep.setImageResource(kept ? R.drawable.ic_control_keep_on : R.drawable.ic_control_keep_off);
-        mBinding.audioKeepAction.setSelected(kept);
-    }
-
     private void checkLockImg() {
         mBinding.control.right.lock.setImageResource(isLock() ? R.drawable.ic_control_lock_on : R.drawable.ic_control_lock_off);
     }
@@ -4507,26 +4541,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
 
     private void checkDanmakuImg() {
         mBinding.control.danmaku.setImageResource(DanmakuSetting.isShow() ? R.drawable.ic_control_danmaku_on : R.drawable.ic_control_danmaku_off);
-    }
-
-    private void createKeep() {
-        Keep keep = new Keep();
-        keep.setKey(getHistoryKey());
-        keep.setCid(VodConfig.getCid());
-        keep.setVodPic(mHistory.getVodPic());
-        keep.setVodName(mHistory.getVodName());
-        keep.setSiteName(getSite().getName());
-        keep.setCreateTime(System.currentTimeMillis());
-        keep.save();
-    }
-
-    private void updateKeep() {
-        Keep keep = Keep.find(getHistoryKey());
-        if (keep != null) {
-            keep.setVodName(mHistory.getVodName());
-            keep.setVodPic(mHistory.getVodPic());
-            keep.save();
-        }
     }
 
     private void updateVod(Vod item) {
@@ -4543,7 +4557,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         if (pic) setArtwork(item.getPic());
         if (pic || name) setMetadata();
         if (pic || name) syncHistory();
-        if (pic || name) updateKeep();
         if (id) updateNavigationKey();
         PlaybackEventCollector.get().updateHistory(mHistory);
         setText(item);
@@ -4555,6 +4568,14 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
                     target.mergeEpisodes(item.getEpisodes(), mHistory.isRevSort());
                     if (target.equals(activated)) setEpisodeAdapter(target.getEpisodes());
                 }, () -> mFlagAdapter.add(item)));
+        updateFlagCount();
+    }
+
+    private void updateFlagCount() {
+        if (mBinding == null || mFlagAdapter == null) return;
+        int count = mFlagAdapter.getItemCount();
+        mBinding.flagCount.setText(getString(R.string.detail_flag_count, count));
+        mBinding.flagCount.setVisibility(count > 0 ? View.VISIBLE : View.GONE);
     }
 
     private final PlaybackService.NavigationCallback mNavigationCallback = new PlaybackService.NavigationCallback() {
@@ -4681,23 +4702,21 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     private void applyAudioPageMode(boolean visible) {
         if (mBinding.videoShadow != null) mBinding.videoShadow.setVisibility(visible ? View.GONE : View.VISIBLE);
         mBinding.name.setVisibility(visible ? View.GONE : View.VISIBLE);
+        mBinding.poster.setVisibility(visible ? View.GONE : View.VISIBLE);
         mBinding.site.setVisibility(visible ? View.GONE : mBinding.site.getText().length() == 0 ? View.GONE : View.VISIBLE);
         mBinding.other.setVisibility(visible ? View.GONE : mBinding.other.getText().length() == 0 ? View.GONE : View.VISIBLE);
         mBinding.director.setVisibility(visible ? View.GONE : mBinding.director.getText().length() == 0 ? View.GONE : View.VISIBLE);
         mBinding.actor.setVisibility(visible ? View.GONE : mBinding.actor.getText().length() == 0 ? View.GONE : View.VISIBLE);
         mBinding.contentLayout.setVisibility(visible ? View.GONE : mBinding.content.getText().length() == 0 ? View.GONE : View.VISIBLE);
-        mBinding.actionRow.setVisibility(View.GONE);
         boolean flagVisible = !visible && mFlagAdapter != null && !mFlagAdapter.isEmpty();
         if (mBinding.flagLayout != null) mBinding.flagLayout.setVisibility(flagVisible ? View.VISIBLE : View.GONE);
         mBinding.flag.setVisibility(flagVisible ? View.VISIBLE : View.GONE);
         boolean qualityVisible = mQualityAdapter != null && mQualityAdapter.getItemCount() > 1;
-        boolean episodeGroupVisible = mEpisodeGroupAdapter != null && mEpisodeGroupAdapter.getItemCount() > 1;
         boolean episodeVisible = mEpisodeAdapter != null && mEpisodeAdapter.getItemCount() > 0;
         boolean quickVisible = mQuickAdapter != null && mQuickAdapter.getItemCount() > 0;
         mBinding.qualityText.setVisibility(visible || !qualityVisible ? View.GONE : View.VISIBLE);
         mBinding.quality.setVisibility(visible || !qualityVisible ? View.GONE : View.VISIBLE);
         if (mBinding.episodeLayout != null) mBinding.episodeLayout.setVisibility(visible || !episodeVisible ? View.GONE : View.VISIBLE);
-        mBinding.episodeGroup.setVisibility(visible || !episodeGroupVisible ? View.GONE : View.VISIBLE);
         mBinding.episode.setVisibility(visible || !episodeVisible ? View.GONE : View.VISIBLE);
         mBinding.quick.setVisibility(visible || !quickVisible ? View.GONE : View.VISIBLE);
     }
@@ -4725,7 +4744,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         mBinding.audioQueueAction.setAlpha(1f);
         setAudioRepeatSelected(service() != null && player().isRepeatOne());
         mBinding.audioKaraokeAction.setSelected(PlayerSetting.isKaraokeMode());
-        mBinding.audioKeepAction.setSelected(Keep.find(getHistoryKey()) != null);
         checkAudioPlayImg(service() != null && player().isPlaying());
         syncAudioCoverRotation();
     }
@@ -6276,13 +6294,16 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
 
     @Override
     public void onCompactEpisodeTitleChanged() {
+        setShortDisplay();
         refreshEpisodeTitles();
     }
 
     private void refreshEpisodeTitles() {
         if (mEpisodeAdapter == null) return;
         if (mFlagAdapter == null || mFlagAdapter.isEmpty()) {
-            updateEpisodeSpan(mEpisodeAdapter.getItems());
+            EpisodeTitleCompact.apply(mEpisodeAdapter.getItems());
+            mEpisodeAdapter.refreshTitleMode();
+            updateEpisodeRowSize();
             mEpisodeAdapter.notifyItemRangeChanged(0, mEpisodeAdapter.getItemCount());
         } else {
             Flag flag = getFlag();
@@ -6290,6 +6311,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         }
         scrollEpisodeToSelected();
         mBinding.episode.post(this::updateEpisodeViewportHeight);
+        refreshEpisodeSheet();
     }
 
     @Override
@@ -6459,6 +6481,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     @Override
     protected void onResume() {
         super.onResume();
+        applyLightStatusBarIcons();
         restoreContextWall();
         if (mAudioStageVisible) restorePlaybackArtwork();
         if (mAudioStageVisible) applyAudioBackground();
@@ -6476,6 +6499,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         }
         syncFullscreenForOrientation(newConfig.orientation);
         setupCustomActionButtons();
+        applyLightStatusBarIcons();
         if (isFullscreen()) Util.hideSystemUI(this);
     }
 
@@ -6582,7 +6606,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         saveHistory(true);
         Timer.get().reset();
         DanmakuApi.cancel();
-        RefreshEvent.keep();
         App.removeCallbacks(mR1, mR2, mR3, mR4);
         if (mOsd != null) mOsd.release();
         mViewModel.getResult().removeObserver(mObserveDetail);

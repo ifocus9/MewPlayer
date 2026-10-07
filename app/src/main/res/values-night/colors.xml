@@ -1,13 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="nav_capsule_stroke">#33FFFFFF</color>
-    <color name="nav_indicator_color">#2A2A32</color>
+    <color name="nav_capsule_bg">#E61C1C1E</color>
+    <color name="nav_capsule_stroke">#1FFFFFFF</color>
+    <color name="fab_capsule_bg">#1C1C1E</color>
+    <color name="nav_indicator_color">#24FFFFFF</color>
     <color name="nav_item_selected">#2196F3</color>
     <color name="nav_item_unselected">#E0E0E0</color>
-    <color name="site_capsule_bg">#26FFFFFF</color>
-    <color name="site_capsule_stroke">#33FFFFFF</color>
+    <!-- 夜间阴影几乎看不见，改用比背景亮一档的实色底来区分 -->
+    <color name="site_capsule_bg">#2C2C2E</color>
+    <color name="site_capsule_text">#F2F2F2</color>
+    <color name="site_capsule_icon">#B3FFFFFF</color>
     <color name="type_indicator_color">#2196F3</color>
     <color name="type_unselected_color">#AAAAAA</color>
     <color name="text_site">#FFFFFF</color>
     <color name="colorPrimary">#217AF4</color>
+
+    <!-- 播放详情页（mobile）深色配色：详情页已关闭系统强制深色，由这里直接决定颜色 -->
+    <color name="detail_bg">#121214</color>
+    <color name="detail_chip">#232327</color>
+    <color name="detail_chip_focused">#2C2C31</color>
+    <color name="detail_chip_selected">#1C3354</color>
+    <color name="detail_text_primary">#E8E8EA</color>
+    <color name="detail_text_body">#BDBDC2</color>
+    <color name="detail_text_meta">#8E8E95</color>
+    <color name="detail_accent">#5B9DFF</color>
 </resources>

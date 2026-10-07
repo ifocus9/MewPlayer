@@ -1,5 +1,6 @@
 package com.fongmi.android.tv.ui.adapter;
 
+import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
@@ -91,6 +92,7 @@ public class FlagAdapter extends RecyclerView.Adapter<FlagAdapter.ViewHolder> {
         Flag item = mItems.get(position);
         holder.binding.text.setText(item.getShow());
         holder.binding.text.setSelected(item.isSelected());
+        holder.binding.text.setTypeface(Typeface.DEFAULT, item.isSelected() ? Typeface.BOLD : Typeface.NORMAL);
         holder.binding.text.setOnClickListener(v -> listener.onItemClick(item));
     }
 

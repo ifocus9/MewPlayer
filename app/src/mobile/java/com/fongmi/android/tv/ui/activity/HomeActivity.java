@@ -7,9 +7,14 @@ import android.content.res.Configuration;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.Interpolator;
+import android.view.animation.OvershootInterpolator;
+import android.view.animation.PathInterpolator;
 import android.widget.RelativeLayout;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
 import androidx.viewbinding.ViewBinding;
 
 import com.fongmi.android.tv.App;
@@ -18,7 +23,6 @@ import com.fongmi.android.tv.api.config.VodConfig;
 import com.fongmi.android.tv.bean.Config;
 import com.fongmi.android.tv.bean.Site;
 import com.fongmi.android.tv.databinding.ActivityHomeBinding;
-import com.fongmi.android.tv.db.AppDatabase;
 import com.fongmi.android.tv.event.ConfigEvent;
 import com.fongmi.android.tv.event.RefreshEvent;
 import com.fongmi.android.tv.event.ServerEvent;
@@ -29,12 +33,14 @@ import com.fongmi.android.tv.server.Server;
 import com.fongmi.android.tv.service.PlaybackService;
 import com.fongmi.android.tv.setting.Setting;
 import com.fongmi.android.tv.ui.base.BaseActivity;
+import com.fongmi.android.tv.ui.base.WebChromeHost;
 import com.fongmi.android.tv.ui.custom.FragmentStateManager;
 import com.fongmi.android.tv.ui.fragment.HistoryFragment;
 import com.fongmi.android.tv.ui.fragment.SettingDanmakuFragment;
 import com.fongmi.android.tv.ui.fragment.SettingFragment;
 import com.fongmi.android.tv.ui.fragment.SettingPlayerFragment;
 import com.fongmi.android.tv.ui.fragment.VodFragment;
+import com.fongmi.android.tv.ui.fragment.WebTabFragment;
 import com.fongmi.android.tv.utils.FileChooser;
 import com.fongmi.android.tv.utils.MobileWindow;
 import com.fongmi.android.tv.utils.Notify;
@@ -42,7 +48,6 @@ import com.fongmi.android.tv.utils.PermissionUtil;
 import com.fongmi.android.tv.utils.ResUtil;
 import com.fongmi.android.tv.utils.UrlUtil;
 import com.fongmi.android.tv.utils.Util;
-import com.fongmi.android.tv.web.WebHomeChromeStartup;
 import com.fongmi.android.tv.web.WebHomeViewport;
 import com.github.catvod.net.OkHttp;
 import com.google.gson.JsonObject;
@@ -50,10 +55,25 @@ import com.google.gson.JsonObject;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class HomeActivity extends BaseActivity implements WebHomeChromeController.Host {
 
     public static final String EXTRA_NAV_POSITION = "nav_position";
-        private static final String STATE_CURRENT_POSITION = "currentPosition";
+    private static final String STATE_CURRENT_POSITION = "currentPosition";
+
+    // FragmentStateManager 的位置索引（与 Fragment tag 绑定，不要重新编号）
+    public static final int TAB_VOD = 0;
+    public static final int TAB_SETTING = 1;
+    public static final int TAB_SETTING_PLAYER = 2;
+    public static final int TAB_KEEP = 3;
+    public static final int TAB_SETTING_DANMAKU = 4;
+    public static final int TAB_WEB = 5;
+
+    private static final long NAV_INDICATOR_DURATION = 300;
+    private static final long NAV_ICON_BOUNCE_DURATION = 320;
+    private static final Interpolator NAV_INDICATOR_INTERPOLATOR = new PathInterpolator(0.2f, 0f, 0f, 1f);
 
     private FragmentStateManager mManager;
     private ActivityHomeBinding mBinding;
@@ -61,6 +81,7 @@ public class HomeActivity extends BaseActivity implements WebHomeChromeControlle
     private Config mStartupConfig;
     private boolean wideWindow;
     private int currentPosition;
+    private int navIndicatorPosition = -1;
     
     @Override
     protected ViewBinding getBinding() {
@@ -85,7 +106,8 @@ public class HomeActivity extends BaseActivity implements WebHomeChromeControlle
         currentPosition = savedInstanceState == null ? 0 : savedInstanceState.getInt(STATE_CURRENT_POSITION, 0);
         updateWindowBackground(currentPosition);
         mStartupConfig = Config.vod();
-        mChrome = new WebHomeChromeController(this, mBinding, this, savedInstanceState, WebHomeChromeStartup.restore(mStartupConfig));
+        // 启动时一律 normal：网页 chrome 只在网页 Tab 可见时生效，不再按「配置 + 首页站点」恢复 edge/immersive
+        mChrome = new WebHomeChromeController(this, mBinding, this, savedInstanceState);
         mBinding.getRoot().addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> checkWindowShape(right - left, bottom - top));
         PermissionUtil.requestFile(this, allGranted -> PermissionUtil.requestNotify(this));
         setNavigation();
@@ -102,17 +124,21 @@ public class HomeActivity extends BaseActivity implements WebHomeChromeControlle
 
     @Override
     protected void initEvent() {
-        mBinding.navVod.setOnClickListener(v -> {
-            setNavigationVisible(true);
-            selectNavigation(0);
+        bindNavItem(mBinding.navVod, mBinding.navVodIcon, TAB_VOD);
+        bindNavItem(mBinding.navKeep, mBinding.navKeepIcon, TAB_KEEP);
+        bindNavItem(mBinding.navWeb, mBinding.navWebIcon, TAB_WEB);
+        bindNavItem(mBinding.navSetting, mBinding.navSettingIcon, TAB_SETTING);
+        // 底栏宽度变化（首次布局、旋转、分屏）时，选中气泡直接对齐到当前 Tab
+        mBinding.navItems.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+            if (right - left != oldRight - oldLeft) moveNavIndicator(navIndicatorPosition, false);
         });
-        mBinding.navKeep.setOnClickListener(v -> {
+    }
+
+    private void bindNavItem(View item, View icon, int position) {
+        item.setOnClickListener(v -> {
+            bounceNavIcon(icon);
             setNavigationVisible(true);
-            selectNavigation(3);
-        });
-        mBinding.navSetting.setOnClickListener(v -> {
-            setNavigationVisible(true);
-            selectNavigation(1);
+            selectNavigation(position);
         });
     }
 
@@ -136,14 +162,15 @@ public class HomeActivity extends BaseActivity implements WebHomeChromeControlle
 
     private void initFragment(Bundle savedInstanceState) {
         mManager = new FragmentStateManager(mBinding.container, getSupportFragmentManager(), position -> switch (position) {
-            case 0 -> VodFragment.newInstance();
-            case 1 -> SettingFragment.newInstance();
-            case 2 -> SettingPlayerFragment.newInstance();
-            case 3 -> HistoryFragment.newInstance();
-            case 4 -> SettingDanmakuFragment.newInstance();
+            case TAB_VOD -> VodFragment.newInstance();
+            case TAB_SETTING -> SettingFragment.newInstance();
+            case TAB_SETTING_PLAYER -> SettingPlayerFragment.newInstance();
+            case TAB_KEEP -> HistoryFragment.newInstance();
+            case TAB_SETTING_DANMAKU -> SettingDanmakuFragment.newInstance();
+            case TAB_WEB -> WebTabFragment.newInstance();
             default -> null;
         });
-        if (savedInstanceState == null) change(0);
+        if (savedInstanceState == null) change(TAB_VOD);
         else restorePosition(currentPosition);
     }
 
@@ -202,14 +229,15 @@ public class HomeActivity extends BaseActivity implements WebHomeChromeControlle
     private void setNavigation() {
         mBinding.navVod.setVisibility(View.VISIBLE);
         mBinding.navKeep.setVisibility(View.VISIBLE);
+        mBinding.navWeb.setVisibility(View.VISIBLE);
         mBinding.navSetting.setVisibility(View.VISIBLE);
         syncNavigationSelection();
     }
 
     public void change(int position) {
-        if (position != 0) hideLoading();
+        if (position != TAB_VOD) hideLoading();
         setNavigationVisible(true);
-        if (position == 0 || position == 1 || position == 3) selectNavigation(position);
+        if (position == TAB_VOD || position == TAB_SETTING || position == TAB_KEEP || position == TAB_WEB) selectNavigation(position);
         else changeFragment(position);
     }
 
@@ -268,17 +296,70 @@ public class HomeActivity extends BaseActivity implements WebHomeChromeControlle
     }
 
     private void syncNavigationSelection(int position) {
-        mBinding.navVod.setSelected(position == 0);
-        mBinding.navKeep.setSelected(position == 3);
-        mBinding.navSetting.setSelected(position == 1);
+        mBinding.navVod.setSelected(position == TAB_VOD);
+        mBinding.navKeep.setSelected(position == TAB_KEEP);
+        mBinding.navWeb.setSelected(position == TAB_WEB);
+        mBinding.navSetting.setSelected(position == TAB_SETTING);
+        moveNavIndicator(position, true);
+    }
+
+    private View getNavItem(int position) {
+        return switch (position) {
+            case TAB_VOD -> mBinding.navVod;
+            case TAB_KEEP -> mBinding.navKeep;
+            case TAB_WEB -> mBinding.navWeb;
+            case TAB_SETTING -> mBinding.navSetting;
+            default -> null;
+        };
+    }
+
+    /**
+     * Telegram 风格选中气泡：在 Tab 之间滑动。
+     * 子设置页（播放器 / 弹幕）没有对应 Tab，隐藏气泡；回到 Tab 时直接出现在目标位置。
+     */
+    private void moveNavIndicator(int position, boolean animate) {
+        View indicator = mBinding.navIndicator;
+        boolean visible = indicator.getVisibility() == View.VISIBLE;
+        // 同一 Tab 重复同步（selectNavigation 与 changeFragment 各调一次）时不打断正在进行的滑动
+        if (animate && visible && position == navIndicatorPosition) return;
+        navIndicatorPosition = position;
+        indicator.animate().cancel();
+        View item = getNavItem(position);
+        if (item == null) {
+            indicator.setVisibility(View.INVISIBLE);
+            return;
+        }
+        // 尚未完成首次布局：由 navItems 的布局回调再定位
+        if (item.getWidth() == 0) return;
+        ViewGroup.LayoutParams params = indicator.getLayoutParams();
+        if (params.width != item.getWidth()) {
+            params.width = item.getWidth();
+            indicator.setLayoutParams(params);
+        }
+        // 气泡自带 4dp 左边距，与 navItems 的左内边距抵消
+        float x = item.getLeft() - mBinding.navItems.getPaddingLeft();
+        indicator.setVisibility(View.VISIBLE);
+        if (animate && visible) {
+            indicator.animate().translationX(x).setDuration(NAV_INDICATOR_DURATION).setInterpolator(NAV_INDICATOR_INTERPOLATOR).start();
+        } else {
+            indicator.setTranslationX(x);
+        }
+    }
+
+    /** 点击 Tab 时图标轻微回弹 */
+    private void bounceNavIcon(View icon) {
+        icon.animate().cancel();
+        icon.setScaleX(0.8f);
+        icon.setScaleY(0.8f);
+        icon.animate().scaleX(1f).scaleY(1f).setDuration(NAV_ICON_BOUNCE_DURATION).setInterpolator(new OvershootInterpolator(3f)).start();
     }
 
     public boolean isSettingActive() {
-        return currentPosition == 1 || currentPosition == 4;
+        return currentPosition == TAB_SETTING || currentPosition == TAB_SETTING_DANMAKU;
     }
 
     private void updateWindowBackground(int position) {
-        int color = (position == 1 || position == 4) ? ResUtil.getColor(R.color.bg_setting) : ResUtil.getColor(R.color.white);
+        int color = (position == TAB_SETTING || position == TAB_SETTING_DANMAKU) ? ResUtil.getColor(R.color.bg_setting) : ResUtil.getColor(R.color.white);
         mBinding.getRoot().setBackgroundColor(color);
     }
 
@@ -301,29 +382,12 @@ public class HomeActivity extends BaseActivity implements WebHomeChromeControlle
         if (mChrome != null) mChrome.setLegacyToolbar(true);
     }
 
-    public void applyWebHomeDefaultChrome(Site site) {
-        if (!Setting.isWebHomeFullscreen()) {
-            if (mChrome != null) mChrome.setChrome(normalWebHomeChrome());
-            return;
-        }
-        if (mChrome != null) mChrome.applyDefault(WebHomeChromeStartup.resolve(VodConfig.get().getConfig(), site));
-    }
-
     public void setWebHomeChrome(JsonObject payload) {
         if (!Setting.isWebHomeFullscreen()) {
             if (mChrome != null) mChrome.setChrome(normalWebHomeChrome());
             return;
         }
-        if (isStartupChrome(payload)) WebHomeChromeStartup.remember(VodConfig.get().getConfig(), VodConfig.get().getHome(), payload);
         if (mChrome != null) mChrome.setChrome(payload);
-    }
-
-    private boolean isStartupChrome(JsonObject payload) {
-        try {
-            return payload != null && payload.has("startup") && payload.get("startup").getAsBoolean();
-        } catch (Throwable e) {
-            return false;
-        }
     }
 
     public void restoreWebHomeChrome() {
@@ -355,9 +419,8 @@ public class HomeActivity extends BaseActivity implements WebHomeChromeControlle
     public void openVod() {
         resetVodChrome();
         setNavigationVisible(true);
-        selectNavigation(0);
-        VodFragment fragment = (VodFragment) mManager.getFragment(0);
-        if (fragment != null) fragment.openVodHome();
+        selectNavigation(TAB_VOD);
+        if (mManager.getFragment(TAB_VOD) instanceof VodFragment fragment) fragment.openVodHome();
     }
 
     
@@ -371,21 +434,26 @@ public class HomeActivity extends BaseActivity implements WebHomeChromeControlle
 
     @Override
     public boolean isWebHomeChromeActive() {
-        return mManager != null && mManager.isVisible(0);
+        return mManager != null && mManager.isVisible(TAB_WEB);
     }
 
     @Override
     public void onWebHomeChromeChanged(String mode) {
-        if (mManager == null) return;
-        VodFragment fragment = (VodFragment) mManager.getFragment(0);
-        if (fragment != null) fragment.applyWebHomeChrome(mode);
+        for (WebChromeHost host : getWebChromeHosts()) host.applyWebHomeChrome(mode);
     }
 
     @Override
     public void onWebHomeViewportChanged(WebHomeViewport viewport) {
-        if (mManager == null) return;
-        VodFragment fragment = (VodFragment) mManager.getFragment(0);
-        if (fragment != null) fragment.applyWebHomeViewport(viewport);
+        for (WebChromeHost host : getWebChromeHosts()) host.applyWebHomeViewport(viewport);
+    }
+
+    private List<WebChromeHost> getWebChromeHosts() {
+        List<WebChromeHost> hosts = new ArrayList<>();
+        if (mManager == null) return hosts;
+        for (Fragment fragment : getSupportFragmentManager().getFragments()) {
+            if (fragment instanceof WebChromeHost host && fragment.isAdded()) hosts.add(host);
+        }
+        return hosts;
     }
 
     @Override
@@ -416,7 +484,10 @@ public class HomeActivity extends BaseActivity implements WebHomeChromeControlle
 
     @Override
     protected void onBackInvoked() {
-        if (mChrome != null && mChrome.consumeBack()) {
+        // 网页 Tab：先退出 HTML5 全屏，再退出 edge / immersive 回到普通模式，最后才是网页后退 / 切 Tab
+        if (mManager != null && mManager.isVisible(TAB_WEB) && mManager.getFragment(TAB_WEB) instanceof WebTabFragment web && web.consumeFullscreenBack()) {
+            return;
+        } else if (mChrome != null && mChrome.consumeBack()) {
             return;
         } else if (isLoading()) {
             hideLoading();
@@ -424,13 +495,16 @@ public class HomeActivity extends BaseActivity implements WebHomeChromeControlle
         } else if (mBinding.navVod.getVisibility() != View.VISIBLE) {
             setNavigation();
         
-        } else if (currentPosition == 2 || currentPosition == 4 || mManager.isVisible(2) || mManager.isVisible(4)) {
-            change(1);
-        } else if (currentPosition == 3 || mManager.isVisible(3)) {
-            if (mManager.canBack(3)) change(0);
-        } else if (currentPosition == 1 || mManager.isVisible(1)) {
-            change(0);
-        } else if (mManager.canBack(0)) {
+        } else if (currentPosition == TAB_SETTING_PLAYER || currentPosition == TAB_SETTING_DANMAKU || mManager.isVisible(TAB_SETTING_PLAYER) || mManager.isVisible(TAB_SETTING_DANMAKU)) {
+            change(TAB_SETTING);
+        } else if (currentPosition == TAB_KEEP || mManager.isVisible(TAB_KEEP)) {
+            if (mManager.canBack(TAB_KEEP)) change(TAB_VOD);
+        } else if (currentPosition == TAB_WEB || mManager.isVisible(TAB_WEB)) {
+            // 网页 Tab：先退出 HTML5 全屏视频 / 网页内后退，无可后退时回到发现页（不退出 App）
+            if (mManager.canBack(TAB_WEB)) change(TAB_VOD);
+        } else if (currentPosition == TAB_SETTING || mManager.isVisible(TAB_SETTING)) {
+            change(TAB_VOD);
+        } else if (mManager.canBack(TAB_VOD)) {
             if (PlaybackService.isRunning()) Util.moveToBackground(this);
             else super.onBackInvoked();
         }
@@ -440,7 +514,6 @@ public class HomeActivity extends BaseActivity implements WebHomeChromeControlle
     protected void onDestroy() {
         if (mChrome != null) mChrome.destroy();
         VodConfig.get().clear();
-        AppDatabase.backup();
         OkHttp.get().clear();
         Source.get().exit();
         Server.get().stop();

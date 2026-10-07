@@ -73,7 +73,6 @@ import com.fongmi.android.tv.bean.Danmaku;
 import com.fongmi.android.tv.bean.Episode;
 import com.fongmi.android.tv.bean.Flag;
 import com.fongmi.android.tv.bean.History;
-import com.fongmi.android.tv.bean.Keep;
 import com.fongmi.android.tv.bean.Parse;
 import com.fongmi.android.tv.bean.Result;
 import com.fongmi.android.tv.bean.Site;
@@ -663,7 +662,6 @@ public class VideoActivity extends PlaybackActivity implements CustomKeyDownVod.
     @Override
     @SuppressLint("ClickableViewAccessibility")
     protected void initEvent() {
-        mBinding.keep.setOnClickListener(view -> onKeep());
         mBinding.search.setOnClickListener(view -> onSearch());
         mBinding.video.setOnClickListener(view -> onVideo());
         mBinding.change1.setOnClickListener(view -> onChange());
@@ -717,7 +715,6 @@ public class VideoActivity extends PlaybackActivity implements CustomKeyDownVod.
         mBinding.audioRepeatAction.setOnClickListener(view -> onRepeat());
         mBinding.audioQueueAction.setOnClickListener(view -> onAudioQueue());
         mBinding.audioLyricsAction.setOnClickListener(view -> onLyricsSearch());
-        mBinding.audioKeepAction.setOnClickListener(view -> onKeep());
         mBinding.audioCastAction.setOnClickListener(view -> onCast());
         mBinding.audioSettingAction.setOnClickListener(view -> onSetting());
         mBinding.audioKaraokeAction.setOnClickListener(view -> onKaraokeMode());
@@ -763,7 +760,7 @@ public class VideoActivity extends PlaybackActivity implements CustomKeyDownVod.
         return new View[]{
                 mBinding.audioRepeatAction, mBinding.audioPrev, mBinding.audioPlay, mBinding.audioNext, mBinding.audioQueueAction,
                 mBinding.audioLyricsAction, mBinding.audioKaraokeAction, mBinding.audioMoreAction,
-                mBinding.audioCastAction, mBinding.audioKeepAction, mBinding.audioSettingAction, mBinding.audioTrackAction, mBinding.audioSubtitleAction, mBinding.audioInfoAction,
+                mBinding.audioCastAction, mBinding.audioSettingAction, mBinding.audioTrackAction, mBinding.audioSubtitleAction, mBinding.audioInfoAction,
                 mBinding.audioBackgroundAction
         };
     }
@@ -1142,9 +1139,7 @@ public class VideoActivity extends PlaybackActivity implements CustomKeyDownVod.
         App.removeCallbacks(mR4);
         checkHistory(item);
         checkFlag(item);
-        checkKeepImg();
         setText(item);
-        updateKeep();
     }
 
     private void setText(Vod item) {
@@ -1775,14 +1770,6 @@ public class VideoActivity extends PlaybackActivity implements CustomKeyDownVod.
         TimerDialog.create().show(this);
     }
 
-    private void onKeep() {
-        Keep keep = Keep.find(getHistoryKey());
-        Notify.show(keep != null ? R.string.keep_del : R.string.keep_add);
-        if (keep != null) keep.delete();
-        else createKeep();
-        checkKeepImg();
-    }
-
     private void checkPlay() {
         setR1Callback();
         if (player().isPlaying()) onPaused();
@@ -2364,7 +2351,6 @@ public class VideoActivity extends PlaybackActivity implements CustomKeyDownVod.
     private void onAudioMore() {
         ArrayList<String> items = new ArrayList<>();
         ArrayList<Runnable> actions = new ArrayList<>();
-        addAudioMoreItem(items, actions, getString(R.string.keep), this::onKeep);
         addAudioMoreItem(items, actions, getString(R.string.home_setting), this::onSetting);
         addAudioMoreItem(items, actions, getString(R.string.play_cast), this::onCast);
         addAudioMoreItem(items, actions, getString(R.string.play_timer), this::onTimer);
@@ -3754,33 +3740,6 @@ public class VideoActivity extends PlaybackActivity implements CustomKeyDownVod.
         PlaybackEventCollector.get().updateHistory(mHistory);
     }
 
-    private void checkKeepImg() {
-        boolean kept = Keep.find(getHistoryKey()) != null;
-        mBinding.keep.setCompoundDrawablesWithIntrinsicBounds(kept ? R.drawable.ic_detail_keep_on : R.drawable.ic_detail_keep_off, 0, 0, 0);
-        mBinding.audioKeepAction.setSelected(kept);
-        mBinding.audioKeepAction.setCompoundDrawablesWithIntrinsicBounds(0, kept ? R.drawable.ic_detail_keep_on : R.drawable.ic_detail_keep_off, 0, 0);
-    }
-
-    private void createKeep() {
-        Keep keep = new Keep();
-        keep.setKey(getHistoryKey());
-        keep.setCid(VodConfig.getCid());
-        keep.setVodPic(mHistory.getVodPic());
-        keep.setVodName(mHistory.getVodName());
-        keep.setSiteName(getSite().getName());
-        keep.setCreateTime(System.currentTimeMillis());
-        keep.save();
-    }
-
-    private void updateKeep() {
-        Keep keep = Keep.find(getHistoryKey());
-        if (keep != null) {
-            keep.setVodName(mHistory.getVodName());
-            keep.setVodPic(mHistory.getVodPic());
-            keep.save();
-        }
-    }
-
     private void updateVod(Vod item) {
         boolean id = !item.getId().isEmpty();
         boolean pic = !item.getPic().isEmpty();
@@ -3795,7 +3754,6 @@ public class VideoActivity extends PlaybackActivity implements CustomKeyDownVod.
         if (pic) setArtwork(item.getPic());
         if (pic || name) setMetadata();
         if (pic || name) syncHistory();
-        if (pic || name) updateKeep();
         if (id) updateNavigationKey();
         if (name) setPartAdapter();
         PlaybackEventCollector.get().updateHistory(mHistory);
@@ -4027,7 +3985,6 @@ public class VideoActivity extends PlaybackActivity implements CustomKeyDownVod.
         setAudioToolEnabled(mBinding.audioInfoAction, service() != null && !player().isEmpty());
         setAudioRepeatSelected(service() != null && player().isRepeatOne());
         mBinding.audioKaraokeAction.setSelected(false);
-        checkKeepImg();
         checkAudioPlayImg(service() != null && player().isPlaying());
         syncAudioCoverRotation();
     }
@@ -6381,7 +6338,6 @@ public class VideoActivity extends PlaybackActivity implements CustomKeyDownVod.
         saveHistory(true);
         DanmakuApi.cancel();
         dismissQuickSearchDialog();
-        RefreshEvent.keep();
         App.removeCallbacks(mR1, mR2, mR3, mR4, mAudioRefreshLyricsRunnable, mApplyAudioBackgroundRunnable, mHideAudioFocusRunnable);
         stopAudioCoverRotation();
         if (mOsd != null) mOsd.release();

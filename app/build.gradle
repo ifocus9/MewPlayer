@@ -1,5 +1,47 @@
+import com.android.build.api.artifact.SingleArtifact
+
+import javax.inject.Inject
+
 plugins {
     alias libs.plugins.android.application
+}
+
+// chaquo 模块为两个 ABI 都生成 Chaquopy 资源（stdlib/requirements/bootstrap-native），
+// 而 assets 不受 abiFilters 过滤。这里在合并后的 assets 上去掉另一个 ABI 的那份（每个 APK 约 5MB）。
+// Chaquopy 运行时只解压当前设备 ABI 的文件，FongMi 上游也是删同样这三类条目。
+abstract class StripForeignAbiAssetsTask extends DefaultTask {
+    @InputDirectory
+    @PathSensitive(PathSensitivity.RELATIVE)
+    abstract DirectoryProperty getInputDir()
+
+    @OutputDirectory
+    abstract DirectoryProperty getOutputDir()
+
+    @Input
+    abstract Property<String> getAbi()
+
+    @Input
+    abstract Property<String> getForeignAbi()
+
+    @Inject
+    abstract FileSystemOperations getFs()
+
+    @TaskAction
+    void strip() {
+        def own = abi.get()
+        def foreign = foreignAbi.get()
+        fs.sync { spec ->
+            spec.from(inputDir)
+            spec.into(outputDir)
+            spec.exclude("chaquopy/requirements-${foreign}.imy".toString(), "chaquopy/stdlib-${foreign}.imy".toString(), "chaquopy/bootstrap-native/${foreign}/**".toString())
+        }
+        def chaquopy = outputDir.get().dir('chaquopy').asFile
+        if (chaquopy.isDirectory()) {
+            def required = ["requirements-${own}.imy".toString(), "stdlib-${own}.imy".toString(), "bootstrap-native/${own}".toString()]
+            def missing = required.findAll { !new File(chaquopy, it).exists() }
+            if (!missing.isEmpty()) throw new GradleException("Chaquopy assets for ${own} missing: ${missing}")
+        }
+    }
 }
 
 def localProps = new Properties()
@@ -35,7 +77,7 @@ android {
     ndkVersion "29.0.14206865"
 
     defaultConfig {
-        applicationId "com.catvod.custom.tv"
+        applicationId "com.mewplayer.tv"
         minSdk libs.versions.minSdk.get().toInteger()
         targetSdk libs.versions.targetSdk.get().toInteger()
         versionCode 560
@@ -111,6 +153,16 @@ android {
         }
     }
 
+    packaging {
+        // jniLibs 保持 AGP 默认（.so 不压缩、直接从 APK 内 mmap 加载，不解压到 nativeLibraryDir）。
+        // 试过 useLegacyPackaging = true：APK 降到约 93MB，但安装后 APK 内压缩副本 + 解压副本双份共存，
+        // 安装占用反而从约 235MB 涨到约 262MB，故回退。
+        resources {
+            // BouncyCastle 后量子 Picnic 签名的查表数据（约 1MB），本项目不使用 Picnic。
+            excludes += 'org/bouncycastle/pqc/crypto/picnic/*.properties'
+        }
+    }
+
     configurations.configureEach {
         exclude group: 'stax', module: 'stax-api'
         exclude group: 'xpp3', module: 'xpp3'
@@ -147,6 +199,19 @@ android {
 }
 
 androidComponents {
+    onVariants(selector().all()) { variant ->
+        def abiFlavor = variant.productFlavors.find { it.first == 'abi' }?.second
+        def abiPairs = [arm64_v8a: ['arm64-v8a', 'armeabi-v7a'], armeabi_v7a: ['armeabi-v7a', 'arm64-v8a']]
+        def pair = abiPairs[abiFlavor]
+        if (pair == null) return
+        def stripTask = project.tasks.register("strip${variant.name.capitalize()}ForeignAbiAssets", StripForeignAbiAssetsTask) { t ->
+            t.abi.set(pair[0])
+            t.foreignAbi.set(pair[1])
+        }
+        variant.artifacts.use(stripTask)
+                .wiredWithDirectories({ it.inputDir }, { it.outputDir })
+                .toTransform(SingleArtifact.ASSETS.INSTANCE)
+    }
     onVariants(selector().withBuildType('release')) { variant ->
         def flavors = variant.productFlavors.collectEntries { [(it.first): it.second] }
         def mode = flavors['mode'] ?: 'mode'
@@ -160,6 +225,7 @@ androidComponents {
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.aar"])
     implementation project(':catvod')
+    implementation project(':chaquo')
     implementation project(':quickjs')
     implementation libs.appcompat
     implementation libs.lifecycle.service

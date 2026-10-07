@@ -86,7 +86,10 @@ public class Notify {
 
     private void makeText(String text) {
         if (mToast != null) mToast.cancel();
-        mToast = Toast.makeText(App.get(), text, Toast.LENGTH_LONG);
+        // MIUI / HyperOS 会给 Toast.makeText(context, text, ...) 的文案自动加上「应用名:」前缀；
+        // 先用 null 文案创建、再 setText，可绕过该前缀，其它系统上行为不变。
+        mToast = Toast.makeText(App.get(), null, Toast.LENGTH_LONG);
+        mToast.setText(text);
         mToast.show();
     }
 }

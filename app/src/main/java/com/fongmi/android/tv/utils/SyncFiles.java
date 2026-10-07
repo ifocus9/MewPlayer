@@ -2,7 +2,6 @@ package com.fongmi.android.tv.utils;
 
 import android.text.TextUtils;
 
-import com.fongmi.android.tv.bean.SyncOptions;
 import com.github.catvod.crawler.SpiderDebug;
 import com.github.catvod.utils.Path;
 
@@ -24,8 +23,6 @@ import java.util.zip.ZipOutputStream;
 public class SyncFiles {
 
     public static final String DEFAULT_PATHS = "TV\nTVBox\nTVData";
-    public static final String CUSTOM_CSP_PATH = "TV/CustomCsp";
-    public static final String PART_NAME = "syncFiles";
 
     private static final int BUFFER_SIZE = 128 * 1024;
 
@@ -41,26 +38,6 @@ public class SyncFiles {
 
     public static String getPathsText(List<String> paths) {
         return TextUtils.join("\n", paths);
-    }
-
-    public static List<String> getPaths(SyncOptions options) {
-        List<String> result = new ArrayList<>();
-        if (options == null) return result;
-        if (options.isSpider()) for (String path : getPaths(options.getPaths())) addPath(result, path);
-        if (options.isConfig() || options.isWebHome()) addPath(result, CUSTOM_CSP_PATH);
-        return result;
-    }
-
-    public static boolean hasPaths(SyncOptions options) {
-        return !getPaths(options).isEmpty();
-    }
-
-    private static void addPath(List<String> paths, String path) {
-        String candidate = normalizeRelative(path);
-        if (candidate.isEmpty()) return;
-        for (String existing : paths) if (covers(existing, candidate)) return;
-        paths.removeIf(existing -> covers(candidate, existing));
-        paths.add(candidate);
     }
 
     private static boolean covers(String parent, String child) {

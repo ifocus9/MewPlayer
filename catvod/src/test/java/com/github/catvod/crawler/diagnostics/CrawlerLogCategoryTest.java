@@ -8,7 +8,7 @@ import static org.junit.Assert.assertTrue;
 
 public class CrawlerLogCategoryTest {
     @Test public void runtimeOutputUsesTheExistingNetworkSwitch() {
-        for (String tag : new String[]{"quickjs", "python-spider", "SpiderDebug"}) {
+        for (String tag : new String[]{"quickjs", "SpiderDebug"}) {
             DiagnosticCategories.Category category = DiagnosticCategories.text(tag);
             assertEquals(DiagnosticCategories.Category.NETWORK, category);
             assertTrue(DiagnosticCategories.accepts(DiagnosticCategories.ALL, category));

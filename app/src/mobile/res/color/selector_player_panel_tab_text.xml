@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 全屏选集面板次要文字（共N条 / 全N集）：深色面板上的浅灰 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="#99FFFFFF" />
+</selector>

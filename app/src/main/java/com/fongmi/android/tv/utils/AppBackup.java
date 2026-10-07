@@ -38,7 +38,6 @@ public final class AppBackup {
     private static final String DATA = "backup.json";
     private static final String MANIFEST = "manifest.json";
     private static final String SHARED = "shared-files.zip";
-    private static final String LOGIN = "login-state.zip";
     private static final String APP_FILES = "app-files/";
     private static final int BUFFER_SIZE = 128 * 1024;
 
@@ -89,46 +88,30 @@ public final class AppBackup {
 
     public static synchronized CreateResult create(File target, Progress progress) throws IOException {
         SyncFiles.Archive shared = null;
-        LoginStateSync.Archive login = null;
         try {
             notifyProgress(progress, "整理数据库和设置", 5, 0, 0);
             Backup backup = Backup.create();
             if (backup.getConfig().isEmpty()) throw new IOException("没有可备份的接口配置");
             notifyProgress(progress, "整理共享数据文件", 15, 0, 0);
             StringBuilder warning = new StringBuilder();
-            int customCspSourceFiles = 0;
-            int customCspFiles = 0;
             try {
-                customCspSourceFiles = SyncFiles.countFiles(SyncFiles.CUSTOM_CSP_PATH);
                 shared = SyncFiles.createArchive(SyncFiles.getPaths(SyncFiles.DEFAULT_PATHS));
-                customCspFiles = SyncFiles.countArchiveFiles(shared == null ? null : shared.getFile(), SyncFiles.CUSTOM_CSP_PATH);
-                if (customCspFiles < customCspSourceFiles) appendWarning(warning, "站点注入文件未完整写入备份");
             } catch (Throwable e) {
                 if (shared != null) shared.delete();
                 shared = null;
                 appendWarning(warning, "共享数据文件未写入备份");
                 SpiderDebug.log("backup", "shared archive warning error=%s", e.getMessage());
             }
-            notifyProgress(progress, "整理登录态和云盘凭据", 30, shared == null ? 0 : shared.getZipSize(), 0);
-            try {
-                login = LoginStateSync.createArchive();
-            } catch (Throwable e) {
-                login = null;
-                appendWarning(warning, "登录态和云盘凭据未写入备份");
-                SpiderDebug.log("backup", "login archive warning error=%s", e.getMessage());
-            }
             String warningText = warning.toString();
             byte[] data = backup.toString().getBytes(StandardCharsets.UTF_8);
-            byte[] manifest = manifest(shared, login, customCspSourceFiles, customCspFiles, backup.getWebHomeExtensionPreferenceCount(), backup.getWebHomeExtensionSourceCount(), warningText).getBytes(StandardCharsets.UTF_8);
+            byte[] manifest = manifest(shared, warningText).getBytes(StandardCharsets.UTF_8);
             long total = data.length + manifest.length + appFilesSize(Path.files(), Path.files());
             if (shared != null) total += shared.getFile().length();
-            if (login != null) total += login.getFile().length();
             Counter counter = new Counter(total, progress);
             try (ZipOutputStream output = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(Path.create(target)), BUFFER_SIZE))) {
                 addBytes(output, DATA, data, counter);
                 addBytes(output, MANIFEST, manifest, counter);
                 if (shared != null) addFile(output, SHARED, shared.getFile(), counter);
-                if (login != null) addFile(output, LOGIN, login.getFile(), counter);
                 addAppFiles(output, Path.files(), Path.files(), counter);
             }
             notifyProgress(progress, warningText.isEmpty() ? "备份完成" : "备份完成，但部分数据未写入", 100, target.length(), target.length());
@@ -140,7 +123,6 @@ public final class AppBackup {
             throw new IOException(e);
         } finally {
             if (shared != null) shared.delete();
-            if (login != null) login.delete();
         }
     }
 
@@ -153,7 +135,6 @@ public final class AppBackup {
         notifyProgress(progress, "读取备份文件", 5, sourceSize, sourceSize);
         if (!isZip(source)) return restoreLegacy(source, progress);
         File shared = null;
-        File login = null;
         String json = "";
         String manifestJson = "";
         int appFiles = 0;
@@ -173,8 +154,6 @@ public final class AppBackup {
                         manifestJson = new String(readEntry(input, buffer), StandardCharsets.UTF_8);
                     } else if (SHARED.equals(name)) {
                         shared = extractTemp(input, "webhtv-shared-restore-", buffer);
-                    } else if (LOGIN.equals(name)) {
-                        login = extractTemp(input, "webhtv-login-restore-", buffer);
                     } else if (name.startsWith(APP_FILES)) {
                         String relative = safe(name.substring(APP_FILES.length()));
                         if (!relative.isEmpty()) {
@@ -191,7 +170,6 @@ public final class AppBackup {
             notifyProgress(progress, "校验备份内容", 45, sourceSize, sourceSize);
         } catch (Throwable e) {
             Path.clear(shared);
-            Path.clear(login);
             if (e instanceof IOException) throw (IOException) e;
             throw new IOException(e);
         }
@@ -208,25 +186,16 @@ public final class AppBackup {
                 appendWarning(restoreWarning, "共享数据文件未能完整恢复");
                 SpiderDebug.log("backup", "shared restore warning error=%s", e.getMessage());
             }
-            notifyProgress(progress, "恢复登录态和云盘凭据", 70, sourceSize, sourceSize);
-            int loginFiles = 0;
-            try {
-                loginFiles = login == null ? 0 : LoginStateSync.restoreArchive(login);
-            } catch (Throwable e) {
-                appendWarning(restoreWarning, "登录态和云盘凭据未能完整恢复");
-                SpiderDebug.log("backup", "login restore warning error=%s", e.getMessage());
-            }
             notifyProgress(progress, "恢复数据库和设置", 85, sourceSize, sourceSize);
             backup.restore(true);
             reload();
             if (restoreWarning.length() > 0) restoreWarning.append("，其余可用数据已恢复");
             String warningText = restoreWarning.toString();
             notifyProgress(progress, warningText.isEmpty() ? "恢复完成" : "恢复完成，但部分数据缺失", 100, sourceSize, sourceSize);
-            SpiderDebug.log("backup", "restore complete shared=%d login=%d app=%d warning=%s", sharedFiles, loginFiles, appFiles, warningText);
-            return new RestoreResult(sharedFiles, loginFiles, appFiles, false, warningText);
+            SpiderDebug.log("backup", "restore complete shared=%d app=%d warning=%s", sharedFiles, appFiles, warningText);
+            return new RestoreResult(sharedFiles, appFiles, false, warningText);
         } finally {
             Path.clear(shared);
-            Path.clear(login);
         }
     }
 
@@ -240,7 +209,7 @@ public final class AppBackup {
             backup.restore();
             reload();
             notifyProgress(progress, "恢复完成", 100, source.length(), source.length());
-            return new RestoreResult(0, 0, 0, true, "");
+            return new RestoreResult(0, 0, true, "");
         } finally {
             Path.clear(restore);
         }
@@ -251,23 +220,16 @@ public final class AppBackup {
         VodConfig.get().clear().init().load(new Callback());
         WallConfig.get().init().load();
         ConfigEvent.common();
-        RefreshEvent.keep();
         RefreshEvent.history();
         RefreshEvent.home();
-        Backup.refreshWebHomeExtensions();
     }
 
-    private static String manifest(SyncFiles.Archive shared, LoginStateSync.Archive login, int customCspSourceFiles, int customCspFiles, int webHomeExtensionPrefs, int webHomeExtensionSources, String warning) {
+    private static String manifest(SyncFiles.Archive shared, String warning) {
         JsonObject object = new JsonObject();
         object.addProperty("app", "WebHTV");
         object.addProperty("version", 3);
         object.addProperty("createdAt", System.currentTimeMillis());
         object.addProperty("sharedFiles", shared == null ? 0 : shared.getCount());
-        object.addProperty("loginStateFiles", login == null ? 0 : login.getCount());
-        object.addProperty("customCspSourceFiles", customCspSourceFiles);
-        object.addProperty("customCspFiles", customCspFiles);
-        object.addProperty("webHomeExtensionPrefs", webHomeExtensionPrefs);
-        object.addProperty("webHomeExtensionSources", webHomeExtensionSources);
         object.addProperty("warning", warning == null ? "" : warning);
         return App.gson().toJson(object);
     }
@@ -283,17 +245,6 @@ public final class AppBackup {
         }
         if (object == null || integer(object, "version") < 3) return "";
         StringBuilder warning = new StringBuilder(string(object, "warning"));
-        int expectedCustomCsp = Math.max(integer(object, "customCspSourceFiles"), integer(object, "customCspFiles"));
-        try {
-            int actualCustomCsp = SyncFiles.countArchiveFiles(shared, SyncFiles.CUSTOM_CSP_PATH);
-            if (actualCustomCsp < expectedCustomCsp) appendWarning(warning, "站点注入文件不完整");
-        } catch (Throwable e) {
-            appendWarning(warning, "站点注入文件无法校验");
-        }
-        int expectedWebHomePrefs = integer(object, "webHomeExtensionPrefs");
-        if (backup.getWebHomeExtensionPreferenceCount() < expectedWebHomePrefs) appendWarning(warning, "WebHome 扩展配置不完整");
-        int expectedWebHomeSources = integer(object, "webHomeExtensionSources");
-        if (backup.getWebHomeExtensionSourceCount() < expectedWebHomeSources) appendWarning(warning, "WebHome 扩展源不完整");
         if (warning.length() > 0) SpiderDebug.log("backup", "restore manifest warning=%s", warning);
         return warning.toString();
     }
@@ -460,21 +411,19 @@ public final class AppBackup {
     public static final class RestoreResult {
 
         public final int sharedFiles;
-        public final int loginFiles;
         public final int appFiles;
         public final boolean legacy;
         public final String warning;
 
-        private RestoreResult(int sharedFiles, int loginFiles, int appFiles, boolean legacy, String warning) {
+        private RestoreResult(int sharedFiles, int appFiles, boolean legacy, String warning) {
             this.sharedFiles = sharedFiles;
-            this.loginFiles = loginFiles;
             this.appFiles = appFiles;
             this.legacy = legacy;
             this.warning = warning == null ? "" : warning;
         }
 
         public int fileCount() {
-            return sharedFiles + loginFiles + appFiles;
+            return sharedFiles + appFiles;
         }
 
         public boolean hasWarning() {

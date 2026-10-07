@@ -117,7 +117,8 @@ public abstract class BaseActivity extends AppCompatActivity {
     }
 
     private void enableEdgeToEdge() {
-        EdgeToEdge.enable(this, SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT), SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT));
+        // auto 按 Activity 的 uiMode（含设置里的主题覆盖）选状态栏/导航栏图标深浅：浅色时深色图标，深色时浅色图标
+        EdgeToEdge.enable(this, SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT), SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             getWindow().setStatusBarContrastEnforced(false);
             getWindow().setNavigationBarContrastEnforced(false);

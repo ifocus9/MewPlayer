@@ -15,6 +15,21 @@ import java.util.regex.Pattern;
 
 public final class EpisodeTitleCompact {
 
+    // 集数、画质等“词”的边界：前后只要不是字母/数字/汉字（Unicode L、N 类）就算断开。
+    // 之前是白名单（- _ . 空格 | 括号……），网盘文件名里冒出“01~4K”“10｜4K”“05～4K”这类
+    // 新符号就识别不了，同一列表里“13-4K”精简成“13”、“01~4K”却原样保留。
+    // 改成“非字母数字即边界”后，不需要再逐个补符号。
+    // 例外：汉字“丨”（U+4E28）在 Unicode 里属于字母，但网盘文件名常拿它当竖线用（“10丨4K”“遮丨天”），
+    // 这里按分隔符处理。只用单字符的正向环视，不用字符集交集/差集，兼容 Android 旧版 ICU。
+    // 韩文字母“ㅣ”（U+3163）同理，偶尔也被当竖线用。
+    private static final String BAR_LETTERS = "丨ㅣ";
+    private static final String TOKEN_START = "(?:^|(?<=[^\\p{L}\\p{N}])|(?<=[" + BAR_LETTERS + "]))";
+    private static final String TOKEN_END = "(?=$|[^\\p{L}\\p{N}]|[" + BAR_LETTERS + "])";
+    // 首尾清理仍用白名单：标题末尾的“！”“+”（如 HDR10+）等需要保留，不能一律去掉
+    private static final String SEPARATOR_CHARS = "\\s\\u00A0\\u3000._\\-·|｜" + BAR_LETTERS + "/\\\\:：,，;；~～—–";
+    private static final String BOUNDARY_CHARS = SEPARATOR_CHARS + "\\[\\]()（）【】《》";
+    // “01~03”是合集范围，不能只取开头的 01；“01~4K”后面跟的是 4K，不算范围
+    private static final String NOT_TILDE_RANGE = "(?!\\s*[~～]\\s*[0-9]{1,3}(?![0-9A-Za-z]))";
     private static final Pattern EXTENSION = Pattern.compile("(?i)\\.(mp4|mkv|avi|mov|flv|wmv|ts|m2ts|m3u8|rmvb|webm)$");
     private static final String SIZE_VALUE = "(?:\\d{1,3}(?:,\\d{3})+|\\d+)(?:\\.\\d+)?";
     private static final String SIZE_UNIT = "(?:TB|T|GB|G|MB|M)";
@@ -36,15 +51,17 @@ public final class EpisodeTitleCompact {
     private static final Pattern COLLECTION_CHAPTER = Pattern.compile("([白黑]之章|(?:前|后|後|上|下)(?:篇|章))");
     private static final Pattern NESTED_COLLECTION_HEADER = Pattern.compile("^\\s*\\[\\[(.*?)\\]\\]\\s*(.*)$");
     private static final Pattern CATEGORY_HEADER = Pattern.compile("(?i)^\\s*\\[(PV|其他|番外|花絮|舞台剧|舞台劇)\\]\\s*(.*)$");
-    private static final Pattern REPEATED_BRACKET_SERIES = Pattern.compile("(?i)^\\s*[\\[【]\\s*([^\\]】]{1,24}?)\\s*[\\]】]\\s*\\1\\s*((?:S\\s*[0-9]{1,2}\\s*E\\s*[0-9]{1,4}|EP?\\s*[0-9]{1,4}|SP\\s*[0-9]{1,4}|[0-9]{1,4}(?:[.·][0-9]+)?))(?=$|[\\s._\\-·|/\\\\:：,，;；\\[\\]()（）【】《》])");
+    private static final Pattern REPEATED_BRACKET_SERIES = Pattern.compile("(?i)^\\s*[\\[【]\\s*([^\\]】]{1,24}?)\\s*[\\]】]\\s*\\1\\s*((?:S\\s*[0-9]{1,2}\\s*E\\s*[0-9]{1,4}|EP?\\s*[0-9]{1,4}|SP\\s*[0-9]{1,4}|[0-9]{1,4}(?:[.·][0-9]+)?))" + TOKEN_END);
     private static final Pattern BARE_STRUCTURED_HEADER = Pattern.compile("(?i)^\\s*\\[(?:DBD-Raws|[^\\]]*(?:字幕组|字幕組|字幕团|字幕團))\\]");
     private static final String CJK_NUMBER = "[0-9一二三四五六七八九十百千零〇两兩]+";
     private static final Pattern MAKU_BRACKET = Pattern.compile("^\\s*((?:第\\s*" + CJK_NUMBER + "\\s*幕)|(?:(?:最終|最终)\\s*幕))(?:\\s+.*)?$");
     private static final Pattern MAKU_EDITION = Pattern.compile("(?i)[\\[【]\\s*(?:特別版|特别版)(?:\\s*[（(]\\s*([^）)]+)\\s*[）)])?\\s*[\\]】]");
+    // “【2】陈利手与朱惠罗，在重案一组重逢！”这类“序号 + 剧情标题”的选集名
+    private static final Pattern BRACKET_NUMBER_TITLE = Pattern.compile("^\\s*[\\[【]\\s*([0-9]{1,4})\\s*[\\]】]\\s*(\\S.*)$");
     private static final Pattern DAY_RELEASE_CONTENT = Pattern.compile("(?i)\\[DAY\\]\\s*\\[([^\\]]+)\\]");
     // Android 9's ICU 60 rejects the Java-specific IsHan alias; sc=Han works on both Android and the JVM.
     private static final Pattern INLINE_EPISODE = Pattern.compile("(?i)(?<![0-9])([0-9]{1,3}(?:\\.[0-9]+)?(?:SP)?)[\\s._-]*([\\p{sc=Han}々〆〇ヶ]+(?:[（(][^）)]{1,16}[）)])?)");
-    private static final Pattern LEADING_FILE_EPISODE = Pattern.compile("(?i)^\\s*([0-9]{1,3})(?=$|[\\s._\\-·|/\\\\:：,，;；\\[\\]()（）【】《》])");
+    private static final Pattern LEADING_FILE_EPISODE = Pattern.compile("(?i)^\\s*([0-9]{1,3})" + NOT_TILDE_RANGE + TOKEN_END);
     private static final Pattern SEMANTIC_FILE_TITLE = Pattern.compile("(?i)^\\s*(剧场版|劇場版|特别篇|特別篇)\\s+(.+)$");
     private static final Pattern TECHNICAL_TITLE_SUFFIX = Pattern.compile("(?i)(?:^|[\\s._\\-·])(?:4320P|2160P|1080P|720P|[48]K|HDR10(?:\\+|⁺)?|HDR|SDR|DV|DOLBY|HEVC|H[.]?26[45]|X26[45]|AVC|AV1|AAC|FLAC|WEB-?DL|WEBRIP|BLU-?RAY|BDRIP|BD|MP4|MKV|AVI|TS|(?:HI)?10-?BIT|8-?BIT|(?:19|20)[0-9]{2}[-._][0-9]{1,2}[-._][0-9]{1,2})(?=$|[\\s._\\-·])");
     private static final Pattern BRACKET_EPISODE = Pattern.compile("(?i)(?:SP[0-9]{1,3}|[0-9]{1,3}(?:[.·][0-9]+)?(?:SP)?)");
@@ -57,7 +74,7 @@ public final class EpisodeTitleCompact {
     private static final Pattern COLLECTION_VARIANT_TOKEN = Pattern.compile("(?i)(?:4320|2160|1080|720)P|[48]K|HDR10(?:\\+|⁺)?|HDR|SDR|DV|HEVC|H[.]?265|X265|AVC|H[.]?264|X264|AV1");
     private static final Pattern EPISODE_START = Pattern.compile("(?i)^(?:S\\s*[0-9]{1,2}\\s*E\\s*[0-9]{1,4}(?:\\s*(?:E|[-~—–])\\s*[0-9]{1,4})?|[0-9]{1,2}\\s*x\\s*[0-9]{1,4}(?:\\s*[-~—–]\\s*[0-9]{1,4})?|第\\s*[0-9一二三四五六七八九十百千零〇两兩]+\\s*(?:集|话|話|期|章|回|幕)|(?:最終|最终|特別|特别)\\s*幕|[0-9]{1,4}\\s*(?:集|话|話|期|章|回)|(?:EP|E)\\s*[0-9]{1,4}(?:\\s*[-~—–]\\s*[0-9]{1,4})?|[0-9]{4}[-._][0-9]{1,2}[-._][0-9]{1,2}|[0-9]{1,4}(?:\\D|$)|[上下](?:集|部)?|前篇|后篇|後篇|正片|预告|預告|花絮)");
     private static final Pattern WEAK_EPISODE_TOKEN = Pattern.compile("(?i)[上下](?:集|部)?|前篇|后篇|後篇|正片|预告|預告|花絮");
-    private static final Pattern VARIANT_TOKEN = Pattern.compile("(?i)(?:^|[\\s._\\-·|/\\\\:：,，;；\\[\\]()（）【】《》])((?:4320|2160|1080|720)P|[48]K|HQ|HD|HDR10(?:\\+|⁺)?|HDR|SDR|DV|60FPS|50FPS|30FPS|25FPS|24FPS|10BITS|8BITS|HEVC|H265|H\\.265|AVC|H264|H\\.264|AV1|DDP\\s*2[.·]?0|AAC\\s*2[.·]?0)(?=$|[\\s._\\-·|/\\\\:：,，;；\\[\\]()（）【】《》])");
+    private static final Pattern VARIANT_TOKEN = Pattern.compile("(?i)" + TOKEN_START + "((?:4320|2160|1080|720)P|[48]K|HQ|HD|HDR10(?:\\+|⁺)?|HDR|SDR|DV|60FPS|50FPS|30FPS|25FPS|24FPS|10BITS|8BITS|HEVC|H265|H\\.265|AVC|H264|H\\.264|AV1|DDP\\s*2[.·]?0|AAC\\s*2[.·]?0)" + TOKEN_END);
     private static final Pattern TAIL_CODE = Pattern.compile("(?i)[._\\-·]([0-9]{8,})$");
     private static final Pattern DATE_TOKEN = Pattern.compile("(?i)[0-9]{4}[-._][0-9]{1,2}[-._][0-9]{1,2}");
     private static final Pattern[] EPISODE_TOKENS = {
@@ -67,14 +84,29 @@ public final class EpisodeTitleCompact {
             Pattern.compile("(?i)第\\s*[0-9一二三四五六七八九十百]+\\s*(?:集|话|話|期|章|回)"),
             Pattern.compile("(?i)[0-9]{1,4}\\s*(?:集|话|話|期|章|回)"),
             Pattern.compile("(?i)(?:EP|E)\\s*[0-9]{1,4}(?:\\s*[-~—–]\\s*[0-9]{1,4})?"),
-            Pattern.compile("(?i)^\\s*([0-9]{1,3})(?=$|[\\s._\\-·|/\\\\:：,，;；\\[\\]()（）【】《》])"),
+            Pattern.compile("(?i)^\\s*([0-9]{1,3})" + NOT_TILDE_RANGE + TOKEN_END),
             DATE_TOKEN,
-            Pattern.compile("(?i)(?:^|[\\s._\\-·|/\\\\:：,，;；\\[\\]()（）【】《》])([0-9]{1,4}v[0-9]+|[0-9]{1,3})(?=$|[\\s._\\-·|/\\\\:：,，;；\\[\\]()（）【】《》])")
+            Pattern.compile("(?i)" + TOKEN_START + "([0-9]{1,4}v[0-9]+|[0-9]{1,3})" + TOKEN_END)
     };
     private static final Pattern TECH_SUFFIX = Pattern.compile("(?i)^[\\s._\\-\\[\\]()（）【】]+(?:4K|8K|2160P|1080P|720P|HDR|HDR10|DV|DOLBY|HEVC|H265|H\\.265|H264|H\\.264|AV1|AAC|FLAC|WEB-DL|WEBRIP|BLURAY|BD|HD|国语|国配|粤语|中字|中英双字|简中|繁中|内嵌字幕|无字)(?:[\\s._\\-\\[\\]()（）【】]+(?:4K|8K|2160P|1080P|720P|HDR|HDR10|DV|DOLBY|HEVC|H265|H\\.265|H264|H\\.264|AV1|AAC|FLAC|WEB-DL|WEBRIP|BLURAY|BD|HD|国语|国配|粤语|中字|中英双字|简中|繁中|内嵌字幕|无字))*[\\s._\\-\\[\\]()（）【】]*$");
-    private static final Pattern FILE_EDGE_SEPARATORS = Pattern.compile("^[\\s._\\-·|/\\\\:：,，;；]+|[\\s._\\-·|/\\\\:：,，;；]+$");
-    private static final Pattern EDGE_SEPARATORS = Pattern.compile("^[\\s._\\-·|/\\\\:：,，;；\\[\\]()（）【】《》]+|[\\s._\\-·|/\\\\:：,，;；\\[\\]()（）【】《》]+$");
+    private static final Pattern FILE_EDGE_SEPARATORS = Pattern.compile("^[" + SEPARATOR_CHARS + "]+|[" + SEPARATOR_CHARS + "]+$");
+    private static final Pattern EDGE_SEPARATORS = Pattern.compile("^[" + BOUNDARY_CHARS + "]+|[" + BOUNDARY_CHARS + "]+$");
     private static final int MAX_COMPACT_LENGTH = 14;
+    // 整列表找“变化的那个数字”用：独立的数字段（不拆分 1080 这类连续数字）
+    private static final Pattern DIGIT_RUN = Pattern.compile("(?<![0-9])[0-9]{1,4}(?![0-9])");
+    // 去掉集数后，剩下的内容如果只有这些技术标记，就说明这条名字只是“集数 + 画质/编码噪音”
+    private static final Pattern NOISE_TOKEN = Pattern.compile("(?i)" + TOKEN_START + "(?:"
+            + "[0-9]{3,4}\\s*[x×]\\s*[0-9]{3,4}|(?:4320|2160|1440|1080|720|576|480)[PI]|[248]K|UHD|FHD|HD|HQ|SD"
+            + "|HDR10(?:\\+|⁺)?|HDR|SDR|DV|DOVI|DOLBY(?:\\s*VISION)?|HEVC|AVC|AV1|[HX][.]?26[45]"
+            + "|AAC(?:\\s*[0-9][.·][0-9])?|E?AC3|DDP(?:\\s*[0-9][.·][0-9])?|DTS(?:-HD)?|TRUEHD|ATMOS|FLAC|PCM"
+            + "|WEB-?DL|WEB-?RIP|BLU-?RAY|BDRIP|BD|TVRIP|HDTV|REMUX|MP4|MKV|AVI|TS"
+            + "|[0-9]{2,3}\\s*FPS|(?:HI)?10\\s*-?\\s*BITS?|8\\s*-?\\s*BITS?"
+            + "|[0-9]{4}[-._][0-9]{1,2}[-._][0-9]{1,2}"
+            + "|国语|国配|粤语|中字|中英双字|简中|繁中|内嵌字幕|无字"
+            + ")" + TOKEN_END);
+    private static final Pattern NOT_LETTER_OR_DIGIT = Pattern.compile("(?:[^\\p{L}\\p{N}]|[" + BAR_LETTERS + "])+");
+    // 少于 3 条时“各不相同且大致连续”没有统计意义，不启用
+    private static final int MIN_VARYING_NUMBER_ITEMS = 3;
 
     private EpisodeTitleCompact() {
     }
@@ -87,17 +119,40 @@ public final class EpisodeTitleCompact {
         }
         List<String> rawNames = new ArrayList<>();
         for (Episode episode : episodes) rawNames.add(episode.getRawDisplayName());
-        List<String> displayNames = compact(rawNames);
+        List<String> displayNames = compactForDisplay(rawNames);
         for (int i = 0; i < episodes.size(); i++) episodes.get(i).setDisplayName(displayNames.get(i));
     }
 
+    /**
+     * 列表展示用的精简结果：优先不带文件大小（如“第01集”），只有去掉大小后出现重名
+     * （同一集多个版本）时才保留大小用于区分。
+     * 之前总是追加“ [805.79MB]”，像“第01集.mp4【805.79 MB】”这类短文件名精简前后几乎没区别，
+     * 选集按钮也一直停留在长标题的两行模式，看起来像“精简标题不起作用”。
+     */
+    static List<String> compactForDisplay(List<String> rawNames) {
+        List<String> withSize = compact(rawNames, true);
+        List<String> withoutSize = compact(rawNames, false);
+        if (withoutSize.size() != withSize.size()) return withSize;
+        for (int i = 0; i < withSize.size(); i++) {
+            String bare = withoutSize.get(i);
+            // 去掉大小后若为空、或需要靠大小/去重后缀才能区分（两种结果对不上），就保留大小
+            if (isEmpty(bare)) return withSize;
+            if (!withSize.get(i).equals(appendSize(bare, extractSize(rawNames.get(i))))) return withSize;
+        }
+        return withoutSize;
+    }
+
     static List<String> compact(List<String> rawNames) {
+        return compact(rawNames, true);
+    }
+
+    static List<String> compact(List<String> rawNames, boolean includeSize) {
         if (rawNames == null || rawNames.isEmpty()) return new ArrayList<>();
         List<String> names = new ArrayList<>();
         List<String> sizes = new ArrayList<>();
         for (String raw : rawNames) {
             names.add(cleanFileNoise(raw));
-            sizes.add(extractSize(raw));
+            sizes.add(includeSize ? extractSize(raw) : "");
         }
         if (rawNames.size() < 2) {
             List<String> result = new ArrayList<>();
@@ -122,13 +177,20 @@ public final class EpisodeTitleCompact {
             collectionDisplays.add(findCollectionDisplay(rawNames.get(i)));
         }
         collectionDisplays = resolveCollectionVariants(rawNames, collectionDisplays);
+        List<String> varyingNumbers = findVaryingNumberDisplays(fallback, collectionDisplays);
+        boolean unifyTokens = shouldUnifyEpisodeTokens(fallback, detectedTokens, collectionDisplays);
         List<String> compacted = new ArrayList<>();
         List<String> tokens = new ArrayList<>();
         Map<String, Integer> count = new HashMap<>();
         for (int i = 0; i < names.size(); i++) {
             String collectionDisplay = collectionDisplays.get(i);
-            String token = isEmpty(collectionDisplay) ? detectedTokens.get(i) : collectionDisplay;
-            String base = isEmpty(collectionDisplay) ? preferEpisodeToken(token, fallback.get(i)) : collectionDisplay;
+            String varyingNumber = varyingNumbers.get(i);
+            String token = !isEmpty(collectionDisplay) ? collectionDisplay : !isEmpty(varyingNumber) ? varyingNumber : detectedTokens.get(i);
+            String base;
+            if (!isEmpty(collectionDisplay)) base = collectionDisplay;
+            else if (!isEmpty(varyingNumber)) base = varyingNumber;
+            else if (unifyTokens && !isEmpty(token)) base = token;
+            else base = preferEpisodeToken(token, fallback.get(i));
             String display = appendSize(base, sizes.get(i));
             compacted.add(display);
             tokens.add(token);
@@ -291,7 +353,7 @@ public final class EpisodeTitleCompact {
     }
 
     private static boolean isSeparator(char c) {
-        return Character.isWhitespace(c) || "-_.·|/\\:：,，;；[]()（）【】《》".indexOf(c) >= 0;
+        return Character.isWhitespace(c) || "-_.·|｜丨ㅣ/\\:：,，;；~～—–\u00A0\u3000[]()（）【】《》".indexOf(c) >= 0;
     }
 
     private static boolean startsEpisode(String text) {
@@ -309,6 +371,87 @@ public final class EpisodeTitleCompact {
         return c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z';
     }
 
+    /**
+     * 通用逻辑（没命中任何结构识别）按整个列表决定是否只显示集数：
+     * 只要有一条剥完前后缀后仍超过 MAX_COMPACT_LENGTH 且能找到集数，
+     * 就让所有能找到集数的条目都只显示集数，避免“长的变成集数、短的保留原标题”的混排。
+     * 如果统一后会出现重复集数（比如同一集的正片和预告），说明集数不足以区分，
+     * 退回逐条判断，避免变成“EP01-1 / EP01-2”这种更难读的结果。
+     */
+    private static boolean shouldUnifyEpisodeTokens(List<String> fallback, List<String> tokens, List<String> collectionDisplays) {
+        boolean needToken = false;
+        Set<String> seen = new HashSet<>();
+        for (int i = 0; i < fallback.size(); i++) {
+            if (!isEmpty(collectionDisplays.get(i))) continue;
+            String token = tokens.get(i);
+            if (isEmpty(token)) continue;
+            if (!seen.add(token)) return false;
+            if (fallback.get(i).length() > MAX_COMPACT_LENGTH) needToken = true;
+        }
+        return needToken;
+    }
+
+    /**
+     * 通用兜底：不依赖具体分隔符或命名格式，整列表一起看，找出“各集都不一样的那个数字”。
+     * 做法是把每条（已去掉公共前后缀的）名字里的数字段按出现顺序排成列，
+     * 第一列满足“每条都有、互不重复、不是年份、取值大致连续”的就当作集数。
+     * 只有当某条去掉这个数字后只剩画质/编码之类的技术标记时，才改成只显示集数；
+     * 带剧情标题（“01 重逢”）或集数标记（“第01集”“EP01”）的保持原样。
+     * 已被结构识别命中的条目不受影响。
+     */
+    private static List<String> findVaryingNumberDisplays(List<String> texts, List<String> collectionDisplays) {
+        List<String> result = new ArrayList<>();
+        for (int i = 0; i < texts.size(); i++) result.add("");
+        if (texts.size() < MIN_VARYING_NUMBER_ITEMS) return result;
+        List<List<int[]>> runs = new ArrayList<>();
+        int columns = Integer.MAX_VALUE;
+        for (String text : texts) {
+            List<int[]> positions = new ArrayList<>();
+            Matcher matcher = DIGIT_RUN.matcher(text);
+            while (matcher.find()) positions.add(new int[]{matcher.start(), matcher.end()});
+            runs.add(positions);
+            columns = Math.min(columns, positions.size());
+        }
+        int column = findVaryingNumberColumn(texts, runs, columns);
+        if (column < 0) return result;
+        for (int i = 0; i < texts.size(); i++) {
+            if (!isEmpty(collectionDisplays.get(i))) continue;
+            String text = texts.get(i);
+            int[] run = runs.get(i).get(column);
+            String rest = text.substring(0, run[0]) + " " + text.substring(run[1]);
+            if (isOnlyTechnicalNoise(rest)) result.set(i, text.substring(run[0], run[1]));
+        }
+        return result;
+    }
+
+    private static int findVaryingNumberColumn(List<String> texts, List<List<int[]>> runs, int columns) {
+        for (int column = 0; column < columns; column++) {
+            Set<Integer> values = new HashSet<>();
+            int min = Integer.MAX_VALUE;
+            int max = Integer.MIN_VALUE;
+            boolean valid = true;
+            for (int i = 0; i < texts.size(); i++) {
+                int[] run = runs.get(i).get(column);
+                String value = texts.get(i).substring(run[0], run[1]);
+                int number = Integer.parseInt(value);
+                if (isStandaloneYear(value) || !values.add(number)) {
+                    valid = false;
+                    break;
+                }
+                min = Math.min(min, number);
+                max = Math.max(max, number);
+            }
+            // 允许缺集，但跨度不能超过条数的两倍（排除 720/1080 这类偶然不同的数字）
+            if (valid && max - min + 1 <= texts.size() * 2) return column;
+        }
+        return -1;
+    }
+
+    private static boolean isOnlyTechnicalNoise(String text) {
+        String value = NOISE_TOKEN.matcher(text).replaceAll(" ");
+        return NOT_LETTER_OR_DIGIT.matcher(value).replaceAll("").isEmpty();
+    }
+
     private static String preferEpisodeToken(String token, String compact) {
         if (compact.length() <= MAX_COMPACT_LENGTH) return compact;
         return isEmpty(token) ? compact : token;
@@ -322,6 +465,8 @@ public final class EpisodeTitleCompact {
         if (nested.matches()) return findNestedCollectionDisplay(nested.group(2));
         Matcher category = CATEGORY_HEADER.matcher(text);
         if (category.matches()) return findCategoryDisplay(category.group(1), category.group(2));
+        String numbered = findBracketNumberTitleDisplay(text);
+        if (!isEmpty(numbered)) return numbered;
         String maku = findMakuDisplay(text);
         if (!isEmpty(maku)) return maku;
         String dayRelease = findDayReleaseDisplay(text);
@@ -332,6 +477,20 @@ public final class EpisodeTitleCompact {
         String fileDisplay = findLeadingFileDisplay(text);
         if (!isEmpty(fileDisplay)) return fileDisplay;
         return "";
+    }
+
+    /**
+     * “【N】剧情标题”统一精简为“第N集”。
+     * 之前这类名字走通用逻辑：只有超过 MAX_COMPACT_LENGTH 的才换成序号，
+     * 结果同一列表里一部分变成“2”，一部分仍是完整标题，看起来像只精简了一半。
+     * 这里按名字结构判断，不看长度，保证整列表结果一致。
+     */
+    private static String findBracketNumberTitleDisplay(String text) {
+        Matcher matcher = BRACKET_NUMBER_TITLE.matcher(stripFileNoise(text));
+        if (!matcher.matches()) return "";
+        String number = matcher.group(1);
+        if (isStandaloneYear(number)) return "";
+        return "第" + number + "集";
     }
 
     private static String findMakuDisplay(String text) {

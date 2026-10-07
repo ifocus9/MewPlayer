@@ -3,7 +3,6 @@ package com.fongmi.android.tv.web;
 import android.graphics.Color;
 import android.text.TextUtils;
 
-import com.fongmi.android.tv.bean.Site;
 import com.github.catvod.utils.Json;
 import com.google.gson.JsonObject;
 
@@ -39,13 +38,6 @@ public final class WebHomeChromeOptions {
 
     public static WebHomeChromeOptions legacyImmersive() {
         return new WebHomeChromeOptions(WebHomeChrome.IMMERSIVE, STYLE_AUTO, STYLE_AUTO, RESTORE_NATIVE, Color.TRANSPARENT, Color.TRANSPARENT);
-    }
-
-    public static WebHomeChromeOptions fromSite(Site site) {
-        JsonObject object = site == null ? null : site.getWebHomeChrome();
-        String mode = site == null ? WebHomeChrome.NORMAL : site.getChromeMode();
-        if (TextUtils.isEmpty(mode)) mode = WebHomeChrome.EDGE;
-        return from(object, mode);
     }
 
     public static WebHomeChromeOptions from(JsonObject object, String fallbackMode) {

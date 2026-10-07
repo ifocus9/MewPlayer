@@ -34,7 +34,7 @@ public final class DiagnosticCategories {
 
     public static Category text(String tag) {
         String value = tag == null ? "" : tag.toLowerCase(Locale.ROOT);
-        if (value.equals("quickjs") || value.equals("python-spider")) return Category.NETWORK;
+        if (value.equals("quickjs")) return Category.NETWORK;
         if (value.contains("subtitle") || value.contains("libass") || value.contains("script") || value.equals("ass")) return Category.SUBTITLE;
         if (value.contains("audio") || value.contains("audiotrack")) return Category.AUDIO;
         if (value.contains("surface") || value.contains("video") || value.contains("render") || value.contains("codec")) return Category.VIDEO;

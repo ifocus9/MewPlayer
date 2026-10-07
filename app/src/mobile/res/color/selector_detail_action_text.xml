@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 分区标题右侧的文字按钮（倒序 / 精简标题）：开启时强调色 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="@color/detail_accent" android:state_selected="true" />
+    <item android:color="@color/detail_text_body" />
+</selector>

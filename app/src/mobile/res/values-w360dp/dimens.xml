@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 360dp 宽：底栏约 328dp，两侧各留 16dp，接近 Telegram 的贴边悬浮效果 -->
+    <dimen name="nav_item_width">80dp</dimen>
+</resources>

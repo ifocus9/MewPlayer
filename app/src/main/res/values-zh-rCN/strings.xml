@@ -23,10 +23,6 @@
     <string name="detail_content">简介：<xliff:g name="name">%s</xliff:g></string>
     <string name="detail_desc">简介</string>
 
-    <!-- Keep -->
-    <string name="keep">收藏</string>
-    <string name="keep_add">已加入收藏</string>
-    <string name="keep_del">已取消收藏</string>
     <string name="exit_confirm_title">确定退出应用？</string>
     <string name="exit_confirm_message">当前页面将关闭；如果正在播放，会继续留在后台。</string>
     <string name="exit_confirm_positive">确认退出</string>
@@ -138,12 +134,15 @@
     <string name="dialog_cancel">取消</string>
     <string name="dialog_confirm">确认</string>
     <string name="setting_web_home">首页配置</string>
-    <string name="viewing_record_sync_entry_summary">%1$s · 远端 %2$d/%3$d · Webhook %4$d/%5$d</string>
-    <string name="setting_custom_csp_permission_required">站点注入需要文件访问权限。</string>
-    <string name="setting_custom_csp_save_failed">站点注入保存失败：%1$s</string>
+    <string name="web_page_no_app">没有可以打开该链接的应用</string>
+    <string name="web_page_download_unsupported">不支持该类型的下载</string>
     <string name="setting_incognito">无痕模式</string>
     <string name="dialog_close">关闭</string>
     <string name="setting_doh">DoH</string>
+    <string name="setting_theme">主题</string>
+    <string name="setting_theme_system">跟随系统</string>
+    <string name="setting_theme_light">浅色</string>
+    <string name="setting_theme_dark">深色</string>
     <string name="setting_cache">缓存</string>
     <string name="setting_backup">备份</string>
     <string name="setting_restore">恢复</string>
@@ -168,9 +167,7 @@
     <string name="device_select">选择设备</string>
     <string name="device_offline">设备已离线</string>
     <string name="cast_not_ready">播放信息尚未就绪，请稍后重试</string>
-    <string name="sync_failed">同步失败</string>
     <string name="history_watched_time">已看 %1$s</string>
-    <string name="sync_receive_success">已接收同步数据</string>
     <string name="apk_push_url_busy">已有 APK 链接下载任务正在进行</string>
     <string name="apk_push_url_schedule_failed">无法启动 APK 链接下载</string>
     <string name="apk_push_url_install_ready">APK 已下载，请确认安装</string>
@@ -457,20 +454,16 @@
 
     <!-- Hint -->
     <string name="copied">已复制</string>
-    <string name="debug_log_dialog_message">调试日志服务已启动。\n\n局域网地址：\n%1$s\n\n本机地址：\n%2$s\n\n电视端没有浏览器也没关系，请在同一局域网的电脑或手机浏览器中打开局域网地址。</string>
+    <string name="debug_log_status_ready">调试日志服务已启动</string>
+    <string name="debug_log_lan_url">局域网地址</string>
+    <string name="debug_log_local_url">本机地址</string>
+    <string name="debug_log_lan_hint">电视端没有浏览器也没关系，在同一局域网的电脑或手机浏览器中打开局域网地址即可。</string>
+    <string name="debug_log_section_category">记录分类</string>
+    <string name="debug_log_section_diagnose">故障诊断</string>
     <string name="debug_log_open_browser">打开浏览器</string>
     <string name="debug_log_copy_url">复制地址</string>
     <string name="debug_log_no_browser">未找到可打开网页的应用，请使用局域网地址访问</string>
     <string name="debug_log_url_copied">调试日志地址已复制</string>
-    <string name="manage_page_stop">停止页面</string>
-    <string name="manage_page_notification_title">管理页面运行中</string>
-    <string name="manage_page_battery_guide_vivo">vivo/iQOO：设置 → 电池 → 后台耗电管理/后台高耗电 → 找到本应用 → 改为“允许后台高耗电”。如果不能直达，请在系统设置里搜索“后台耗电管理”。</string>
-    <string name="manage_page_battery_guide_xiaomi">小米/Redmi/POCO：设置 → 应用设置 → 授权管理 → 自启动管理 → 允许本应用；再到应用电池用量中选择无限制。</string>
-    <string name="manage_page_battery_guide_oppo">OPPO/realme/一加：设置 → 应用 → 自启动/关联启动 → 允许本应用；再到电池 → 应用耗电管理中允许后台运行。</string>
-    <string name="manage_page_battery_guide_huawei">华为/荣耀：手机管家或设置 → 应用启动管理 → 找到本应用 → 关闭自动管理，并允许自启动、关联启动、后台活动。</string>
-    <string name="manage_page_battery_guide_samsung">三星：设置 → 应用 → 本应用 → 电池 → 选择不受限制；同时在电池 → 后台使用限制中不要加入休眠应用。</string>
-    <string name="manage_page_battery_guide_meizu">魅族：手机管家 → 权限管理/后台管理 → 找到本应用 → 允许后台运行；再到电量管理中把本应用设为不限制。</string>
-    <string name="manage_page_battery_guide_default">设置 → 应用 → 本应用 → 电池 → 选择不受限制/不优化；如果有自启动或后台运行选项，也请允许本应用。</string>
 
     <!-- UNIT -->
     <string name="all">全部</string>

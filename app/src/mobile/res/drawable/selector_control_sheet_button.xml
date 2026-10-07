@@ -1,33 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 播放设置面板 / 弹幕设置 / 解析线路的胶囊按钮：与全屏 LUT 快捷面板（LutQuickPanel.applyBg）同一套配色。
+     选中蓝底白边，焦点 / 按下半透明白底白边，默认半透明深灰细边，圆角 6dp（无内边距，由布局控制） -->
 <ripple xmlns:android="http://schemas.android.com/apk/res/android"
     android:color="#33FFFFFF">
     <item>
         <selector>
-            <item android:state_pressed="true">
+            <item android:state_enabled="false">
                 <shape android:shape="rectangle">
-                    <corners android:radius="7dp" />
-                    <solid android:color="#66FFFFFF" />
-                    <stroke
-                        android:width="2dp"
-                        android:color="#D9FFFFFF" />
+                    <corners android:radius="6dp" />
+                    <solid android:color="#11FFFFFF" />
+                    <stroke android:width="1dp" android:color="#1AFFFFFF" />
+                </shape>
+            </item>
+            <item android:state_focused="true" android:state_selected="true">
+                <shape android:shape="rectangle">
+                    <corners android:radius="6dp" />
+                    <solid android:color="#FF2F80ED" />
+                    <stroke android:width="2dp" android:color="#FFFFFFFF" />
                 </shape>
             </item>
             <item android:state_selected="true">
                 <shape android:shape="rectangle">
-                    <corners android:radius="7dp" />
-                    <solid android:color="#5CFFFFFF" />
-                    <stroke
-                        android:width="2dp"
-                        android:color="#BFFFFFFF" />
+                    <corners android:radius="6dp" />
+                    <solid android:color="#FF2F80ED" />
+                    <stroke android:width="1dp" android:color="#FFFFFFFF" />
+                </shape>
+            </item>
+            <item android:state_focused="true">
+                <shape android:shape="rectangle">
+                    <corners android:radius="6dp" />
+                    <solid android:color="#55FFFFFF" />
+                    <stroke android:width="2dp" android:color="#FFFFFFFF" />
+                </shape>
+            </item>
+            <item android:state_pressed="true">
+                <shape android:shape="rectangle">
+                    <corners android:radius="6dp" />
+                    <solid android:color="#55FFFFFF" />
+                    <stroke android:width="1dp" android:color="#FFFFFFFF" />
                 </shape>
             </item>
             <item>
                 <shape android:shape="rectangle">
-                    <corners android:radius="7dp" />
-                    <solid android:color="#1FFFFFFF" />
-                    <stroke
-                        android:width="1dp"
-                        android:color="#14FFFFFF" />
+                    <corners android:radius="6dp" />
+                    <solid android:color="#22FFFFFF" />
+                    <stroke android:width="1dp" android:color="#33FFFFFF" />
                 </shape>
             </item>
         </selector>

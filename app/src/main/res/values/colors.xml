@@ -21,17 +21,40 @@
     <color name="white_80">#CCFFFFFF</color>
     <color name="white_90">#E6FFFFFF</color>
 
-    <color name="nav_capsule_stroke">#FFFFFF</color>
+    <!-- 启动器图标背景（浅蓝灰，避免白色 M 与纯白底融在一起） -->
+    <color name="ic_launcher_background">#EEF1F8</color>
+
+    <!-- 首页底栏（Telegram 风格半透明悬浮胶囊） -->
+    <color name="nav_capsule_bg">#E6FFFFFF</color>
+    <color name="nav_capsule_stroke">#14000000</color>
+    <!-- 首页悬浮按钮（回到顶部 / 筛选）底色：必须不透明。半透明底会透出按钮下方的阴影，
+         系统把小圆的阴影近似成多边形，透出来就是中间一块六边形色块 -->
+    <color name="fab_capsule_bg">#FFFFFF</color>
     <color name="bg_setting">#F5F6F8</color>
-    <color name="nav_indicator_color">#ECECEC</color>
+    <color name="nav_indicator_color">#12000000</color>
     <color name="nav_item_selected">#217AF4</color>
     <color name="nav_item_unselected">#1A1A1A</color>
-    <color name="site_capsule_bg">#18000000</color>
-    <color name="site_capsule_stroke">#20000000</color>
+    <!-- 站源胶囊（悬浮式）：不透明白底，靠 elevation 阴影与背景区分 -->
+    <color name="site_capsule_bg">#FFFFFF</color>
+    <!-- 胶囊关闭了强制深色，文字/图标颜色需按日夜模式自己给 -->
+    <color name="site_capsule_text">#1A1A1A</color>
+    <color name="site_capsule_icon">#555555</color>
     <color name="type_indicator_color">#1E88E5</color>
     <color name="type_unselected_color">#666666</color>
     <color name="text_site">#FFFFFF</color>
     <color name="colorPrimary">#217AF4</color>
+
+    <!-- 播放详情页（mobile） -->
+    <color name="detail_bg">#FFFFFF</color>
+    <color name="detail_chip">#F2F3F5</color>
+    <color name="detail_chip_focused">#E9EBEF</color>
+    <color name="detail_chip_selected">#E8F1FE</color>
+    <color name="detail_text_primary">#1A1A1A</color>
+    <color name="detail_text_body">#3C4043</color>
+    <!-- 白底上约 4.6:1，满足小字号对比度建议值 -->
+    <color name="detail_text_meta">#70757A</color>
+    <!-- 详情页强调色（选中文字、站源标签、展开、下划线、播放中标记） -->
+    <color name="detail_accent">#217AF4</color>
     <color name="loading_indicator">#666666</color>
 
 </resources>
