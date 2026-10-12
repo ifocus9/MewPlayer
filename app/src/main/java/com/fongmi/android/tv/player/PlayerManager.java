@@ -5115,7 +5115,6 @@ public class PlayerManager implements ParseCallback {
 
     private PlayerEngine buildEngine(int type, int decode) {
         return switch (type) {
-            case PlayerSetting.IJK -> new IjkPlayerEngine(decode, listener);
             case PlayerSetting.MPV -> new MpvPlayerEngine(decode, listener, this::onMpvVideoSizeProbed);
             default -> new ExoPlayerEngine(decode, listener);
         };

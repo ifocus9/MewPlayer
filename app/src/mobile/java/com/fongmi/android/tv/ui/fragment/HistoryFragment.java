@@ -13,6 +13,7 @@ import androidx.viewbinding.ViewBinding;
 import com.fongmi.android.tv.R;
 import com.fongmi.android.tv.bean.History;
 import com.fongmi.android.tv.databinding.FragmentHistoryBinding;
+import com.fongmi.android.tv.event.ConfigEvent;
 import com.fongmi.android.tv.event.RefreshEvent;
 import com.fongmi.android.tv.ui.activity.VideoActivity;
 import com.fongmi.android.tv.ui.adapter.HistoryAdapter;
@@ -56,10 +57,23 @@ public class HistoryFragment extends BaseFragment implements HistoryAdapter.OnCl
     }
 
     private void getHistory() {
+        if (mAdapter == null) return;
         mAdapter.setItems(History.get(), (hasChange) -> {
-            mBinding.progressLayout.showContent(true, mAdapter.getItemCount());
-            if (hasChange) mBinding.recycler.scrollToPosition(0);
+            if (mBinding != null) mBinding.progressLayout.showContent(true, mAdapter.getItemCount());
+            if (hasChange && mBinding != null) mBinding.recycler.scrollToPosition(0);
         });
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (isVisible()) getHistory();
+    }
+
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        if (!hidden) getHistory();
     }
 
     private boolean onMenuItemClick(MenuItem item) {
@@ -81,6 +95,11 @@ public class HistoryFragment extends BaseFragment implements HistoryAdapter.OnCl
         } else if (mAdapter.getItemCount() > 0) {
             mAdapter.setDelete(true);
         }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onConfigEvent(ConfigEvent event) {
+        if (event.isVod()) getHistory();
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

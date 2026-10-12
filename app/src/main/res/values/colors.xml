@@ -22,7 +22,7 @@
     <color name="white_90">#E6FFFFFF</color>
 
     <!-- 启动器图标背景（浅蓝灰，避免白色 M 与纯白底融在一起） -->
-    <color name="ic_launcher_background">#EEF1F8</color>
+    <color name="ic_launcher_background">#FFFFFF</color>
 
     <!-- 首页底栏（Telegram 风格半透明悬浮胶囊） -->
     <color name="nav_capsule_bg">#E6FFFFFF</color>
@@ -55,6 +55,22 @@
     <color name="detail_text_meta">#70757A</color>
     <!-- 详情页强调色（选中文字、站源标签、展开、下划线、播放中标记） -->
     <color name="detail_accent">#217AF4</color>
+    <color name="detail_border">#1A000000</color>
     <color name="loading_indicator">#666666</color>
+
+    <!-- 页面与卡片通用背景（浅色模式） -->
+    <color name="bg_window">#FFFFFF</color>
+    <color name="bg_card">#FFFFFF</color>
+    <color name="color_surface">#FFFFFF</color>
+    <color name="color_surface_variant">#F2F2F2</color>
+    <color name="color_on_surface">#1A1A1A</color>
+    <color name="color_on_surface_variant">#555555</color>
+    <color name="color_secondary_container">#E3F2FD</color>
+    <color name="color_on_secondary_container">#1565C0</color>
+    <color name="divider">#EFEFEF</color>
+    <color name="toolbar_popup_bg">#F2FFFFFF</color>
+    <color name="toolbar_popup_stroke">@color/white_60</color>
+    <color name="toolbar_popup_text">#18333A</color>
+    <color name="toolbar_popup_subtext">#5D7278</color>
 
 </resources>

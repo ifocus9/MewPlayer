@@ -2531,8 +2531,7 @@ public class VideoActivity extends PlaybackActivity implements CustomKeyDownVod.
                             getString(R.string.player_karaoke_track_search),
                             getString(R.string.player_karaoke_track_import_file),
                             getString(R.string.player_karaoke_track_import_url),
-                            getString(R.string.player_karaoke_track_sources),
-                            getKaraokeBasicPitchLabel()
+                            getString(R.string.player_karaoke_track_sources)
                     },
                     new Runnable[]{
                             this::generateKaraokePitchTrack,
@@ -2540,10 +2539,9 @@ public class VideoActivity extends PlaybackActivity implements CustomKeyDownVod.
                             this::showKaraokeTrackSearchDialog,
                             this::chooseKaraokeTrackFile,
                             this::showKaraokeTrackUrlDialog,
-                            this::showKaraokeTrackSourcesDialog,
-                            this::toggleKaraokeBasicPitchTfliteFromSettings
+                            this::showKaraokeTrackSourcesDialog
                     },
-                    new boolean[]{true, false, true, true, true, true, true},
+                    new boolean[]{true, false, true, true, true, true},
                     3), karaokeActionGridParams(8));
         } else {
             root.addView(createLyricsOffsetControl(), lyricsSettingRowParams(8, 42));
@@ -2669,14 +2667,12 @@ public class VideoActivity extends PlaybackActivity implements CustomKeyDownVod.
         root.addView(createAudioSheetSection(getString(R.string.player_karaoke_track)), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ResUtil.dp2px(40)));
         root.addView(createKaraokeActionGrid(dialog, true,
                 new String[]{
-                        getKaraokeBasicPitchLabel(),
                         getString(R.string.player_karaoke_track_search),
                         getString(R.string.player_karaoke_track_import_file),
                         getString(R.string.player_karaoke_track_import_url),
                         getString(R.string.player_karaoke_track_sources)
                 },
                 new Runnable[]{
-                        this::toggleKaraokeBasicPitchTflite,
                         this::showKaraokeTrackSearchDialog,
                         this::chooseKaraokeTrackFile,
                         this::showKaraokeTrackUrlDialog,
@@ -2685,20 +2681,6 @@ public class VideoActivity extends PlaybackActivity implements CustomKeyDownVod.
                 2), karaokeActionGridParams(6));
         dialog.setContentView(root);
         showLyricsSettingsSheet(dialog);
-    }
-
-    private String getKaraokeBasicPitchLabel() {
-        return getString(R.string.player_karaoke_track_basic_pitch_tflite, getString(PlayerSetting.isKaraokeBasicPitchTflite() ? R.string.player_karaoke_track_option_enabled : R.string.player_karaoke_track_option_disabled));
-    }
-
-    private void toggleKaraokeBasicPitchTflite() {
-        PlayerSetting.putKaraokeBasicPitchTflite(!PlayerSetting.isKaraokeBasicPitchTflite());
-        showKaraokeTrackAdvancedPanel();
-    }
-
-    private void toggleKaraokeBasicPitchTfliteFromSettings() {
-        PlayerSetting.putKaraokeBasicPitchTflite(!PlayerSetting.isKaraokeBasicPitchTflite());
-        showLyricsSettingsPanel(LYRICS_TAB_TRACK);
     }
 
     private void chooseKaraokeTrackFile() {

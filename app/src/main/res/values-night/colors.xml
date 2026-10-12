@@ -24,4 +24,21 @@
     <color name="detail_text_body">#BDBDC2</color>
     <color name="detail_text_meta">#8E8E95</color>
     <color name="detail_accent">#5B9DFF</color>
+    <color name="detail_border">#22FFFFFF</color>
+
+    <!-- 页面与卡片通用背景（深色模式） -->
+    <color name="bg_window">#121214</color>
+    <color name="bg_setting">#121214</color>
+    <color name="bg_card">#1C1C1E</color>
+    <color name="color_surface">#121214</color>
+    <color name="color_surface_variant">#2C2C2E</color>
+    <color name="color_on_surface">#F2F2F2</color>
+    <color name="color_on_surface_variant">#8E8E95</color>
+    <color name="color_secondary_container">#1C3354</color>
+    <color name="color_on_secondary_container">#5B9DFF</color>
+    <color name="divider">#2C2C2E</color>
+    <color name="toolbar_popup_bg">#F21C1C1E</color>
+    <color name="toolbar_popup_stroke">#1FFFFFFF</color>
+    <color name="toolbar_popup_text">#F2F2F2</color>
+    <color name="toolbar_popup_subtext">#8E8E95</color>
 </resources>

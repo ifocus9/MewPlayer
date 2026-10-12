@@ -38,7 +38,7 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="@color/white"
+                app:cardBackgroundColor="@color/bg_card"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp">
@@ -104,7 +104,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"
@@ -154,7 +154,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"
@@ -204,7 +204,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"
@@ -254,7 +254,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"
@@ -304,7 +304,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"
@@ -354,7 +354,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"
@@ -404,7 +404,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"
@@ -455,7 +455,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"
@@ -507,7 +507,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"
@@ -567,7 +567,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"
@@ -619,7 +619,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"
@@ -670,7 +670,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"
@@ -721,7 +721,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"
@@ -772,7 +772,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"
@@ -823,7 +823,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"
@@ -874,7 +874,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"
@@ -925,7 +925,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"
@@ -976,7 +976,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"
@@ -1027,7 +1027,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"
@@ -1078,7 +1078,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"
@@ -1129,7 +1129,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"
@@ -1180,7 +1180,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"
@@ -1231,7 +1231,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"
@@ -1278,7 +1278,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
-                app:cardBackgroundColor="@color/white"
+                app:cardBackgroundColor="@color/bg_card"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp">
@@ -1344,7 +1344,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"
@@ -1391,7 +1391,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
-                app:cardBackgroundColor="@color/white"
+                app:cardBackgroundColor="@color/bg_card"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp">
@@ -1456,7 +1456,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"
@@ -1506,7 +1506,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"
@@ -1565,7 +1565,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"
@@ -1615,7 +1615,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"
@@ -1665,7 +1665,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0.6dp"
                             android:layout_marginStart="16dp"
-                            android:background="#EFEFEF" />
+                            android:background="@color/divider" />
 
                         <androidx.appcompat.widget.LinearLayoutCompat
                             android:layout_width="match_parent"

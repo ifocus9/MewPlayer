@@ -188,6 +188,16 @@ public class Setting {
         Prefers.put("incognito", incognito);
     }
 
+    private static volatile boolean themeChanging;
+
+    public static boolean isThemeChanging() {
+        return themeChanging;
+    }
+
+    public static void setThemeChanging(boolean changing) {
+        themeChanging = changing;
+    }
+
     public static int getTheme() {
         int theme = Prefers.getInt("theme", THEME_FOLLOW_SYSTEM);
         for (int option : THEME_OPTIONS) if (option == theme) return theme;
@@ -195,17 +205,13 @@ public class Setting {
     }
 
     public static void putTheme(int theme) {
+        setThemeChanging(true);
         Prefers.put("theme", theme);
         applyTheme();
     }
 
-    /**
-     * 深色依赖系统强制深色（Android 10+，见 mobile Theme.Base 的 forceDarkAllowed）与 values-night 资源，
-     * 两者都按 Activity 的 uiMode 判断：AppCompat 夜间模式覆盖 uiMode，变化时自动重建所有 AppCompatActivity。
-     * Android 10 以下没有强制深色，固定跟随系统（即浅色）。
-     */
     public static void applyTheme() {
-        int theme = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ? getTheme() : THEME_FOLLOW_SYSTEM;
+        int theme = getTheme();
         int mode = switch (theme) {
             case THEME_LIGHT -> AppCompatDelegate.MODE_NIGHT_NO;
             case THEME_DARK -> AppCompatDelegate.MODE_NIGHT_YES;
@@ -238,7 +244,16 @@ public class Setting {
     }
 
     public static Context wrapDisplay(Context context) {
-        return wrapUiScale(wrapLanguage(context));
+        return wrapUiScale(wrapLanguage(wrapTheme(context)));
+    }
+
+    public static Context wrapTheme(Context context) {
+        int theme = getTheme();
+        if (theme == THEME_FOLLOW_SYSTEM) return context;
+        Configuration config = new Configuration(context.getResources().getConfiguration());
+        int nightMode = theme == THEME_DARK ? Configuration.UI_MODE_NIGHT_YES : Configuration.UI_MODE_NIGHT_NO;
+        config.uiMode = (config.uiMode & ~Configuration.UI_MODE_NIGHT_MASK) | nightMode;
+        return context.createConfigurationContext(config);
     }
 
     public static Context wrapLanguage(Context context) {
@@ -315,7 +330,7 @@ public class Setting {
     }
 
     public static boolean isPlaybackArtworkWall() {
-        return Prefers.getBoolean("playback_artwork_wall", true);
+        return Prefers.getBoolean("playback_artwork_wall", false);
     }
 
     public static boolean isCspWarmup() {

@@ -86,6 +86,7 @@ public class ConfigDialog extends BaseAlertDialog {
         Config config = getConfig();
         binding.title.setText(getDialogTitle());
         binding.positive.setText(edit ? R.string.dialog_edit : R.string.dialog_positive);
+        binding.input.setVisibility(edit ? View.VISIBLE : View.GONE);
         binding.name.setText(edit ? config.getName() : "");
         ori = config.getUrl();
         if (type == 3 && TextUtils.isEmpty(ori)) ori = "";

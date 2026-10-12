@@ -110,9 +110,14 @@ public class HomeActivity extends BaseActivity implements WebHomeChromeControlle
         mChrome = new WebHomeChromeController(this, mBinding, this, savedInstanceState);
         mBinding.getRoot().addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> checkWindowShape(right - left, bottom - top));
         PermissionUtil.requestFile(this, allGranted -> PermissionUtil.requestNotify(this));
+        Setting.setThemeChanging(false);
         setNavigation();
         initFragment(savedInstanceState);
-        initConfig();
+        if (VodConfig.get().getSites().isEmpty()) {
+            initConfig();
+        } else {
+            checkAction(getIntent());
+        }
     }
 
     @Override
@@ -266,6 +271,7 @@ public class HomeActivity extends BaseActivity implements WebHomeChromeControlle
     public void onConfigEvent(ConfigEvent event) {
         switch (event.type()) {
             case VOD:
+                RefreshEvent.history();
                 RefreshEvent.home();
                 break;
             case COMMON:
@@ -359,8 +365,8 @@ public class HomeActivity extends BaseActivity implements WebHomeChromeControlle
     }
 
     private void updateWindowBackground(int position) {
-        int color = (position == TAB_SETTING || position == TAB_SETTING_DANMAKU) ? ResUtil.getColor(R.color.bg_setting) : ResUtil.getColor(R.color.white);
-        mBinding.getRoot().setBackgroundColor(color);
+        int colorRes = (position == TAB_SETTING || position == TAB_SETTING_DANMAKU) ? R.color.bg_setting : R.color.bg_window;
+        mBinding.getRoot().setBackgroundColor(androidx.core.content.ContextCompat.getColor(this, colorRes));
     }
 
     private boolean changeFragment(int position) {
@@ -513,6 +519,10 @@ public class HomeActivity extends BaseActivity implements WebHomeChromeControlle
     @Override
     protected void onDestroy() {
         if (mChrome != null) mChrome.destroy();
+        if (!isFinishing() || isChangingConfigurations() || Setting.isThemeChanging()) {
+            super.onDestroy();
+            return;
+        }
         VodConfig.get().clear();
         OkHttp.get().clear();
         Source.get().exit();

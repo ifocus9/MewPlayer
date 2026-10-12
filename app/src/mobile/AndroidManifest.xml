@@ -77,7 +77,6 @@
                 <data android:scheme="ed2k" />
                 <data android:scheme="magnet" />
                 <data android:scheme="thunder" />
-                <data android:scheme="jianpian" />
             </intent-filter>
         </activity>
 

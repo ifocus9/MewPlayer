@@ -1,4 +1,4 @@
-# MewPlayer（CatTV）
+# MewPlayer
 
 MewPlayer 是基于 [FongMi/TV](https://github.com/FongMi/TV) 与 WebHTV 二次定制的影视播放器，主打 **Node.js 猫源（CatPawOpen 等标准猫源 bundle）**，同时保留 jar / QuickJS / Python 爬虫源。播放层集成 **Exo（Media3）/ MPV / IJK 三个内核**，手机端提供可注入原生 JSBridge 的 **「网页」Tab**。
 
@@ -192,14 +192,14 @@ keyPassword=your_key_password
 
 普通打包直接使用仓库内已提交的预编译产物：
 
-| 位置 | 内容 |
-| --- | --- |
-| `app/src/main/jniLibs/<abi>/` | `libnode.so`（nodejs-mobile）、`libijkffmpeg.so`、`libijksdl.so`、`libijkplayer.so` |
-| `app/src/<abi>/assets/mpv-libs/<abi>/` | `libmpv.so`、`libplayer.so`、`libc++_shared.so`、改名后的 FFmpeg（`libmv*` / `libmw*`） |
-| `third_party/exo-ass-native/prebuilt/<abi>/` | `libexo_ass.so`（Exo ASS 字幕） |
-| `third_party/exo-dv5-native/prebuilt/<abi>/` | libplacebo / shaderc / libdovi 静态库，供 App CMake 链接 `libexo_dovi_renderer.so` |
-| `third_party/maven/` | `androidx.media3:*:1.11.0-alpha01-fongmi`（17 个模块）与 `nextlib-media3ext` |
-| `app/libs/*.aar` | Hook、Thunder、ForceTech、JianPian、TVBus |
+| 位置                                         | 内容                                                                                    |
+| -------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `app/src/main/jniLibs/<abi>/`                | `libnode.so`（nodejs-mobile）、`libijkffmpeg.so`、`libijksdl.so`、`libijkplayer.so`     |
+| `app/src/<abi>/assets/mpv-libs/<abi>/`       | `libmpv.so`、`libplayer.so`、`libc++_shared.so`、改名后的 FFmpeg（`libmv*` / `libmw*`） |
+| `third_party/exo-ass-native/prebuilt/<abi>/` | `libexo_ass.so`（Exo ASS 字幕）                                                         |
+| `third_party/exo-dv5-native/prebuilt/<abi>/` | libplacebo / shaderc / libdovi 静态库，供 App CMake 链接 `libexo_dovi_renderer.so`      |
+| `third_party/maven/`                         | `androidx.media3:*:1.11.0-alpha01-fongmi`（17 个模块）与 `nextlib-media3ext`            |
+| `app/libs/*.aar`                             | Hook、Thunder、ForceTech、JianPian、TVBus                                               |
 
 - `nextlib-media3ext` 当前使用 `1.10.0-0.12.1-fongmi-softload-av3a-avs3-ffmpeg901-r5`（FFmpeg 9.0.1-fongmi `177f090e`，含 AV3A / AVS3 / APE 与软解负载控制）；`third_party/maven` 中还保留了 r1–r4 等旧版本。
 - `ExoplayerHdrUtils 0.4.0` 提供基于 libdovi 的 HEVC RPU 转换：按"原生 DV7 → P8.1 转换 → HDR10 基底层"选择播放路径。
@@ -208,14 +208,14 @@ keyPassword=your_key_password
 
 ### 版本锁定文件
 
-| 文件 | 内容 |
-| --- | --- |
-| `third_party/mpv-native-lock.json` | MPV `cca559b4`（0.41.0-940）、FFmpeg `177f090e`、libplacebo `b694a21b`（7.375.0）、mpv-android `99a60ad2`、curl 8.21.0、nghttp2 1.69.0、MbedTLS 3.6.7 等；NDK r29 / API 24。构建时会读取它生成 `BuildConfig.MPV_NATIVE_SOURCES`，不能删除 |
-| `third_party/media-lock.json` | Media3 fork（fish2018/webhtv `media/release-1.11.0-alpha01-fongmi` @ `e3e922d5`）及补丁；nextlib @ `6ff6cf9d`，NDK 28.2.13676358 |
-| `third_party/ijk-native-lock.json` | ijkplayer @ `be89479c`、FFmpeg `ff4.0--ijk0.8.8--20210426--001`、OpenSSL 3.2；NDK 28.2.13676358 |
-| `third_party/dvd-native-lock.json` | libdvdread 7.0.1、libdvdnav 7.0.0、libbluray；NDK 28.2.13676358 |
-| `third_party/exo-ass-lock.json` | libass、freetype 2.14.3、harfbuzz 14.2.1、fribidi、fontconfig、libxml2；NDK r29 |
-| `third_party/fongmi-repositories-lock.json` | 上游仓库审计基线（见下表） |
+| 文件                                        | 内容                                                                                                                                                                                                                                      |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `third_party/mpv-native-lock.json`          | MPV `cca559b4`（0.41.0-940）、FFmpeg `177f090e`、libplacebo `b694a21b`（7.375.0）、mpv-android `99a60ad2`、curl 8.21.0、nghttp2 1.69.0、MbedTLS 3.6.7 等；NDK r29 / API 24。构建时会读取它生成 `BuildConfig.MPV_NATIVE_SOURCES`，不能删除 |
+| `third_party/media-lock.json`               | Media3 fork（fish2018/webhtv `media/release-1.11.0-alpha01-fongmi` @ `e3e922d5`）及补丁；nextlib @ `6ff6cf9d`，NDK 28.2.13676358                                                                                                          |
+| `third_party/ijk-native-lock.json`          | ijkplayer @ `be89479c`、FFmpeg `ff4.0--ijk0.8.8--20210426--001`、OpenSSL 3.2；NDK 28.2.13676358                                                                                                                                           |
+| `third_party/dvd-native-lock.json`          | libdvdread 7.0.1、libdvdnav 7.0.0、libbluray；NDK 28.2.13676358                                                                                                                                                                           |
+| `third_party/exo-ass-lock.json`             | libass、freetype 2.14.3、harfbuzz 14.2.1、fribidi、fontconfig、libxml2；NDK r29                                                                                                                                                           |
+| `third_party/fongmi-repositories-lock.json` | 上游仓库审计基线（见下表）                                                                                                                                                                                                                |
 
 `third_party/patches/` 保存 FFmpeg、IJK、libplacebo、Media3、MPV、nextlib 的补丁；`third_party/mpv-player-jni/` 是 `libplayer.so` 的 JNI 源码；`third_party/mpv-native-overrides/`、`avs3-hpm/`、`nextlib-media3ext-compat/` 是原生重建用的配方与适配源码。
 
@@ -235,15 +235,15 @@ Release/apk/  release 构建自动复制的 APK（已在 .gitignore 中忽略）
 
 ## 上游基线
 
-| 仓库 | 分支 | Commit |
-| --- | --- | --- |
-| [TV](https://github.com/FongMi/TV) | `fongmi` | `1a19fee278fa2234da725d61a53bf59b69fe9127`（`560 / 5.6.0`） |
-| [FFmpeg](https://github.com/FongMi/FFmpeg) | `release-9.0-fongmi` | `177f090e0503b7e013922ca903bde14b1c375f18` |
-| [mpv-android](https://github.com/FongMi/mpv-android) | `fongmi` | `99a60ad2141d5ace94453590903c2c6b9a0a2443` |
-| [media](https://github.com/FongMi/media) | `release` | `2bc207851df311340767e913931ca7b28cab1794` |
-| [mpv](https://github.com/FongMi/mpv) | `fongmi` | `cca559b41ceb0bb7731cf6ef2e1f33276cd30c42` |
-| [libplacebo](https://github.com/FongMi/libplacebo) | `fongmi` | `b694a21bf2dc176c1e98b8a13c6421a0de5f3da5` |
-| [CatVodSpider](https://github.com/FongMi/CatVodSpider) | `main` | `a511a606a287089dffdd8374db75d95ec5f372b6`（仅审计，不打包） |
+| 仓库                                                   | 分支                 | Commit                                                       |
+| ------------------------------------------------------ | -------------------- | ------------------------------------------------------------ |
+| [TV](https://github.com/FongMi/TV)                     | `fongmi`             | `1a19fee278fa2234da725d61a53bf59b69fe9127`（`560 / 5.6.0`）  |
+| [FFmpeg](https://github.com/FongMi/FFmpeg)             | `release-9.0-fongmi` | `177f090e0503b7e013922ca903bde14b1c375f18`                   |
+| [mpv-android](https://github.com/FongMi/mpv-android)   | `fongmi`             | `99a60ad2141d5ace94453590903c2c6b9a0a2443`                   |
+| [media](https://github.com/FongMi/media)               | `release`            | `2bc207851df311340767e913931ca7b28cab1794`                   |
+| [mpv](https://github.com/FongMi/mpv)                   | `fongmi`             | `cca559b41ceb0bb7731cf6ef2e1f33276cd30c42`                   |
+| [libplacebo](https://github.com/FongMi/libplacebo)     | `fongmi`             | `b694a21bf2dc176c1e98b8a13c6421a0de5f3da5`                   |
+| [CatVodSpider](https://github.com/FongMi/CatVodSpider) | `main`               | `a511a606a287089dffdd8374db75d95ec5f372b6`（仅审计，不打包） |
 
 实际打包的 Media3 来自 fork `fish2018/webhtv` 分支 `media/release-1.11.0-alpha01-fongmi` @ `e3e922d5c01bc0b564849940fe589daf37360d15`，在 FongMi/media 基础上选择性移植上游修复。机器可读记录见 [`third_party/fongmi-repositories-lock.json`](third_party/fongmi-repositories-lock.json) 与 [`third_party/media-lock.json`](third_party/media-lock.json)。
 
@@ -264,4 +264,5 @@ Release/apk/  release 构建自动复制的 APK（已在 .gitignore 中忽略）
 - nodejs-mobile、[nextlib](https://github.com/anilbeesetti/nextlib)、[Chaquopy](https://chaquo.com/chaquopy/)
 
 ### 友情链接
+
 [![Linux.do](https://img.shields.io/badge/-Linux.do-1c1c1e?style=flat-square&logo=data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMiIgYmFzZVByb2ZpbGU9InRpbnktcHMiIHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiB2aWV3Qm94PSIwIDAgMTIwIDEyMCI+CiAgPGNsaXBQYXRoIGlkPSJhIj4KICAgIDxjaXJjbGUgY3g9IjYwIiBjeT0iNjAiIHI9IjQ3Ii8+CiAgPC9jbGlwUGF0aD4KICA8Y2lyY2xlIGZpbGw9IiNmMGYwZjAiIGN4PSI2MCIgY3k9IjYwIiByPSI1MCIvPgogIDxyZWN0IGZpbGw9IiMxYzFjMWUiIGNsaXAtcGF0aD0idXJsKCNhKSIgeD0iMTAiIHk9IjEwIiB3aWR0aD0iMTAwIiBoZWlnaHQ9IjMwIi8+CiAgPHJlY3QgZmlsbD0iI2YwZjBmMCIgY2xpcC1wYXRoPSJ1cmwoI2EpIiB4PSIxMCIgeT0iNDAiIHdpZHRoPSIxMDAiIGhlaWdodD0iNDAiLz4KICA8cmVjdCBmaWxsPSIjZmZiMDAzIiBjbGlwLXBhdGg9InVybCgjYSkiIHg9IjEwIiB5PSI4MCIgd2lkdGg9IjEwMCIgaGVpZ2h0PSIzMCIvPgo8L3N2Zz4K)](https://linux.do/)

@@ -100,7 +100,18 @@ public class VodFragment extends BaseFragment implements ConfigListener, SiteLis
         setRecyclerView();
         syncWebHomeViewport();
         setViewModel();
-        showProgress();
+        if (!VodConfig.get().getSites().isEmpty()) {
+            Result cached = VodConfig.get().getResult();
+            if (cached != null && (!cached.getTypes().isEmpty() || !cached.getList().isEmpty())) {
+                mResult = cached;
+                mViewModel.setResult(cached);
+                setAdapter(cached);
+            } else if (mViewModel.getResult().getValue() == null) {
+                loadHome();
+            }
+        } else {
+            showProgress();
+        }
         setTitle();
         setLogo();
         updateToolbarMenu();
@@ -110,7 +121,6 @@ public class VodFragment extends BaseFragment implements ConfigListener, SiteLis
     protected void initEvent() {
         mBinding.top.setOnClickListener(this::onTop);
         mBinding.logo.setOnClickListener(this::onLogo);
-        mBinding.logo.setOnLongClickListener(this::onLogoLongClick);
         mBinding.title.setOnClickListener(this::onSite);
         mBinding.title.setOnLongClickListener(this::reloadConfig);
         mBinding.siteCapsule.setOnClickListener(this::onSite);
@@ -233,11 +243,6 @@ public class VodFragment extends BaseFragment implements ConfigListener, SiteLis
         HistoryDialog.create().vod().readOnly().show(this);
     }
 
-    private boolean onLogoLongClick(View view) {
-        homeContent();
-        return true;
-    }
-
     private void onSite(View view) {
         SiteDialog.create().change().show(this);
     }
@@ -339,7 +344,12 @@ public class VodFragment extends BaseFragment implements ConfigListener, SiteLis
     }
 
     public Result getResult() {
-        return mResult == null ? new Result() : mResult;
+        if (mResult != null) return mResult;
+        Result cached = VodConfig.get().getResult();
+        if (cached != null && (!cached.getTypes().isEmpty() || !cached.getList().isEmpty())) {
+            return mResult = cached;
+        }
+        return new Result();
     }
 
     private void setLogo() {
@@ -355,6 +365,7 @@ public class VodFragment extends BaseFragment implements ConfigListener, SiteLis
     public void onRefreshEvent(RefreshEvent event) {
         switch (event.getType()) {
             case HOME:
+                VodConfig.get().setResult(null);
                 loadHome();
                 break;
             case SIZE:

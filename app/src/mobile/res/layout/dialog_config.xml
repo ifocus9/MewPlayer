@@ -20,7 +20,7 @@
         android:textColor="#202124"
         android:textSize="20sp"
         android:textStyle="bold"
-        tools:text="点播" />
+        tools:text="订阅" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/input"

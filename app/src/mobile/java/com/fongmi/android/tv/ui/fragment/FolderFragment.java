@@ -62,7 +62,9 @@ public class FolderFragment extends BaseFragment {
     @Override
     protected void initView() {
         mType = getType();
-        getChildFragmentManager().beginTransaction().replace(R.id.container, TypeFragment.newInstance(getKey(), mType.getTypeId(), mType.getStyle(), getExtend(), mType.isFolder(), getY())).commit();
+        if (getChild() == null) {
+            getChildFragmentManager().beginTransaction().replace(R.id.container, TypeFragment.newInstance(getKey(), mType.getTypeId(), mType.getStyle(), getExtend(), mType.isFolder(), getY())).commit();
+        }
     }
 
     private HashMap<String, String> getExtend() {

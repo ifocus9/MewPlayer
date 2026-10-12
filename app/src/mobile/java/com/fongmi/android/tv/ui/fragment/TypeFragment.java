@@ -129,11 +129,30 @@ public class TypeFragment extends BaseFragment implements CustomScroller.Callbac
     }
 
     private void getHome() {
+        VodConfig.get().setResult(null);
         mAdapter.clear(() -> mViewModel.homeContent());
     }
 
     private void getVideo() {
         mScroller.reset();
+        if (isHome()) {
+            Result result = getParent().getResult();
+            if (result != null && !result.getList().isEmpty()) {
+                setAdapter(result);
+                return;
+            }
+        } else {
+            Result cached = VodConfig.get().getCategory(getKey(), getTypeId());
+            if (cached != null && !cached.getList().isEmpty()) {
+                mViewModel.setResult(cached);
+                setAdapter(cached);
+                return;
+            }
+        }
+        if (mViewModel.getResult().getValue() != null && !mViewModel.getResult().getValue().getList().isEmpty()) {
+            setAdapter(mViewModel.getResult().getValue());
+            return;
+        }
         mAdapter.clear(() -> {
             if (!mBinding.swipeLayout.isRefreshing()) mBinding.progressLayout.showProgress();
             if (isHome()) setAdapter(getParent().getResult());
@@ -179,8 +198,16 @@ public class TypeFragment extends BaseFragment implements CustomScroller.Callbac
 
     @Override
     public void onRefresh() {
-        if (isHome()) getHome();
-        else getVideo();
+        if (isHome()) {
+            getHome();
+        } else {
+            VodConfig.get().removeCategory(getKey(), getTypeId());
+            mScroller.reset();
+            mAdapter.clear(() -> {
+                if (!mBinding.swipeLayout.isRefreshing()) mBinding.progressLayout.showProgress();
+                getVideo(getTypeId(), "1");
+            });
+        }
     }
 
     @Override

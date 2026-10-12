@@ -23,6 +23,7 @@ import com.fongmi.android.tv.ui.adapter.EpisodeSizing;
 import com.fongmi.android.tv.ui.base.ViewType;
 import com.fongmi.android.tv.ui.custom.SpaceItemDecoration;
 import com.fongmi.android.tv.utils.ResUtil;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 import java.util.List;
@@ -81,16 +82,23 @@ public class EpisodeSheetDialog extends BaseBottomSheetDialog implements Episode
         super.setBehavior(dialog);
         FrameLayout sheet = dialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
         if (sheet == null) return;
+        int height = Math.round(ResUtil.getScreenHeight(requireContext()) * HEIGHT_RATIO);
         ViewGroup.LayoutParams params = sheet.getLayoutParams();
-        params.height = Math.round(ResUtil.getScreenHeight(requireContext()) * HEIGHT_RATIO);
+        params.height = height;
         sheet.setLayoutParams(params);
+        BottomSheetBehavior<FrameLayout> behavior = BottomSheetBehavior.from(sheet);
+        behavior.setPeekHeight(height);
+        behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+        behavior.setSkipCollapsed(true);
     }
 
     @Override
     protected void initView() {
+        binding.group.setNestedScrollingEnabled(false);
         binding.group.setHasFixedSize(true);
         binding.group.setItemAnimator(null);
         binding.group.setAdapter(groupAdapter = new EpisodeGroupAdapter(this, true));
+        binding.episode.setNestedScrollingEnabled(true);
         binding.episode.setHasFixedSize(true);
         binding.episode.setItemAnimator(null);
         binding.episode.setAdapter(episodeAdapter = new EpisodeAdapter(this, ViewType.GRID));

@@ -772,13 +772,14 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     protected void initEvent() {
         mBinding.name.setOnClickListener(view -> onName());
         mBinding.episodeCount.setOnClickListener(view -> onMore());
+        mBinding.other.setOnClickListener(view -> onOther());
+        mBinding.director.setOnClickListener(view -> onDirector());
         mBinding.actor.setOnClickListener(view -> onActor());
         mBinding.content.setOnClickListener(view -> onContent());
-        mBinding.contentMore.setOnClickListener(view -> onContent());
-        mBinding.content.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> updateContentMore());
-        mBinding.director.setOnClickListener(view -> onDirector());
+        mBinding.contentLayout.setOnClickListener(view -> onContent());
         mBinding.name.setOnLongClickListener(view -> onChange());
         mBinding.content.setOnLongClickListener(view -> onCopy());
+        mBinding.contentLayout.setOnLongClickListener(view -> onCopy());
         mBinding.control.back.setOnClickListener(view -> onBack());
         mBinding.control.cast.setOnClickListener(view -> onCast());
         mBinding.control.info.setOnClickListener(view -> onInfo());
@@ -1321,6 +1322,9 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         setText(mBinding.content, 0, item.getContent());
         setDetailLyrics(item.getContent());
         setOther(mBinding.other, item);
+        mBinding.other.setMaxLines(1);
+        mBinding.director.setMaxLines(1);
+        mBinding.actor.setMaxLines(1);
         updateAudioStageText();
         if (mAudioStageVisible) applyAudioPageMode(true);
     }
@@ -1337,7 +1341,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
 
     private void setContentVisible() {
         mBinding.contentLayout.setVisibility(mBinding.content.getVisibility());
-        mBinding.content.post(this::updateContentMore);
     }
 
     /**
@@ -1349,20 +1352,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     private void applyDetailForceDark() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return;
         mBinding.getRoot().setForceDarkAllowed(false);
-    }
-
-    /**
-     * 简介被截断时在末尾显示“展开”（点击打开完整简介弹窗）。
-     */
-    private void updateContentMore() {
-        if (mBinding == null) return;
-        Layout layout = mBinding.content.getLayout();
-        boolean ellipsized = false;
-        if (layout != null && layout.getLineCount() > 0) {
-            ellipsized = layout.getEllipsisCount(layout.getLineCount() - 1) > 0 || layout.getLineCount() > mBinding.content.getMaxLines();
-        }
-        int visibility = ellipsized ? View.VISIBLE : View.GONE;
-        if (mBinding.contentMore.getVisibility() != visibility) mBinding.contentMore.setVisibility(visibility);
     }
 
     private ClickableSpan clickableSpan(Result result) {
@@ -1823,12 +1812,16 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         EpisodeSheetDialog.create().show(this);
     }
 
-    private void onActor() {
-        mBinding.actor.setMaxLines(mBinding.actor.getMaxLines() == 1 ? Integer.MAX_VALUE : 1);
+    private void onOther() {
+        mBinding.other.setMaxLines(mBinding.other.getMaxLines() == 1 ? Integer.MAX_VALUE : 1);
     }
 
     private void onDirector() {
         mBinding.director.setMaxLines(mBinding.director.getMaxLines() == 1 ? Integer.MAX_VALUE : 1);
+    }
+
+    private void onActor() {
+        mBinding.actor.setMaxLines(mBinding.actor.getMaxLines() == 1 ? Integer.MAX_VALUE : 1);
     }
 
     private void onContent() {
@@ -2803,8 +2796,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
                             getString(R.string.player_karaoke_track_search),
                             getString(R.string.player_karaoke_track_import_file),
                             getString(R.string.player_karaoke_track_import_url),
-                            getString(R.string.player_karaoke_track_sources),
-                            getKaraokeBasicPitchLabel()
+                            getString(R.string.player_karaoke_track_sources)
                     },
                     new Runnable[]{
                             this::generateKaraokePitchTrack,
@@ -2812,10 +2804,9 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
                             this::showKaraokeTrackSearchDialog,
                             this::chooseKaraokeTrackFile,
                             this::showKaraokeTrackUrlDialog,
-                            this::showKaraokeTrackSourcesDialog,
-                            this::toggleKaraokeBasicPitchTfliteFromSettings
+                            this::showKaraokeTrackSourcesDialog
                     },
-                    new boolean[]{true, false, true, true, true, true, true},
+                    new boolean[]{true, false, true, true, true, true},
                     3), karaokeActionGridParams(8));
         } else {
             root.addView(createLyricsOffsetControl(), lyricsSettingRowParams(8, 42));
@@ -2927,14 +2918,12 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         root.addView(createAudioSheetSection(getString(R.string.player_karaoke_track)), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ResUtil.dp2px(40)));
         root.addView(createKaraokeActionGrid(dialog, true,
                 new String[]{
-                        getKaraokeBasicPitchLabel(),
                         getString(R.string.player_karaoke_track_search),
                         getString(R.string.player_karaoke_track_import_file),
                         getString(R.string.player_karaoke_track_import_url),
                         getString(R.string.player_karaoke_track_sources)
                 },
                 new Runnable[]{
-                        this::toggleKaraokeBasicPitchTflite,
                         this::showKaraokeTrackSearchDialog,
                         this::chooseKaraokeTrackFile,
                         this::showKaraokeTrackUrlDialog,
@@ -2943,20 +2932,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
                 2), karaokeActionGridParams(6));
         dialog.setContentView(root);
         showLyricsSettingsSheet(dialog);
-    }
-
-    private String getKaraokeBasicPitchLabel() {
-        return getString(R.string.player_karaoke_track_basic_pitch_tflite, getString(PlayerSetting.isKaraokeBasicPitchTflite() ? R.string.player_karaoke_track_option_enabled : R.string.player_karaoke_track_option_disabled));
-    }
-
-    private void toggleKaraokeBasicPitchTflite() {
-        PlayerSetting.putKaraokeBasicPitchTflite(!PlayerSetting.isKaraokeBasicPitchTflite());
-        showKaraokeTrackAdvancedPanel();
-    }
-
-    private void toggleKaraokeBasicPitchTfliteFromSettings() {
-        PlayerSetting.putKaraokeBasicPitchTflite(!PlayerSetting.isKaraokeBasicPitchTflite());
-        showLyricsSettingsPanel(LYRICS_TAB_TRACK);
     }
 
     private LinearLayout createKaraokeSheetHeader(BottomSheetDialog dialog, String title, Runnable backAction) {
@@ -3398,7 +3373,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     private void generateKaraokePitchTrack() {
         List<LyricsLine> lines = getKaraokeGenerationLines();
         KaraokeTrackRepository.MediaInput input = service() == null ? null : KaraokeTrackRepository.snapshot(player());
-        android.util.Log.i("karaoke-generate", "pitch requested basicPitch=" + PlayerSetting.isKaraokeBasicPitchTflite() + " lines=" + lines.size() + " input=" + (input == null ? "null" : input.getUrl()));
+        android.util.Log.i("karaoke-generate", "pitch requested lines=" + lines.size() + " input=" + (input == null ? "null" : input.getUrl()));
         if (!KaraokeTrackRepository.canGeneratePitch(input, lines)) {
             Notify.show(R.string.player_karaoke_track_generate_no_lyrics);
             return;
@@ -4335,41 +4310,8 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     }
 
     private void setContextWall(String url) {
-        if (!Setting.isPlaybackArtworkWall()) {
-            mContextWallUrl = "";
-            hideContextWall();
-            return;
-        }
-        String wall = lockContextWall(url);
-        if (TextUtils.isEmpty(wall)) {
-            mContextWallUrl = "";
-            hideContextWall();
-            return;
-        }
-        if (Objects.equals(mContextWallUrl, wall)) return;
-        mContextWallUrl = wall;
-        resetContextWallAlpha();
-        if (isGone(mBinding.contextWall)) {
-            mBinding.contextWall.setBackgroundColor(0xFF000000);
-            mBinding.contextWall.setVisibility(View.VISIBLE);
-        }
-        ImgUtil.load(this, wall, new CustomTarget<>() {
-            @Override
-            public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
-                if (!Objects.equals(mContextWallUrl, wall)) return;
-                resetContextWallAlpha();
-                mBinding.contextWall.setBackgroundColor(0x00000000);
-                mBinding.contextWall.setImageDrawable(resource);
-                mBinding.contextWall.setVisibility(View.VISIBLE);
-            }
-
-            @Override
-            public void onLoadFailed(@Nullable Drawable errorDrawable) {
-                if (!Objects.equals(mContextWallUrl, wall)) return;
-                mContextWallUrl = "";
-                hideContextWall();
-            }
-        });
+        mContextWallUrl = "";
+        hideContextWall();
     }
 
     private void resetContextWallAlpha() {
@@ -4378,18 +4320,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     }
 
     private void restoreContextWall() {
-        if (!Setting.isPlaybackArtworkWall()) return;
-        String wall = getContextWall();
-        if (TextUtils.isEmpty(wall)) {
-            hideContextWall();
-        } else if (Objects.equals(mContextWallUrl, wall) && mBinding.contextWall.getDrawable() != null) {
-            resetContextWallAlpha();
-            mBinding.contextWall.setBackgroundColor(Color.TRANSPARENT);
-            mBinding.contextWall.setVisibility(View.VISIBLE);
-        } else {
-            mContextWallUrl = "";
-            setContextWall(wall);
-        }
+        hideContextWall();
     }
 
     private void hideContextWall() {

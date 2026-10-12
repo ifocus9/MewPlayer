@@ -17,10 +17,11 @@ import androidx.appcompat.widget.AppCompatImageView;
 
 public class ContextWallImageView extends AppCompatImageView {
 
-    // 可读性遮罩：顶部（影片信息区）最实，往下逐渐透出海报
-    private static final float[] SCRIM_STOPS = {0f, 0.5f, 1f};
-    private static final int[] SCRIM_ALPHAS = {0xF0, 0xD9, 0xB3};
-    private static final float SCRIM_BLUR_DP = 10f;
+    // 可读性遮罩：大幅提高模糊与遮罩深度，彻底消除具象文字/图案残留，营造柔和环境色辉光
+    private static final float[] SCRIM_STOPS = {0f, 0.45f, 1f};
+    private static final int[] SCRIM_ALPHAS_LIGHT = {0xFD, 0xF6, 0xEE};
+    private static final int[] SCRIM_ALPHAS_DARK = {0xF6, 0xEE, 0xE0};
+    private static final float SCRIM_BLUR_DP = 28f;
 
     private final Matrix matrix;
     private final Paint scrimPaint;
@@ -81,9 +82,14 @@ public class ContextWallImageView extends AppCompatImageView {
             scrimPaint.setShader(null);
             return;
         }
-        int[] colors = new int[SCRIM_ALPHAS.length];
-        for (int i = 0; i < SCRIM_ALPHAS.length; i++) {
-            colors[i] = Color.argb(SCRIM_ALPHAS[i], Color.red(scrimColor), Color.green(scrimColor), Color.blue(scrimColor));
+        int r = Color.red(scrimColor);
+        int g = Color.green(scrimColor);
+        int b = Color.blue(scrimColor);
+        boolean isLight = (r * 299 + g * 587 + b * 114) / 1000 > 160;
+        int[] alphas = isLight ? SCRIM_ALPHAS_LIGHT : SCRIM_ALPHAS_DARK;
+        int[] colors = new int[alphas.length];
+        for (int i = 0; i < alphas.length; i++) {
+            colors[i] = Color.argb(alphas[i], r, g, b);
         }
         scrimPaint.setShader(new LinearGradient(0, 0, 0, height, colors, SCRIM_STOPS, Shader.TileMode.CLAMP));
     }

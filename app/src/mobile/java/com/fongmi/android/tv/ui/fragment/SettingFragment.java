@@ -87,10 +87,8 @@ public class SettingFragment extends BaseFragment implements ConfigListener, Sit
         EventBus.getDefault().register(this);
         mBinding.vodUrl.setText(VodConfig.getDesc());
         mBinding.versionText.setText(AppVersion.fullName());
-        // 深色靠系统强制深色实现，Android 10 以下没有该能力，不提供主题选项
-        boolean themeSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;
-        mBinding.theme.setVisibility(themeSupported ? View.VISIBLE : View.GONE);
-        mBinding.themeDivider.setVisibility(themeSupported ? View.VISIBLE : View.GONE);
+        mBinding.theme.setVisibility(View.VISIBLE);
+        mBinding.themeDivider.setVisibility(View.VISIBLE);
         setOtherText();
         setCacheText();
     }

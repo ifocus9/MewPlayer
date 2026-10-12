@@ -107,11 +107,15 @@ public class ResUtil {
     }
 
     public static Drawable getDrawable(@DrawableRes int resId) {
-        return ContextCompat.getDrawable(App.get(), resId);
+        android.app.Activity activity = App.activity();
+        Context context = activity != null ? activity : App.get();
+        return ContextCompat.getDrawable(context, resId);
     }
 
     public static int getColor(@ColorRes int resId) {
-        return ContextCompat.getColor(App.get(), resId);
+        android.app.Activity activity = App.activity();
+        Context context = activity != null ? activity : App.get();
+        return ContextCompat.getColor(context, resId);
     }
 
     public static Animation getAnim(@AnimRes int resId) {

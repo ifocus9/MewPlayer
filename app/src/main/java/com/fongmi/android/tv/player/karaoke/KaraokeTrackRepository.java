@@ -147,15 +147,13 @@ public class KaraokeTrackRepository {
         if (input == null || input.isEmpty()) return ImportResult.fail("empty player");
         try {
             String signature = input.getSignature();
-            String text = PlayerSetting.isKaraokeBasicPitchTflite()
-                    ? BasicPitchTfliteGenerator.build(input, lines, progress)
-                    : KaraokePitchTrackGenerator.build(input, lines, progress);
+            String text = KaraokePitchTrackGenerator.build(input, lines, progress);
             deleteGeneratedBoundIfAny(signature, input.getLegacySignature());
             delete(generatedFile(signature));
             delete(generatedFile(input.getLegacySignature()));
             return importText(generatedPitchFile(signature), "Generated pitch scoring track", text);
         } catch (Exception e) {
-            android.util.Log.e("karaoke-generate", "pitch generation failed basicPitch=" + PlayerSetting.isKaraokeBasicPitchTflite() + " url=" + input.getUrl() + " duration=" + input.getDuration() + " headers=" + input.getHeaders().size() + " lines=" + (lines == null ? 0 : lines.size()), e);
+            android.util.Log.e("karaoke-generate", "pitch generation failed url=" + input.getUrl() + " duration=" + input.getDuration() + " headers=" + input.getHeaders().size() + " lines=" + (lines == null ? 0 : lines.size()), e);
             return ImportResult.fail(e.getMessage());
         }
     }

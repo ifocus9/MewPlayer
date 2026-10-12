@@ -70,6 +70,10 @@ public class SiteViewModel extends ViewModel {
         return result;
     }
 
+    public void setResult(Result res) {
+        result.setValue(res);
+    }
+
     public LiveData<Result> getPlayer() {
         return player;
     }
@@ -114,11 +118,21 @@ public class SiteViewModel extends ViewModel {
     }
 
     public void homeContent() {
-        execute(TaskType.RESULT, result, () -> SiteApi.homeContent(VodConfig.get().getHome()));
+        execute(TaskType.RESULT, result, () -> {
+            Result res = SiteApi.homeContent(VodConfig.get().getHome());
+            VodConfig.get().setResult(res);
+            return res;
+        });
     }
 
     public void categoryContent(String key, String tid, String page, boolean filter, HashMap<String, String> extend) {
-        execute(TaskType.RESULT, result, () -> SiteApi.categoryContent(key, tid, page, filter, extend));
+        execute(TaskType.RESULT, result, () -> {
+            Result res = SiteApi.categoryContent(key, tid, page, filter, extend);
+            if ("1".equals(page) && (extend == null || extend.isEmpty())) {
+                VodConfig.get().putCategory(key, tid, res);
+            }
+            return res;
+        });
     }
 
     public void action(String key, String act) {

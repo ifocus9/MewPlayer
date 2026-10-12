@@ -1,25 +1,21 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <style name="Theme.Base" parent="Theme.Material3.Light.NoActionBar">
-        <!-- 应用只有浅色主题：显式允许系统强制深色（Android 10+）。
-             不写时默认值取系统属性 debug.hwui.force_dark（原生为 false），只有厂商白名单（如 MIUI on Android 11）才会变暗，
-             新系统 / 不在白名单时系统深色模式对本应用不生效。 -->
-        <item name="android:forceDarkAllowed" tools:targetApi="q">true</item>
+    <style name="Theme.Base" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
         <item name="android:statusBarColor">@color/transparent</item>
         <item name="android:navigationBarColor">@color/transparent</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">#1A65CC</item>
         <item name="colorAccent">@color/colorPrimary</item>
-        <!-- Force white background globally across all surfaces -->
-        <item name="android:colorBackground">#FFFFFF</item>
-        <item name="android:windowBackground">#FFFFFF</item>
-        <item name="colorSurface">#FFFFFF</item>
-        <item name="colorSurfaceVariant">#F2F2F2</item>
-        <item name="colorOnSurface">#1A1A1A</item>
-        <item name="colorOnSurfaceVariant">#555555</item>
-        <item name="colorSecondaryContainer">#E3F2FD</item>
-        <item name="colorOnSecondaryContainer">#1565C0</item>
+        <item name="android:colorBackground">@color/bg_window</item>
+        <item name="android:windowBackground">@color/bg_window</item>
+        <item name="colorSurface">@color/color_surface</item>
+        <item name="colorSurfaceVariant">@color/color_surface_variant</item>
+        <item name="colorOnSurface">@color/color_on_surface</item>
+        <item name="colorOnSurfaceVariant">@color/color_on_surface_variant</item>
+        <item name="colorSecondaryContainer">@color/color_secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/color_on_secondary_container</item>
     </style>
 
 
@@ -149,15 +145,15 @@
         <item name="titleTextColor">?attr/colorOnSurface</item>
     </style>
 
-    <style name="ToolbarPopupTheme" parent="ThemeOverlay.Material3.Light">
+    <style name="ToolbarPopupTheme" parent="ThemeOverlay.Material3">
         <item name="android:popupBackground">@drawable/shape_toolbar_popup</item>
-        <item name="android:textColorPrimary">#18333A</item>
-        <item name="android:textColorSecondary">#5D7278</item>
-        <item name="android:colorControlNormal">#2D4C55</item>
-        <item name="colorControlNormal">#2D4C55</item>
-        <item name="colorSurface">#F2FFFFFF</item>
-        <item name="colorOnSurface">#18333A</item>
-        <item name="colorOnSurfaceVariant">#5D7278</item>
+        <item name="android:textColorPrimary">@color/toolbar_popup_text</item>
+        <item name="android:textColorSecondary">@color/toolbar_popup_subtext</item>
+        <item name="android:colorControlNormal">@color/toolbar_popup_subtext</item>
+        <item name="colorControlNormal">@color/toolbar_popup_subtext</item>
+        <item name="colorSurface">@color/toolbar_popup_bg</item>
+        <item name="colorOnSurface">@color/toolbar_popup_text</item>
+        <item name="colorOnSurfaceVariant">@color/toolbar_popup_subtext</item>
         <item name="popupMenuStyle">@style/ToolbarPopupMenu</item>
         <item name="android:popupMenuStyle">@style/ToolbarPopupMenu</item>
         <item name="textAppearanceLargePopupMenu">@style/ToolbarPopupTextAppearance</item>
@@ -171,7 +167,7 @@
     </style>
 
     <style name="ToolbarPopupTextAppearance" parent="TextAppearance.AppCompat.Widget.PopupMenu.Large">
-        <item name="android:textColor">#18333A</item>
+        <item name="android:textColor">@color/toolbar_popup_text</item>
         <item name="android:textSize">15sp</item>
     </style>
 

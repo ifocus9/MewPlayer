@@ -10,6 +10,7 @@ import com.fongmi.android.tv.api.loader.BaseLoader;
 import com.fongmi.android.tv.bean.Config;
 import com.fongmi.android.tv.bean.Depot;
 import com.fongmi.android.tv.bean.Parse;
+import com.fongmi.android.tv.bean.Result;
 import com.fongmi.android.tv.bean.Rule;
 import com.fongmi.android.tv.bean.Site;
 import com.fongmi.android.tv.event.ConfigEvent;
@@ -49,6 +50,8 @@ public class VodConfig extends BaseConfig {
     private List<String> ads;
     private List<String> flags;
     private List<Parse> parses;
+    private Result result;
+    private final Map<String, Result> categoryCache = new java.util.concurrent.ConcurrentHashMap<>();
 
     public static VodConfig get() {
         return Loader.INSTANCE;
@@ -97,6 +100,8 @@ public class VodConfig extends BaseConfig {
         flags = null;
         rules = null;
         parses = null;
+        result = null;
+        clearCategory();
         SiteApi.clearNodeInit();
         BaseLoader.get().clear();
         RuleConfig.get().invalidate();
@@ -366,8 +371,36 @@ public class VodConfig extends BaseConfig {
     }
 
     public void setHome(Site site) {
+        setResult(null);
+        clearCategory();
         setHome(getConfig(), site, true);
         RefreshEvent.home();
+    }
+
+    public Result getResult() {
+        return result;
+    }
+
+    public void setResult(Result result) {
+        this.result = result;
+    }
+
+    public Result getCategory(String key, String tid) {
+        return categoryCache.get(key + "@" + tid);
+    }
+
+    public void putCategory(String key, String tid, Result result) {
+        if (result != null && !result.getList().isEmpty()) {
+            categoryCache.put(key + "@" + tid, result);
+        }
+    }
+
+    public void removeCategory(String key, String tid) {
+        categoryCache.remove(key + "@" + tid);
+    }
+
+    public void clearCategory() {
+        categoryCache.clear();
     }
 
     public String getWall() {

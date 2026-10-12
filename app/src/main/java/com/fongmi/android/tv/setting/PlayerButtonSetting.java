@@ -66,7 +66,7 @@ public class PlayerButtonSetting {
             new Item(FULLSCREEN, R.string.play_fullscreen),
             new Item(CHANGE, R.string.play_change));
     // 不在“播放器按钮设置”里展示的按钮：仍保留在内部排序中（避免 applyOrder 重排时把它甩到最前面），但不可配置、不会被隐藏
-    private static final Set<String> UNCONFIGURABLE = Set.of(DANMAKU);
+    private static final Set<String> UNCONFIGURABLE = Set.of(DANMAKU, FULLSCREEN);
 
     public static List<Item> getItems() {
         List<Item> items = new ArrayList<>();
@@ -174,7 +174,7 @@ public class PlayerButtonSetting {
 
     private static Set<String> getHidden() {
         Set<String> hidden = new HashSet<>();
-        // 不可配置的按钮（弹幕）忽略旧的隐藏配置，避免升级后一直被隐藏且无法在设置里恢复
+        // 不可配置的按钮（弹幕、全屏）忽略旧的隐藏配置，避免升级后一直被隐藏且无法在设置里恢复
         for (String id : split(Prefers.getString(HIDDEN))) if (contains(id) && !UNCONFIGURABLE.contains(id)) hidden.add(id);
         return hidden;
     }

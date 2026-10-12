@@ -304,6 +304,14 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     private void getVideo() {
         updateToolbarVisibility(true);
         mBinding.recycler.setVisibility(View.VISIBLE);
+        Result cached = VodConfig.get().getResult();
+        if (cached != null && (!cached.getTypes().isEmpty() || !cached.getList().isEmpty())) {
+            mResult = Result.empty();
+            mHomeResult = Result.empty();
+            loadingHomeCategory = false;
+            mViewModel.setResult(cached);
+            return;
+        }
         mResult = Result.empty();
         mHomeResult = Result.empty();
         loadingHomeCategory = false;
@@ -405,7 +413,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     public void onConfigEvent(ConfigEvent event) {
         switch (event.type()) {
             case VOD:
-                RefreshEvent.history();
+                getHistory(true);
                 RefreshEvent.home();
                 setLogo();
                 break;
@@ -420,6 +428,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         switch (event.getType()) {
             case HOME:
                 setTitle();
+                VodConfig.get().setResult(null);
                 SpiderDebug.log("site-dialog", "home refresh start key=%s homePage=%s", getHome().getKey(), getHome().hasHomePage());
                 getVideo();
                 SpiderDebug.log("site-dialog", "home refresh end key=%s", getHome().getKey());
@@ -636,6 +645,10 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     @Override
     protected void onDestroy() {
         DLNARendererService.stop(this);
+        if (!isFinishing() || isChangingConfigurations() || Setting.isThemeChanging()) {
+            super.onDestroy();
+            return;
+        }
         VodConfig.get().clear();
         OkHttp.get().clear();
         Source.get().exit();

@@ -494,14 +494,15 @@
 
                             </androidx.appcompat.widget.LinearLayoutCompat>
 
-                            <!-- 年份 · 地区 · 类型 · 备注（如 全40集），合成一行 -->
+                            <!-- 年份 · 地区 · 类型 · 备注（如 全40集） -->
                             <com.google.android.material.textview.MaterialTextView
                                 android:id="@+id/other"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="6dp"
                                 android:ellipsize="end"
-                                android:singleLine="true"
+                                android:lineSpacingExtra="2dp"
+                                android:maxLines="1"
                                 android:textColor="@color/detail_text_body"
                                 android:textSize="13sp"
                                 tools:text="2022 · 台灣 · 科幻 · 全40集" />
@@ -526,6 +527,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="8dp"
                                 android:ellipsize="end"
+                                android:lineSpacingExtra="2dp"
                                 android:maxLines="1"
                                 android:textColor="@color/detail_text_meta"
                                 android:textSize="13sp"
@@ -537,6 +539,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="4dp"
                                 android:ellipsize="end"
+                                android:lineSpacingExtra="2dp"
                                 android:maxLines="1"
                                 android:textColor="@color/detail_text_meta"
                                 android:textSize="13sp"
@@ -546,7 +549,7 @@
 
                     </androidx.appcompat.widget.LinearLayoutCompat>
 
-                    <!-- 简介：海报下方全宽显示，超出 3 行时末尾给出“展开” -->
+                    <!-- 简介：海报下方全宽卡片，点击弹出抽屉详情 -->
                     <androidx.appcompat.widget.LinearLayoutCompat
                         android:id="@+id/content_layout"
                         android:layout_width="match_parent"
@@ -554,32 +557,23 @@
                         android:layout_marginStart="16dp"
                         android:layout_marginTop="12dp"
                         android:layout_marginEnd="16dp"
-                        android:orientation="horizontal">
+                        android:background="@drawable/shape_detail_content_box"
+                        android:orientation="horizontal"
+                        android:paddingStart="12dp"
+                        android:paddingTop="9dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="9dp">
 
                         <com.google.android.material.textview.MaterialTextView
                             android:id="@+id/content"
-                            android:layout_width="0dp"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
                             android:ellipsize="end"
                             android:lineSpacingExtra="4dp"
                             android:maxLines="3"
                             android:textColor="@color/detail_text_body"
                             android:textSize="13sp"
                             tools:text="一個身世神秘的少年范閒，因對自身身世的好奇而離開故鄉澹州，前赴南慶京都。" />
-
-                        <com.google.android.material.textview.MaterialTextView
-                            android:id="@+id/contentMore"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="bottom"
-                            android:layout_marginStart="4dp"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            android:text="@string/detail_content_more"
-                            android:textColor="@color/detail_accent"
-                            android:textSize="13sp"
-                            android:visibility="gone"
-                            tools:visibility="visible" />
 
                     </androidx.appcompat.widget.LinearLayoutCompat>
 

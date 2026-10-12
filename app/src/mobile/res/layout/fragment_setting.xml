@@ -35,7 +35,7 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="@color/white"
+                app:cardBackgroundColor="@color/bg_card"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp">
@@ -91,7 +91,7 @@
                             android:layout_height="40dp"
                             android:background="?android:attr/selectableItemBackgroundBorderless"
                             android:padding="9dp"
-                            app:tint="#666666"
+                            app:tint="?attr/colorOnSurfaceVariant"
                             android:src="@drawable/ic_setting_home" />
 
                         <androidx.appcompat.widget.AppCompatImageView
@@ -101,7 +101,7 @@
                             android:layout_marginEnd="8dp"
                             android:background="?android:attr/selectableItemBackgroundBorderless"
                             android:padding="9dp"
-                            app:tint="#666666"
+                            app:tint="?attr/colorOnSurfaceVariant"
                             android:src="@drawable/ic_setting_history" />
 
                     </androidx.appcompat.widget.LinearLayoutCompat>
@@ -110,7 +110,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="0.6dp"
                         android:layout_marginStart="16dp"
-                        android:background="#EFEFEF" />
+                        android:background="@color/divider" />
 
                     <!-- 播放设置 -->
                     <androidx.appcompat.widget.LinearLayoutCompat
@@ -147,7 +147,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
-                app:cardBackgroundColor="@color/white"
+                app:cardBackgroundColor="@color/bg_card"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp">
@@ -198,7 +198,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="0.6dp"
                         android:layout_marginStart="16dp"
-                        android:background="#EFEFEF" />
+                        android:background="@color/divider" />
 
                     <!-- 调试日志 -->
                     <androidx.appcompat.widget.LinearLayoutCompat
@@ -240,7 +240,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="0.6dp"
                         android:layout_marginStart="16dp"
-                        android:background="#EFEFEF" />
+                        android:background="@color/divider" />
 
                     <!-- 无痕模式 -->
                     <androidx.appcompat.widget.LinearLayoutCompat
@@ -282,7 +282,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="0.6dp"
                         android:layout_marginStart="16dp"
-                        android:background="#EFEFEF" />
+                        android:background="@color/divider" />
 
                     <!-- DoH -->
                     <androidx.appcompat.widget.LinearLayoutCompat
@@ -324,7 +324,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="0.6dp"
                         android:layout_marginStart="16dp"
-                        android:background="#EFEFEF" />
+                        android:background="@color/divider" />
 
                     <!-- 缓存 -->
                     <androidx.appcompat.widget.LinearLayoutCompat
@@ -366,7 +366,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="0.6dp"
                         android:layout_marginStart="16dp"
-                        android:background="#EFEFEF" />
+                        android:background="@color/divider" />
 
                     <!-- 备份 -->
                     <androidx.appcompat.widget.LinearLayoutCompat
@@ -398,7 +398,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="0.6dp"
                         android:layout_marginStart="16dp"
-                        android:background="#EFEFEF" />
+                        android:background="@color/divider" />
 
                     <!-- 恢复 -->
                     <androidx.appcompat.widget.LinearLayoutCompat
@@ -435,7 +435,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
-                app:cardBackgroundColor="@color/white"
+                app:cardBackgroundColor="@color/bg_card"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp">
