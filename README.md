@@ -1,6 +1,6 @@
 # MewPlayer
 
-MewPlayer 是基于 [FongMi/TV](https://github.com/FongMi/TV) 与 WebHTV 二次定制的影视播放器，主打 **Node.js 猫源（CatPawOpen 等标准猫源 bundle）**，同时保留 jar / QuickJS / Python 爬虫源。播放层集成 **Exo（Media3）/ MPV / IJK 三个内核**，手机端提供可注入原生 JSBridge 的 **「网页」Tab**。
+MewPlayer 是基于 [FongMi/TV](https://github.com/FongMi/TV) 与 WebHTV 二次定制的影视播放器，主打 **Node.js 猫源（CatPawOpen 等标准猫源 bundle）**，同时保留 jar / QuickJS / Python 爬虫源。播放层集成 **Exo（Media3）/ MPV 双内核**（已移除老旧冗余的 IJK 内核），手机端提供可注入原生 JSBridge 的 **「网页」Tab**。
 
 - 应用名：`MewPlayer`；applicationId：`com.mewplayer.tv`；代码 namespace 仍为 `com.fongmi.android.tv`。
 - 版本：`5.6.0`（versionCode 560），对应上游 FongMi/TV 560 基线。
@@ -31,11 +31,11 @@ MewPlayer 是基于 [FongMi/TV](https://github.com/FongMi/TV) 与 WebHTV 二次�
 
 ### 播放
 
-- 三个内核可在播放设置中切换：Exo（定制 Media3 `1.11.0-alpha01-fongmi`）、MPV（`libmpv.so` + 自建 JNI `libplayer.so`）、IJK（`libijk*.so`）。各内核有独立的性能设置。
-- Exo 增强：libass ASS 字幕渲染（`third_party/exo-ass-native`）、双字幕、杜比视界（DV5 GPU 渲染 `libexo_dovi_renderer.so`、DV7 → P8.1 / HDR10 回退）、nextlib FFmpeg 软解（含 AV3A、AVS3、APE）、实时弹幕。
-- MPV 增强：OpenGL / Vulkan、AImageReader 硬解、HDR / Dolby Vision、TrueHD / 压缩音频直通、curl + HTTP/2、配置编辑、LUT 调色。
+- 双内核可在播放设置中切换：Exo（定制 Media3 `1.11.0-alpha01-fongmi`）、MPV（`libmpv.so` + 自建 JNI `libplayer.so`）。各内核有独立的性能设置。
+- Exo 增强：libass ASS 字幕渲染（`third_party/exo-ass-native`）、双字幕、杜比视界（基于 libdovi 转换 DV7 → P8.1 / HDR10 回退）、nextlib FFmpeg 软解（含 AV3A、AVS3、APE）、实时弹幕。
+- MPV 增强：OpenGL / Vulkan、AImageReader 硬解、HDR / Dolby Vision、TrueHD / 压缩音频直通、curl + HTTP/2、配置编辑。
 - 光盘：DVD / 蓝光 ISO（含远程 HTTP Range ISO）与光盘菜单导航。
-- 其他：播放器按钮 / OSD 自定义、编解码能力查看、播放性能面板、歌词（含桌面歌词）与 K 歌评分。
+- 其他：播放器按钮 / OSD 自定义、编解码能力查看、播放性能面板、歌词（含桌面歌词）。
 
 ### 其他功能
 
@@ -48,10 +48,16 @@ MewPlayer 是基于 [FongMi/TV](https://github.com/FongMi/TV) 与 WebHTV 二次�
 - DLNA：电视端可作为投屏接收端，两端都可投屏到其他设备；支持 MediaSession（Media3 `MediaLibraryService`）。
 - 备份：仅在设置页手动触发，写入 `/sdcard/TV/bak-yyyyMMdd-HHmm.zip`，保留最新 7 份；退出时不再自动备份。
 
-### 已移除
+### 已移除 / 深度瘦身精简
 
-- 直播：直播界面与入口已移除（无 LiveActivity / 直播配置）；数据库中的 `Live` 表、`/tvbus` 地址拼接和 `app/libs/tvbus-release.aar` 仍有残留。
-- 设置页的「增强功能」入口、局域网管理页 `/m`、电视端网页首页、WebHome 扩展脚本、站点注入、登录态学习、APP 代理、观影记录同步 / Webhook 上报。
+- **IJKPlayer 播放内核**：移除全套 `libijk*.so`（`libijkffmpeg`、`libijkplayer`、`libijksdl`），彻底精简老旧底层，播放内核精简为 Exo / MPV 双内核。
+- **杜比视界 DV5 GPU 渲染库**：移除 `exo_dovi_renderer.cpp` 及 `ExoDv5*.java` 等 GPU 映射实现，保留系统原生硬解及稳定的 libdovi RPU 转换回退机制。
+- **专有 P2P 与专有协议内核**：移除 ForceTech P2P 组件（`forcetech-release.aar`）与剪片 JianPian 专有内核（`jianpian-release.aar`）及其 scheme 协议。
+- **AI 识别模型与 3D LUT 预设**：移除 TensorFlow Lite 运行时依赖及音高识别模型（`basic_pitch_nmp.tflite`）；移除 `lut_presets/*.cube` 全部 3D 滤镜预设。
+- **QuickJS 冗余辅助库**：清理内置无用的第三方辅助 JS 库（`cat.js`、`cheerio.min.js`、`crypto-js.js`、`gbk.js`、`similarity.js`），仅保留初始化必需的 `spider.js` 与 `http.js`。
+- **Node.js 引擎裁剪**：替换原臃肿的 81.2MB `libnode.so` 为 FongMi 定制裁剪版（48.8MB，剔除庞大完整的 ICU 数据，ABI 完全兼容）。
+- **瘦身成果**：经过系统化精简，arm64-v8a Release APK 体积由原本膨胀的 **~208.66 MB 降至约 ~142.5 MB**，累计精简超过 **66 MB**。
+- **直播与冗余功能**：直播界面与入口已移除（无 LiveActivity / 直播配置）；设置页的「增强功能」入口、局域网管理页 `/m`、电视端网页首页、WebHome 扩展脚本、站点注入、登录态学习、APP 代理、观影记录同步 / Webhook 上报、背景海报墙等已移除。
 
 ## 系统架构
 
@@ -67,8 +73,8 @@ MewPlayer 是基于 [FongMi/TV](https://github.com/FongMi/TV) 与 WebHTV 二次�
 │  │ 网页 Tab（仅手机端）     │   │ 播放内核                  │ │
 │  │  - 用户添加的网页        │   │  - Exo（Media3 定制版）   │ │
 │  │  - 可信网页 window.fongmi│   │  - MPV（libmpv + JNI）    │ │
-│  └────────────▲─────────────┘   │  - IJK                    │ │
-│               │ 原生调用        └─────────────▲─────────────┘ │
+│  └────────────▲─────────────┘   └─────────────▲─────────────┘ │
+│               │ 原生调用                      │               │
 │  ┌────────────┴───────────────────────────────┴─────────────┐ │
 │  │ 核心调度                                                 │ │
 │  │  - VodConfig / SiteApi：/config → video.sites → node:路由│ │
@@ -95,10 +101,10 @@ MewPlayer 是基于 [FongMi/TV](https://github.com/FongMi/TV) 与 WebHTV 二次�
 
 - JDK 21（`sourceCompatibility` / `targetCompatibility` 均为 Java 21）。
 - Android SDK：Platform 37、Build Tools 37.0.0、Platform Tools。当前 `compileSdk=37`、`minSdk=24`、`targetSdk=28`。
-- **NDK 29.0.14206865 与 CMake 3.22.1**：App 自带 CMake 构建（`app/src/main/cpp/CMakeLists.txt`），会编译 `libexo_dovi_renderer.so` 和 `libnode_bridge.so`，普通打包也需要。SDK 许可已接受时 AGP 可自动安装。
+- **NDK 29.0.14206865 与 CMake 3.22.1**：App 自带 CMake 构建（`app/src/main/cpp/CMakeLists.txt`），会编译 `libnode_bridge.so`，普通打包也需要。SDK 许可已接受时 AGP 可自动安装。
 - **Python 3.10**（`py -3.10` 或 `python3.10` 可用）：`chaquo` 模块（Chaquopy 17.0.0）构建时用 pip 安装 `chaquo/requirements.txt`（lxml、ujson、pyquery、requests、cachetools、pycryptodome、beautifulsoup4），其中原生包只能从 `https://chaquo.com/pypi-13.1` 获取。
 - Gradle Wrapper 9.5.1，Android Gradle Plugin 9.2.1。
-- 能访问 Maven Central、Google Maven、Gradle Plugin Portal、JitPack 和 chaquo.com。定制 Media3、nextlib 已作为本地 Maven 产物放在 `third_party/maven`，MPV / IJK / Node / ASS 原生库均已预编译提交，普通打包不会现场编译它们。
+- 能访问 Maven Central、Google Maven、Gradle Plugin Portal、JitPack 和 chaquo.com。定制 Media3、nextlib 已作为本地 Maven 产物放在 `third_party/maven`，MPV / Node / ASS 原生库均已预编译提交，普通打包不会现场编译它们。
 
 在仓库根目录创建 `local.properties` 指定 SDK 位置：
 
@@ -194,12 +200,11 @@ keyPassword=your_key_password
 
 | 位置                                         | 内容                                                                                    |
 | -------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `app/src/main/jniLibs/<abi>/`                | `libnode.so`（nodejs-mobile）、`libijkffmpeg.so`、`libijksdl.so`、`libijkplayer.so`     |
+| `app/src/main/jniLibs/<abi>/`                | `libnode.so`（nodejs-mobile FongMi 定制裁剪版）                                         |
 | `app/src/<abi>/assets/mpv-libs/<abi>/`       | `libmpv.so`、`libplayer.so`、`libc++_shared.so`、改名后的 FFmpeg（`libmv*` / `libmw*`） |
 | `third_party/exo-ass-native/prebuilt/<abi>/` | `libexo_ass.so`（Exo ASS 字幕）                                                         |
-| `third_party/exo-dv5-native/prebuilt/<abi>/` | libplacebo / shaderc / libdovi 静态库，供 App CMake 链接 `libexo_dovi_renderer.so`      |
 | `third_party/maven/`                         | `androidx.media3:*:1.11.0-alpha01-fongmi`（17 个模块）与 `nextlib-media3ext`            |
-| `app/libs/*.aar`                             | Hook、Thunder、ForceTech、JianPian、TVBus                                               |
+| `app/libs/*.aar`                             | Hook、Thunder、TVBus（ForceTech、JianPian 已精简移除）                                  |
 
 - `nextlib-media3ext` 当前使用 `1.10.0-0.12.1-fongmi-softload-av3a-avs3-ffmpeg901-r5`（FFmpeg 9.0.1-fongmi `177f090e`，含 AV3A / AVS3 / APE 与软解负载控制）；`third_party/maven` 中还保留了 r1–r4 等旧版本。
 - `ExoplayerHdrUtils 0.4.0` 提供基于 libdovi 的 HEVC RPU 转换：按"原生 DV7 → P8.1 转换 → HDR10 基底层"选择播放路径。
@@ -217,9 +222,9 @@ keyPassword=your_key_password
 | `third_party/exo-ass-lock.json`             | libass、freetype 2.14.3、harfbuzz 14.2.1、fribidi、fontconfig、libxml2；NDK r29                                                                                                                                                           |
 | `third_party/fongmi-repositories-lock.json` | 上游仓库审计基线（见下表）                                                                                                                                                                                                                |
 
-`third_party/patches/` 保存 FFmpeg、IJK、libplacebo、Media3、MPV、nextlib 的补丁；`third_party/mpv-player-jni/` 是 `libplayer.so` 的 JNI 源码；`third_party/mpv-native-overrides/`、`avs3-hpm/`、`nextlib-media3ext-compat/` 是原生重建用的配方与适配源码。
+`third_party/patches/` 保存 FFmpeg、libplacebo、Media3、MPV、nextlib 的补丁；`third_party/mpv-player-jni/` 是 `libplayer.so` 的 JNI 源码；`third_party/mpv-native-overrides/`、`avs3-hpm/`、`nextlib-media3ext-compat/` 是原生重建用的配方与适配源码。
 
-本仓库**不包含**原生库重建脚本（上游 WebHTV 的 `scripts/build_mpv_native.sh`、`build_mpv_player_jni.sh`、`build_ijk_native.sh`、`build_media_deps.sh`、`verify_mpv_native_assets.sh`）。`third_party/mpv-native-build.md` 等文档中对这些脚本和 `docs/` 的引用仅供参考；需要重建 MPV / IJK / Media3 / nextlib 时，请使用上游 WebHTV 仓库的脚本配合本仓库的 lock 和补丁。
+本仓库**不包含**原生库重建脚本（上游 WebHTV 的 `scripts/build_mpv_native.sh`、`build_mpv_player_jni.sh`、`build_media_deps.sh`、`verify_mpv_native_assets.sh`）。`third_party/mpv-native-build.md` 等文档中对这些脚本和 `docs/` 的引用仅供参考；需要重建 MPV / Media3 / nextlib 时，请使用上游 WebHTV 仓库的脚本配合本仓库的 lock 和补丁。
 
 ## 目录结构
 
