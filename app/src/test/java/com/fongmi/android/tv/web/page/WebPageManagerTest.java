@@ -44,9 +44,10 @@ public class WebPageManagerTest {
     @Test
     public void sortedDropsInvalidAndDuplicateEntries() {
         WebPage valid = page("Valid", "https://ok.com/");
-        WebPage invalid = page("Invalid", "file:///sdcard/x.html");
-        List<WebPage> items = WebPageManager.sorted(Arrays.asList(valid, null, invalid, valid));
-        assertEquals(Arrays.asList("Valid"), names(items));
+        WebPage local = page("Local", "file:///sdcard/x.html");
+        WebPage invalid = page("Invalid", "javascript:alert(1)");
+        List<WebPage> items = WebPageManager.sorted(Arrays.asList(valid, null, invalid, local, valid));
+        assertEquals(Arrays.asList("Valid", "Local"), names(items));
     }
 
     @Test

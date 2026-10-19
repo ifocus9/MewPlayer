@@ -215,8 +215,6 @@ public class NodeService extends Service {
                     + "async function boot(mod, target) {\n"
                     + "    const start = mod && (typeof mod.start === 'function' ? mod.start : (mod.default && typeof mod.default.start === 'function' ? mod.default.start : null));\n"
                     + "    if (!start) return;\n"
-                    + "    // 给自启动的 bundle 一点时间监听端口；已在监听则不再调用 start，避免重复监听\n"
-                    + "    await new Promise((r) => setTimeout(r, 300));\n"
                     + "    if (await portInUse()) {\n"
                     + "        console.log('[Launcher] port ' + httpPort + ' already in use, skip start(config)');\n"
                     + "        return;\n"

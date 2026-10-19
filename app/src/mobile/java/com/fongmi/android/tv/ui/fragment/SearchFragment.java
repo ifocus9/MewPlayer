@@ -177,6 +177,7 @@ public class SearchFragment extends BaseFragment implements MenuProvider, WordAd
     }
 
     private void setKeyword(String text) {
+        if (text == null) text = "";
         mBinding.keyword.setText(text);
         mBinding.keyword.setSelection(text.length());
     }

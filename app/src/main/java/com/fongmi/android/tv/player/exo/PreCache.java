@@ -735,10 +735,12 @@ public class PreCache implements Player.Listener {
         boolean http = "http".equalsIgnoreCase(scheme)
                 || "https".equalsIgnoreCase(scheme);
         boolean concatenating = MediaSourceFactory.isConcatenatingUrl(url);
+        boolean loopback = local.uri.getHost() != null && ("127.0.0.1".equals(local.uri.getHost()) || "localhost".equalsIgnoreCase(local.uri.getHost()) || "::1".equals(local.uri.getHost()));
         String reason = !http ? "unsupported-scheme"
-                : concatenating ? "concatenating-url" : "eligible";
+                : concatenating ? "concatenating-url"
+                : loopback ? "loopback-proxy" : "eligible";
         return new PreCacheEligibility(
-                http && !concatenating,
+                http && !concatenating && !loopback,
                 reason,
                 scheme == null ? "-" : scheme,
                 concatenating,

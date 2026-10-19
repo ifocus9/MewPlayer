@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- mobile 覆盖 main 同名样式（leanback 仍用 main 版）：
+<!-- mobile 覆盖 main 同名样式：
      蓝光菜单遥控按钮，与全屏 LUT 快捷面板（LutQuickPanel.applyBg）同色 -->
 <resources>
     <style name="DiscMenuButton" parent="Widget.MaterialComponents.Button">

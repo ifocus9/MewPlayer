@@ -81,10 +81,6 @@ public class Action implements Process {
                 onControl(params);
                 yield Nano.ok();
             }
-            case "danmaku" -> {
-                onDanmaku(params);
-                yield Nano.ok();
-            }
             default -> Nano.ok();
         };
     }
@@ -127,7 +123,6 @@ public class Action implements Process {
             case "detail" -> RefreshEvent.detail();
             case "player" -> RefreshEvent.player();
             case "category" -> RefreshEvent.category();
-            case "danmaku" -> RefreshEvent.danmaku(path);
             case "subtitle" -> RefreshEvent.subtitle(path);
             case "vod" -> RefreshEvent.vod(Vod.objectFrom(json));
         }
@@ -146,13 +141,6 @@ public class Action implements Process {
             case "repeat" -> App.post(service::dispatchRepeat);
             case "replay" -> App.post(service::dispatchReplay);
         }
-    }
-
-    private void onDanmaku(Map<String, String> params) {
-        String text = params.get("text");
-        PlaybackService service = Server.get().getService();
-        if (service == null || TextUtils.isEmpty(text)) return;
-        App.post(() -> service.player().sendDanmaku(text));
     }
 
     private void onCast(Map<String, String> params) {

@@ -4,7 +4,6 @@ import android.net.Uri;
 
 import androidx.media3.common.MediaMetadata;
 
-import com.fongmi.android.tv.bean.Danmaku;
 import com.fongmi.android.tv.bean.Drm;
 import com.fongmi.android.tv.bean.Result;
 import com.fongmi.android.tv.bean.Sub;
@@ -23,7 +22,6 @@ import java.util.Map;
 public class PlaySpec {
 
     private Map<String, String> headers;
-    private List<Danmaku> danmakus;
     private MediaMetadata metadata;
     private List<Sub> subs;
     private Result parseResult;
@@ -37,11 +35,11 @@ public class PlaySpec {
     private boolean parseUseParse;
 
     public static PlaySpec from(String key, String url, Map<String, String> headers, MediaMetadata metadata) {
-        return new PlaySpec(key, url, headers, null, null, null, null, metadata);
+        return new PlaySpec(key, url, headers, null, null, null, metadata);
     }
 
     public static PlaySpec from(Result result, String key, MediaMetadata metadata) {
-        return new PlaySpec(key, result.getRealUrl(), result.getHeader(), result.getFormat(), result.getDrm(), result.getSubs(), result.getDanmaku(), metadata).setSource(result, false, false);
+        return new PlaySpec(key, result.getRealUrl(), result.getHeader(), result.getFormat(), result.getDrm(), result.getSubs(), metadata).setSource(result, false, false);
     }
 
     public static PlaySpec fromParse(Result result, String key, MediaMetadata metadata) {
@@ -49,17 +47,16 @@ public class PlaySpec {
     }
 
     public static PlaySpec fromParse(Result result, String key, MediaMetadata metadata, boolean useParse) {
-        return new PlaySpec(key, null, null, result.getFormat(), result.getDrm(), result.getSubs(), result.getDanmaku(), metadata).setSource(result, true, useParse);
+        return new PlaySpec(key, null, null, result.getFormat(), result.getDrm(), result.getSubs(), metadata).setSource(result, true, useParse);
     }
 
-    private PlaySpec(String key, String url, Map<String, String> headers, String format, Drm drm, List<Sub> subs, List<Danmaku> danmakus, MediaMetadata metadata) {
+    private PlaySpec(String key, String url, Map<String, String> headers, String format, Drm drm, List<Sub> subs, MediaMetadata metadata) {
         this.key = key;
         setUrl(url);
         this.drm = drm;
         this.subs = subs;
         this.format = format;
         this.headers = headers;
-        this.danmakus = danmakus;
         this.metadata = metadata;
     }
 
@@ -101,7 +98,7 @@ public class PlaySpec {
     }
 
     public PlaySpec copyWithFormat(String format) {
-        PlaySpec copy = new PlaySpec(key, url, headers, format, drm, subs, danmakus, metadata).setSource(parseResult, parseSource, parseUseParse);
+        PlaySpec copy = new PlaySpec(key, url, headers, format, drm, subs, metadata).setSource(parseResult, parseSource, parseUseParse);
         copy.playbackRoute = playbackRoute;
         copy.playbackTraceId = playbackTraceId;
         return copy;
@@ -129,10 +126,6 @@ public class PlaySpec {
 
     public List<Sub> getSubs() {
         return subs;
-    }
-
-    public List<Danmaku> getDanmakus() {
-        return danmakus;
     }
 
     public MediaMetadata getMetadata() {
@@ -172,19 +165,16 @@ public class PlaySpec {
         return this;
     }
 
+    public boolean isDash() {
+        if (format != null && (format.contains("mpd") || format.contains("dash"))) return true;
+        if (url == null) return false;
+        if (url.startsWith("edl://") || url.startsWith("data:application/dash+xml")) return true;
+        String lower = url.toLowerCase(java.util.Locale.US);
+        return lower.contains(".mpd") || lower.contains("type=mpd") || lower.contains("format=mpd");
+    }
+
     public void setSub(Sub sub) {
         if (subs == null) subs = new ArrayList<>();
         if (sub != null && !subs.contains(sub)) subs.add(0, sub);
-    }
-
-    public void setDanmaku(Danmaku item) {
-        if (danmakus == null) danmakus = new ArrayList<>();
-        if (!item.isEmpty() && !danmakus.contains(item)) danmakus.add(0, item);
-        danmakus.forEach(danmaku -> danmaku.setSelected(danmaku.getUrl().equals(item.getUrl())));
-    }
-
-    public void addDanmaku(Danmaku item) {
-        if (danmakus == null) danmakus = new ArrayList<>();
-        if (!item.isEmpty() && !danmakus.contains(item)) danmakus.add(item);
     }
 }

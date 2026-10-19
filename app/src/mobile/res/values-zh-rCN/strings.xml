@@ -17,10 +17,10 @@
     <string name="web_page_edit">编辑网页</string>
     <string name="web_page_list">网页列表</string>
     <string name="web_page_name">名称</string>
-    <string name="web_page_url">网址（http/https）</string>
+    <string name="web_page_url">网址或本地路径</string>
     <string name="web_page_trusted">允许原生能力（window.fongmi）</string>
     <string name="web_page_trusted_hint">仅对信任的网页开启：页面将可发起原生网络请求、读取配置信息、拉起播放器。</string>
-    <string name="web_page_url_invalid">请输入以 http:// 或 https:// 开头的网址</string>
+    <string name="web_page_url_invalid">请输入有效的网页地址（http://、https:// 或本地网页）</string>
     <string name="web_page_error">网页加载失败</string>
     <string name="web_page_retry">重试</string>
     <string name="web_page_fullscreen">全屏</string>

@@ -24,6 +24,7 @@ import com.fongmi.android.tv.bean.Config;
 import com.fongmi.android.tv.bean.Site;
 import com.fongmi.android.tv.databinding.ActivityHomeBinding;
 import com.fongmi.android.tv.event.ConfigEvent;
+import com.fongmi.android.tv.event.LoadingEvent;
 import com.fongmi.android.tv.event.RefreshEvent;
 import com.fongmi.android.tv.event.ServerEvent;
 import com.fongmi.android.tv.event.StateEvent;
@@ -36,7 +37,6 @@ import com.fongmi.android.tv.ui.base.BaseActivity;
 import com.fongmi.android.tv.ui.base.WebChromeHost;
 import com.fongmi.android.tv.ui.custom.FragmentStateManager;
 import com.fongmi.android.tv.ui.fragment.HistoryFragment;
-import com.fongmi.android.tv.ui.fragment.SettingDanmakuFragment;
 import com.fongmi.android.tv.ui.fragment.SettingFragment;
 import com.fongmi.android.tv.ui.fragment.SettingPlayerFragment;
 import com.fongmi.android.tv.ui.fragment.VodFragment;
@@ -68,7 +68,6 @@ public class HomeActivity extends BaseActivity implements WebHomeChromeControlle
     public static final int TAB_SETTING = 1;
     public static final int TAB_SETTING_PLAYER = 2;
     public static final int TAB_KEEP = 3;
-    public static final int TAB_SETTING_DANMAKU = 4;
     public static final int TAB_WEB = 5;
 
     private static final long NAV_INDICATOR_DURATION = 300;
@@ -171,7 +170,6 @@ public class HomeActivity extends BaseActivity implements WebHomeChromeControlle
             case TAB_SETTING -> SettingFragment.newInstance();
             case TAB_SETTING_PLAYER -> SettingPlayerFragment.newInstance();
             case TAB_KEEP -> HistoryFragment.newInstance();
-            case TAB_SETTING_DANMAKU -> SettingDanmakuFragment.newInstance();
             case TAB_WEB -> WebTabFragment.newInstance();
             default -> null;
         });
@@ -271,6 +269,7 @@ public class HomeActivity extends BaseActivity implements WebHomeChromeControlle
     public void onConfigEvent(ConfigEvent event) {
         switch (event.type()) {
             case VOD:
+                hideLoading();
                 RefreshEvent.history();
                 RefreshEvent.home();
                 break;
@@ -289,6 +288,14 @@ public class HomeActivity extends BaseActivity implements WebHomeChromeControlle
     public void onServerEvent(ServerEvent event) {
         if (event.type() == ServerEvent.Type.PUSH) VideoActivity.push(this, event.text());
         if (event.type() == ServerEvent.Type.SEARCH) SearchActivity.start(this, event.text());
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onLoadingEvent(LoadingEvent event) {
+        if (event != null && event.text() != null) {
+            Notify.dismiss();
+            showLoading(event.text());
+        }
     }
 
 
@@ -321,7 +328,7 @@ public class HomeActivity extends BaseActivity implements WebHomeChromeControlle
 
     /**
      * Telegram 风格选中气泡：在 Tab 之间滑动。
-     * 子设置页（播放器 / 弹幕）没有对应 Tab，隐藏气泡；回到 Tab 时直接出现在目标位置。
+     * 子设置页（播放器）没有对应 Tab，隐藏气泡；回到 Tab 时直接出现在目标位置。
      */
     private void moveNavIndicator(int position, boolean animate) {
         View indicator = mBinding.navIndicator;
@@ -361,11 +368,11 @@ public class HomeActivity extends BaseActivity implements WebHomeChromeControlle
     }
 
     public boolean isSettingActive() {
-        return currentPosition == TAB_SETTING || currentPosition == TAB_SETTING_DANMAKU;
+        return currentPosition == TAB_SETTING;
     }
 
     private void updateWindowBackground(int position) {
-        int colorRes = (position == TAB_SETTING || position == TAB_SETTING_DANMAKU) ? R.color.bg_setting : R.color.bg_window;
+        int colorRes = (position == TAB_SETTING) ? R.color.bg_setting : R.color.bg_window;
         mBinding.getRoot().setBackgroundColor(androidx.core.content.ContextCompat.getColor(this, colorRes));
     }
 
@@ -501,7 +508,7 @@ public class HomeActivity extends BaseActivity implements WebHomeChromeControlle
         } else if (mBinding.navVod.getVisibility() != View.VISIBLE) {
             setNavigation();
         
-        } else if (currentPosition == TAB_SETTING_PLAYER || currentPosition == TAB_SETTING_DANMAKU || mManager.isVisible(TAB_SETTING_PLAYER) || mManager.isVisible(TAB_SETTING_DANMAKU)) {
+        } else if (currentPosition == TAB_SETTING_PLAYER || mManager.isVisible(TAB_SETTING_PLAYER)) {
             change(TAB_SETTING);
         } else if (currentPosition == TAB_KEEP || mManager.isVisible(TAB_KEEP)) {
             if (mManager.canBack(TAB_KEEP)) change(TAB_VOD);

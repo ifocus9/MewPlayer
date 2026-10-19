@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="14dp"
+    android:layout_marginEnd="14dp"
+    android:layout_marginTop="4dp"
+    android:layout_marginBottom="6dp"
+    android:background="@drawable/shape_tmdb_search_item_card"
+    android:clickable="true"
+    android:focusable="true"
+    android:padding="12dp">
+
+    <!-- 海报缩略图：上下锚定右侧内容区，高度严格对齐，四角保留均匀 5dp 小圆角，宽高比 2:3 -->
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/poster"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:scaleType="centerCrop"
+        android:contentDescription="@null"
+        app:shapeAppearanceOverlay="@style/TmdbPosterSmallRound"
+        app:layout_constraintDimensionRatio="2:3"
+        app:layout_constraintTop_toTopOf="@id/contentBox"
+        app:layout_constraintBottom_toBottomOf="@id/contentBox"
+        app:layout_constraintStart_toStartOf="parent"
+        android:src="@drawable/tmdb_poster_placeholder" />
+
+    <!-- 文本信息区 -->
+    <LinearLayout
+        android:id="@+id/contentBox"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="14dp"
+        android:minHeight="80dp"
+        android:orientation="vertical"
+        android:gravity="center_vertical"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@id/poster"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- 标题行：片名 + 类型标签 (电影/剧集) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="@color/white"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end"
+                tools:text="流浪地球 2" />
+
+            <TextView
+                android:id="@+id/typeBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/shape_tmdb_badge_movie"
+                android:paddingStart="7dp"
+                android:paddingTop="2dp"
+                android:paddingEnd="7dp"
+                android:paddingBottom="2dp"
+                android:textColor="@color/white"
+                android:textSize="10.5sp"
+                android:textStyle="bold"
+                tools:text="电影" />
+
+        </LinearLayout>
+
+        <!-- 外文原名 -->
+        <TextView
+            android:id="@+id/originalTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="#88FFFFFF"
+            android:textSize="12sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:visibility="gone"
+            tools:text="The Wandering Earth II" />
+
+        <!-- 年份与评分行 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#AAAAAA"
+                android:textSize="12sp"
+                tools:text="2023-01-22" />
+
+            <TextView
+                android:id="@+id/rating"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:textColor="#FFC107"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                tools:text="★ 8.2" />
+
+        </LinearLayout>
+
+        <!-- 剧情简介片段 -->
+        <TextView
+            android:id="@+id/overview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="#88FFFFFF"
+            android:textSize="11.5sp"
+            android:maxLines="2"
+            android:ellipsize="end"
+            tools:text="太阳即将毁灭，人类在地球表面建造出巨大的推进器..." />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

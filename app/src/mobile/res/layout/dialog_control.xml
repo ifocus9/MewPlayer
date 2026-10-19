@@ -48,11 +48,6 @@
                 android:orientation="horizontal">
 
                 <com.google.android.material.textview.MaterialTextView
-                    android:id="@+id/lut"
-                    style="@style/ControlSheetButton"
-                    android:text="@string/play_lut" />
-
-                <com.google.android.material.textview.MaterialTextView
                     android:id="@+id/reset"
                     style="@style/ControlSheetButton"
                     android:text="@string/play_reset" />
@@ -67,11 +62,6 @@
                     style="@style/ControlSheetButton"
                     android:text="@string/play_timer" />
 
-                <com.google.android.material.textview.MaterialTextView
-                    android:id="@+id/immersiveAudio"
-                    style="@style/ControlSheetButton"
-                    android:layout_weight="1.8"
-                    android:text="@string/player_immersive_audio_mode" />
             </androidx.appcompat.widget.LinearLayoutCompat>
 
             <androidx.appcompat.widget.LinearLayoutCompat
@@ -333,17 +323,18 @@
                     android:visibility="gone"
                     tools:visibility="visible" />
 
-                <com.google.android.material.textview.MaterialTextView
-                    android:id="@+id/danmaku"
-                    style="@style/ControlSheetButton"
-                    android:text="@string/danmaku"
-                    android:visibility="gone"
-                    tools:visibility="visible" />
 
                 <com.google.android.material.textview.MaterialTextView
                     android:id="@+id/title"
                     style="@style/ControlSheetButton"
                     android:text="@string/play_title"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/chapter"
+                    style="@style/ControlSheetButton"
+                    android:text="@string/play_chapter"
                     android:visibility="gone"
                     tools:visibility="visible" />
 

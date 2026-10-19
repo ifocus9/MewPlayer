@@ -4,6 +4,7 @@ import androidx.media3.common.C;
 import androidx.media3.common.ColorInfo;
 import androidx.media3.common.Effect;
 import androidx.media3.common.Format;
+import androidx.media3.common.MediaChapter;
 import androidx.media3.common.MediaEdition;
 import androidx.media3.common.MediaMetadata;
 import androidx.media3.common.PlaybackException;
@@ -185,6 +186,10 @@ public interface PlayerEngine {
         return false;
     }
 
+    default boolean haveChapter() {
+        return !getCurrentMediaChapters().isEmpty();
+    }
+
     default boolean isRepeatOne() {
         return false;
     }
@@ -193,6 +198,10 @@ public interface PlayerEngine {
     }
 
     default List<MediaEdition> getCurrentMediaEditions() {
+        return Collections.emptyList();
+    }
+
+    default List<MediaChapter> getCurrentMediaChapters() {
         return Collections.emptyList();
     }
 
@@ -211,6 +220,16 @@ public interface PlayerEngine {
 
     default boolean selectEdition(MediaEdition edition) {
         return false;
+    }
+
+    default boolean selectChapter(MediaChapter chapter) {
+        return false;
+    }
+
+    default void preload(PlaySpec spec, long startPositionMs) {
+    }
+
+    default void clearPreload() {
     }
 
     String getErrorMessage(PlaybackException e);

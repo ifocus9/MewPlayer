@@ -15,10 +15,10 @@
     <string name="web_page_edit">編輯網頁</string>
     <string name="web_page_list">網頁列表</string>
     <string name="web_page_name">名稱</string>
-    <string name="web_page_url">網址（http/https）</string>
+    <string name="web_page_url">網址或本機路徑</string>
     <string name="web_page_trusted">允許原生能力（window.fongmi）</string>
     <string name="web_page_trusted_hint">僅對信任的網頁開啟：頁面將可發起原生網路請求、讀取設定資訊、啟動播放器。</string>
-    <string name="web_page_url_invalid">請輸入以 http:// 或 https:// 開頭的網址</string>
+    <string name="web_page_url_invalid">請輸入有效的網頁位址（http://、https:// 或本機網頁）</string>
     <string name="web_page_error">網頁載入失敗</string>
     <string name="web_page_retry">重試</string>
     <string name="web_page_fullscreen">全螢幕</string>

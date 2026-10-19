@@ -60,11 +60,34 @@ public class WebPageTest {
     }
 
     @Test
-    public void displayNameFallsBackToHost() {
+    public void validUrlsIncludeHttpAndLocalPages() {
+        assertTrue(WebPage.isValidUrl("http://127.0.0.1:9988/"));
+        assertTrue(WebPage.isValidUrl("https://example.com/"));
+        assertTrue(WebPage.isValidUrl("file:///sdcard/a.html"));
+        assertTrue(WebPage.isValidUrl("file://TV/index.html"));
+        assertTrue(WebPage.isValidUrl("file:/TV/index.html"));
+        assertTrue(WebPage.isValidUrl("assets://web/index.html"));
+        assertTrue(WebPage.isValidUrl("/storage/emulated/0/test.html"));
+        assertFalse(WebPage.isValidUrl("javascript:alert(1)"));
+        assertFalse(WebPage.isValidUrl("intent://scan#Intent;end"));
+        assertFalse(WebPage.isValidUrl(""));
+        assertFalse(WebPage.isValidUrl(null));
+    }
+
+    @Test
+    public void displayNameFallsBackToHostOrFileName() {
         WebPage named = WebPage.create("  影视前端 ", "https://example.com/app", "", null, false);
         WebPage unnamed = WebPage.create("", "https://example.com:8443/app", "", null, false);
+        WebPage localNamed = WebPage.create("本地页面", "file:///sdcard/test.html", "", null, false);
+        WebPage localUnnamed = WebPage.create("", "file:///sdcard/test.html", "", null, false);
+        WebPage localPath = WebPage.create("", "/storage/emulated/0/my_web/index.html", "", null, false);
+
         assertEquals("影视前端", named.getDisplayName());
         assertEquals("example.com", unnamed.getDisplayName());
+        assertEquals("本地页面", localNamed.getDisplayName());
+        assertEquals("test.html", localUnnamed.getDisplayName());
+        assertEquals("index.html", localPath.getDisplayName());
+        assertEquals("file:///storage/emulated/0/my_web/index.html", localPath.getUrl());
         assertTrue(unnamed.getKey().startsWith("webpage_"));
         assertFalse(unnamed.isTrusted());
     }

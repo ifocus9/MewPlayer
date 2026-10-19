@@ -48,6 +48,9 @@
             app:boxCornerRadiusTopEnd="8dp"
             app:boxCornerRadiusTopStart="8dp"
             app:boxStrokeColor="@color/dialog_outlined_button_stroke"
+            app:endIconDrawable="@drawable/ic_action_choose"
+            app:endIconMode="custom"
+            app:endIconTint="#5F6368"
             app:hintTextColor="#5F6368">
 
             <com.google.android.material.textfield.TextInputEditText

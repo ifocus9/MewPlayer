@@ -73,4 +73,21 @@
     <color name="toolbar_popup_text">#18333A</color>
     <color name="toolbar_popup_subtext">#5D7278</color>
 
+    <!-- TMDB 大画报详情页（暗色沉浸式） -->
+    <color name="tmdb_bg">#0D0D0D</color>
+    <color name="tmdb_surface">#1A1A1A</color>
+    <color name="tmdb_surface_variant">#252525</color>
+    <color name="tmdb_text_primary">#F0F0F0</color>
+    <color name="tmdb_text_secondary">#A0A0A0</color>
+    <color name="tmdb_text_meta">#707070</color>
+    <color name="tmdb_accent">#FFD700</color>
+    <color name="tmdb_accent_dim">#33FFD700</color>
+    <color name="tmdb_play_btn">#E8A020</color>
+    <color name="tmdb_play_btn_pressed">#C47B10</color>
+    <color name="tmdb_overlay_gradient_start">#00000000</color>
+    <color name="tmdb_overlay_gradient_end">#E6000000</color>
+    <color name="tmdb_chip_bg">#33FFFFFF</color>
+    <color name="tmdb_chip_text">#D0D0D0</color>
+    <color name="tmdb_divider">#33FFFFFF</color>
+
 </resources>

@@ -45,9 +45,6 @@ public class Config {
     @Ignore
     @SerializedName("notice")
     private String notice;
-    @Ignore
-    @SerializedName("danmaku")
-    private String danmaku;
 
     public static List<Config> arrayFrom(String str) {
         Type listType = TypeToken.getParameterized(List.class, Config.class).getType();
@@ -209,14 +206,6 @@ public class Config {
 
     public void setNotice(String notice) {
         this.notice = notice;
-    }
-
-    public String getDanmaku() {
-        return danmaku;
-    }
-
-    public void setDanmaku(String danmaku) {
-        this.danmaku = danmaku;
     }
 
     public Config type(int type) {

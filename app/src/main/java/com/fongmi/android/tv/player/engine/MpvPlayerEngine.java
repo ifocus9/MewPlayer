@@ -5,6 +5,7 @@ import android.text.TextUtils;
 import androidx.media3.common.MimeTypes;
 import androidx.media3.common.C;
 import androidx.media3.common.Format;
+import androidx.media3.common.MediaChapter;
 import androidx.media3.common.MediaEdition;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.MediaMetadata;
@@ -708,13 +709,28 @@ public class MpvPlayerEngine implements PlayerEngine {
     }
 
     @Override
+    public boolean haveChapter() {
+        return !getCurrentMediaChapters().isEmpty();
+    }
+
+    @Override
     public List<MediaEdition> getCurrentMediaEditions() {
         return player.getCurrentMediaEditions();
     }
 
     @Override
+    public List<MediaChapter> getCurrentMediaChapters() {
+        return player.getCurrentMediaChapters();
+    }
+
+    @Override
     public boolean selectEdition(MediaEdition edition) {
         return player.selectEdition(edition);
+    }
+
+    @Override
+    public boolean selectChapter(MediaChapter chapter) {
+        return player.selectChapter(chapter);
     }
 
     private String findMpvTrackId(Track track) {

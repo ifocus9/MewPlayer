@@ -31,7 +31,7 @@
             style="@style/Widget.Material3.Button.TonalButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/danmaku_reset"
+            android:text="@string/dialog_reset"
             android:textColor="@color/white"
             app:backgroundTint="@color/selector_player_sheet_button_tint"
             app:cornerRadius="6dp"

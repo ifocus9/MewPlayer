@@ -10,10 +10,15 @@ import android.os.Process;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.fongmi.android.tv.R;
+import com.fongmi.android.tv.event.LoadingEvent;
+import com.fongmi.android.tv.utils.UrlUtil;
 import com.github.catvod.net.OkHttp;
+import com.github.catvod.utils.Json;
 import com.github.catvod.utils.Path;
 import com.github.catvod.utils.Prefers;
 import com.github.catvod.utils.Util;
+import com.google.gson.JsonObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -70,6 +75,22 @@ public class NodeBundleManager {
     private static final Pattern MD5 = Pattern.compile("[0-9a-fA-F]{32}");
     private static final String[] READY_PATHS = {"/check", "/config", "/t4/config"};
 
+    /** 复用轻量探测客户端（本地环回超短超时），避免每次探测反复创建线程池 */
+    private static final OkHttpClient PROBE_CLIENT = new OkHttpClient.Builder()
+            .connectTimeout(250, TimeUnit.MILLISECONDS)
+            .readTimeout(600, TimeUnit.MILLISECONDS)
+            .retryOnConnectionFailure(false)
+            .build();
+
+    /** 探测阶段若命中 /config 或 /t4/config，暂存已解析的 JsonObject，避免 VodConfig 二次请求反序列化 */
+    private static volatile JsonObject sCachedConfigJson;
+
+    public static JsonObject consumeCachedConfig() {
+        JsonObject config = sCachedConfigJson;
+        sCachedConfigJson = null;
+        return config;
+    }
+
     public interface Callback {
         void onSuccess(String readyUrl);
 
@@ -109,15 +130,15 @@ public class NodeBundleManager {
      * </ul>
      */
     public static boolean isNodeConfig(String input) {
-        if (TextUtils.isEmpty(input)) return false;
-        String raw = input.trim();
+        if (input == null || input.trim().isEmpty()) return false;
+        String raw = UrlUtil.convert(input.trim());
         if (raw.contains(";md5;")) return true;
         String path = stripQuery(raw).toLowerCase(Locale.ROOT);
         return path.endsWith("/" + SCRIPT_NAME + ".md5") || path.equals(SCRIPT_NAME + ".md5") || path.endsWith(".js");
     }
 
     public static BundleInfo parse(String input) {
-        String raw = input == null ? "" : input.trim();
+        String raw = input == null ? "" : UrlUtil.convert(input.trim());
         if (raw.contains(";md5;")) {
             String[] parts = raw.split(";md5;", 2);
             String script = parts[0].trim();
@@ -155,7 +176,7 @@ public class NodeBundleManager {
     }
 
     private static String withMd5(String url) {
-        if (TextUtils.isEmpty(url)) return "";
+        if (url == null || url.isEmpty()) return "";
         String path = stripQuery(url);
         return path + ".md5" + url.substring(path.length());
     }
@@ -293,22 +314,29 @@ public class NodeBundleManager {
     // ---- 运行状态 ----
 
     public static boolean isServiceRunning() {
-        return probeReady(200, 300) != null;
+        return probeReady(150, 250) != null;
     }
 
     /**
      * @return 第一个返回 2xx 的就绪地址；都不可用时返回 null
      */
     private static String probeReady(long connectMs, long readMs) {
-        OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(connectMs, TimeUnit.MILLISECONDS)
-                .readTimeout(readMs, TimeUnit.MILLISECONDS)
-                .build();
         String base = baseUrl();
         for (String path : READY_PATHS) {
             String url = base + path;
-            try (Response resp = client.newCall(new Request.Builder().url(url).get().build()).execute()) {
-                if (resp.isSuccessful()) return url;
+            try (Response resp = PROBE_CLIENT.newCall(new Request.Builder().url(url).build()).execute()) {
+                if (resp.isSuccessful()) {
+                    if (resp.body() != null && ("/config".equals(path) || "/t4/config".equals(path))) {
+                        try {
+                            com.google.gson.JsonElement el = Json.parse(resp.body().string());
+                            if (el != null && el.isJsonObject()) {
+                                sCachedConfigJson = el.getAsJsonObject();
+                            }
+                        } catch (Throwable ignored) {
+                        }
+                    }
+                    return url;
+                }
             } catch (Throwable e) {
                 // 连接被拒绝说明端口没有监听，没必要再试其余路径
                 if (e instanceof java.net.ConnectException) return null;
@@ -397,25 +425,50 @@ public class NodeBundleManager {
 
     /**
      * 增量下载 index.js / index.config.js，启动（或在文件更新后重启）Node 服务并等待就绪。
+     * 本地已有同 URL 缓存时优先使用本地缓存秒启，并在后台异步校验更新（Stale-While-Revalidate）。
      *
      * @return 就绪探测成功的地址
      */
     public static String prepareAndStartSync(Context context, String input, long timeoutMs) throws Exception {
+        return prepareAndStartSync(context, input, timeoutMs, false);
+    }
+
+    public static String prepareAndStartSync(Context context, String input, long timeoutMs, boolean forceSyncCheck) throws Exception {
         BundleInfo info = parse(input);
         if (TextUtils.isEmpty(info.scriptUrl)) throw new Exception("Unable to resolve JS bundle URL from input: " + input);
 
         File scriptFile = getScriptFile(context);
         File configFile = getConfigFile(context);
-        boolean changed = ensureFile(info.scriptUrl, info.scriptMd5, info.scriptMd5Url, scriptFile, KEY_SCRIPT_URL, true);
-        changed |= ensureConfig(info, configFile);
+
+        boolean hasCache = scriptFile.exists() && scriptFile.length() > 0 && info.scriptUrl.equals(Prefers.getString(KEY_SCRIPT_URL));
+        boolean syncCheck = forceSyncCheck || !hasCache;
+
+        boolean changed = ensureFile(info.scriptUrl, info.scriptMd5, info.scriptMd5Url, scriptFile, KEY_SCRIPT_URL, true, syncCheck);
+        changed |= ensureConfig(info, configFile, syncCheck);
+
+        // 本地缓存快速通道：在后台静默异步检查是否有新 MD5
+        if (!syncCheck) {
+            checkUpdateAsync(context, info);
+        }
 
         // 只有自己的 :node 进程存活时，端口上的服务才算我们的；没有进程却有应答说明端口被其它应用占用
         boolean alive = findNodePid(context) > 0;
         boolean ready = alive && isServiceRunning();
+
+        // 极速路径：若 Node 已经在健康运行且 bundle 没有变动，直接复用当前就绪服务，0ms 启动！
+        if (ready && !changed) {
+            String readyUrl = probeReady(150, 250);
+            if (readyUrl != null) {
+                Log.i(TAG, "Node service is already running and ready at: " + readyUrl);
+                return readyUrl;
+            }
+        }
+
         // 进程还活着时 NodeService 会忽略新的启动请求（isRunning），所以以下两种情况必须先结束旧进程：
         // 1. bundle 已更新（无论旧进程是否已监听端口）；
         // 2. 进程存活却没在提供服务（旧 bundle 启动失败被 launcher 吞掉异常、或卡死）。
         if (alive && (changed || (!ready && isStale(context)))) {
+            LoadingEvent.show(R.string.node_loading_clean_process);
             Log.i(TAG, changed ? "Bundle updated, restarting Node service..." : "Node process alive but not serving, restarting Node service...");
             killNodeProcess(context);
             alive = false;
@@ -431,6 +484,7 @@ public class NodeBundleManager {
                 if (next <= 0) throw new Exception("Node 猫源启动失败：" + from + " 之后没有可用的本地端口");
                 setPort(next);
             }
+            LoadingEvent.show(R.string.node_loading_start_engine);
             Log.i(TAG, "Starting Node.js service on port " + getPort() + "...");
             NodeService.start(context, scriptFile.getAbsolutePath(), getDataDir(context).getAbsolutePath(), getPort());
             try {
@@ -445,10 +499,43 @@ public class NodeBundleManager {
         }
     }
 
-    private static boolean ensureConfig(BundleInfo info, File configFile) throws Exception {
+    private static void checkUpdateAsync(Context context, BundleInfo info) {
+        EXECUTOR.execute(() -> {
+            try {
+                File scriptFile = getScriptFile(context);
+                File configFile = getConfigFile(context);
+                boolean scriptUpdated = false;
+                if (!TextUtils.isEmpty(info.scriptMd5Url) && scriptFile.exists()) {
+                    String remote = fetchRemoteMd5(info.scriptMd5Url);
+                    if (!TextUtils.isEmpty(remote) && !remote.equalsIgnoreCase(Util.md5(scriptFile))) {
+                        Log.i(TAG, "Async check: " + scriptFile.getName() + " updated on remote, downloading...");
+                        download(info.scriptUrl, remote, scriptFile);
+                        Prefers.put(KEY_SCRIPT_URL, info.scriptUrl);
+                        scriptUpdated = true;
+                    }
+                }
+                if (!TextUtils.isEmpty(info.configMd5Url) && configFile.exists()) {
+                    String remote = fetchRemoteMd5(info.configMd5Url);
+                    if (!TextUtils.isEmpty(remote) && !remote.equalsIgnoreCase(Util.md5(configFile))) {
+                        Log.i(TAG, "Async check: " + configFile.getName() + " updated on remote, downloading...");
+                        download(info.configUrl, remote, configFile);
+                        Prefers.put(KEY_CONFIG_URL, info.configUrl);
+                        scriptUpdated = true;
+                    }
+                }
+                if (scriptUpdated) {
+                    Log.i(TAG, "Async update finished. New bundle ready for next launch.");
+                }
+            } catch (Throwable t) {
+                Log.w(TAG, "Async update check failed: " + t.getMessage());
+            }
+        });
+    }
+
+    private static boolean ensureConfig(BundleInfo info, File configFile, boolean syncCheck) throws Exception {
         if (TextUtils.isEmpty(info.configUrl)) return false;
         try {
-            return ensureFile(info.configUrl, "", info.configMd5Url, configFile, KEY_CONFIG_URL, info.configRequired);
+            return ensureFile(info.configUrl, "", info.configMd5Url, configFile, KEY_CONFIG_URL, info.configRequired, syncCheck);
         } catch (Exception e) {
             if (info.configRequired && !configFile.exists()) throw e;
             // 可选配置（;md5; / 直接 .js 写法）或已有本地副本：继续使用本地 / 空配置
@@ -461,16 +548,24 @@ public class NodeBundleManager {
      * 按 MD5（直接给出或从 md5Url 获取）判断是否需要下载；没有 MD5 时，地址变化或本地缺失才下载。
      *
      * @param strict 下载失败时是否抛出（false 时只在没有本地文件时抛出）
+     * @param syncCheck 是否强制同步联网校验远程 MD5；false 且本地存在有效同 URL 副本时直接复用本地缓存
      * @return 本地文件是否被替换
      */
-    private static boolean ensureFile(String url, String md5, String md5Url, File dest, String urlKey, boolean strict) throws Exception {
+    private static boolean ensureFile(String url, String md5, String md5Url, File dest, String urlKey, boolean strict, boolean syncCheck) throws Exception {
+        boolean exists = dest.exists() && dest.length() > 0;
+        boolean sameUrl = url.equals(Prefers.getString(urlKey));
+
+        // 缓存优先通道：本地文件存在且源地址一致，且属于远程 MD5 URL，跳过同步网络阻塞
+        if (!syncCheck && exists && sameUrl && !TextUtils.isEmpty(md5Url)) {
+            Log.i(TAG, dest.getName() + " fast-path: using local cache, async update check will follow.");
+            return false;
+        }
+
         String expected = md5;
         if (TextUtils.isEmpty(expected) && !TextUtils.isEmpty(md5Url)) {
             expected = fetchRemoteMd5(md5Url);
             if (TextUtils.isEmpty(expected)) Log.w(TAG, "Failed to fetch remote MD5 from " + md5Url + ", fallback to local copy if available.");
         }
-        boolean exists = dest.exists() && dest.length() > 0;
-        boolean sameUrl = url.equals(Prefers.getString(urlKey));
         if (exists) {
             if (!TextUtils.isEmpty(expected)) {
                 String local = Util.md5(dest);
@@ -485,6 +580,11 @@ public class NodeBundleManager {
             }
         }
         try {
+            if (SCRIPT_NAME.equals(dest.getName())) {
+                LoadingEvent.show(R.string.node_loading_download_script);
+            } else if (CONFIG_NAME.equals(dest.getName())) {
+                LoadingEvent.show(R.string.node_loading_download_config);
+            }
             Log.i(TAG, "Downloading " + dest.getName() + " from: " + url);
             download(url, expected, dest);
             Prefers.put(urlKey, url);
@@ -518,10 +618,22 @@ public class NodeBundleManager {
             if (!response.isSuccessful()) throw new Exception("HTTP download failed with code: " + response.code() + " url=" + url);
             ResponseBody body = response.body();
             if (body == null) throw new Exception("Empty response body downloading " + url);
+            long contentLength = body.contentLength();
             try (InputStream is = body.byteStream(); FileOutputStream fos = new FileOutputStream(tempFile)) {
                 byte[] buffer = new byte[16384];
                 int read;
-                while ((read = is.read(buffer)) != -1) fos.write(buffer, 0, read);
+                long totalRead = 0;
+                long lastProgressTime = 0;
+                while ((read = is.read(buffer)) != -1) {
+                    fos.write(buffer, 0, read);
+                    totalRead += read;
+                    long now = System.currentTimeMillis();
+                    if (contentLength > 0 && now - lastProgressTime > 250) {
+                        lastProgressTime = now;
+                        int percent = (int) (totalRead * 100 / contentLength);
+                        LoadingEvent.show(R.string.node_loading_download_percent, destFile.getName(), percent);
+                    }
+                }
                 fos.flush();
             }
         }
@@ -554,8 +666,10 @@ public class NodeBundleManager {
     private static String waitForReadySync(Context context, long timeoutMs) throws Exception {
         long startTime = System.currentTimeMillis();
         long portBusyAt = 0;
+        int lastReportedSeconds = 0;
+        LoadingEvent.show(R.string.node_loading_wait_ready);
         while (System.currentTimeMillis() - startTime < timeoutMs) {
-            String ready = probeReady(500, 1000);
+            String ready = probeReady(200, 500);
             if (ready != null) {
                 Log.i(TAG, "Node service is ready at: " + ready);
                 return ready;
@@ -574,8 +688,16 @@ public class NodeBundleManager {
                 if (portBusyAt == 0) portBusyAt = now;
                 else if (now - portBusyAt > 3000) throw new PortInUseException("Node 猫源启动失败：本地端口 " + getPort() + " 已被其它应用占用");
             }
+            long elapsed = System.currentTimeMillis() - startTime;
+            int seconds = (int) (elapsed / 1000);
+            if (seconds >= 3 && seconds != lastReportedSeconds) {
+                lastReportedSeconds = seconds;
+                LoadingEvent.show(R.string.node_loading_wait_ready_seconds, seconds);
+            }
+            // 阶梯式敏捷探测：前 3 秒以 100ms 高频感知， Node 一旦启动成功立即捕获；随后退避节省 CPU
+            long sleepMs = elapsed < 3000 ? 100 : (elapsed < 8000 ? 250 : 500);
             try {
-                Thread.sleep(500);
+                Thread.sleep(sleepMs);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;

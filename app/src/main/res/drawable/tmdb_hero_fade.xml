@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hero 画报底部平滑渐变：从透明平滑过渡到半透明，使原画报自然融入底层高斯模糊背景 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient
+        android:type="linear"
+        android:angle="270"
+        android:startColor="#00000000"
+        android:centerColor="#33080A0E"
+        android:endColor="#73080A0E" />
+</shape>

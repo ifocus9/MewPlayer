@@ -170,7 +170,8 @@ public class HomeWebController {
      * 加载用户网页。UA / 请求头来自 WebPage。
      */
     public boolean loadPage(WebPage target, boolean force) {
-        if (target == null || !WebPage.isHttpUrl(target.getUrl())) return false;
+        if (target == null || !WebPage.isValidUrl(target.getUrl())) return false;
+        Server.get().start();
         String url = UrlUtil.convert(target.getUrl());
         if (TextUtils.isEmpty(url)) return false;
         boolean switched = page == null || !page.getId().equals(target.getId());
@@ -190,7 +191,6 @@ public class HomeWebController {
         updateCurrentOrigin(webView.getUrl());
         updateBridge();
         registerPageSdk();
-        Server.get().start();
         if (isLocalHostUrl(url) && !com.fongmi.android.tv.node.NodeBundleManager.isServiceRunning()) {
             com.fongmi.android.tv.node.NodeBundleManager.startIfPresent(activity);
             if (!com.fongmi.android.tv.node.NodeBundleManager.isServiceRunning()) {

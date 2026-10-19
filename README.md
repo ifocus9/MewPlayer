@@ -4,7 +4,7 @@ MewPlayer 是基于 [FongMi/TV](https://github.com/FongMi/TV) 与 WebHTV 二次�
 
 - 应用名：`MewPlayer`；applicationId：`com.mewplayer.tv`；代码 namespace 仍为 `com.fongmi.android.tv`。
 - 版本：`5.6.0`（versionCode 560），对应上游 FongMi/TV 560 基线。
-- 构建变体：`leanback`（电视）/ `mobile`（手机）× `arm64_v8a` / `armeabi_v7a`。
+- 构建变体：`mobile`（手机）× `arm64_v8a` / `armeabi_v7a`。
 
 ## 核心特性
 
@@ -27,12 +27,11 @@ MewPlayer 是基于 [FongMi/TV](https://github.com/FongMi/TV) 与 WebHTV 二次�
 - 手机端底部「网页」Tab 可管理多个网页（本地 `http://127.0.0.1:9988/...` 或任意远程 H5），支持文件上传、HTML5 全屏视频和下载。
 - 只有标记为「可信」的网页才挂载 `fongmiBridge` 并在 document-start 注入 SDK，且调用方 origin 必须与网页 origin 一致（首次加载的服务端 3xx 跳转会更新可信 origin，JS 跳转和点击链接不会扩大范围）。
 - SDK 对象为 `window.fongmi`（简写 `window.fm`），能力包括 `player.*`（播放 URL / 点播 / 控制 / 状态）、`net.request`、`cache.*`、`pan.check` / `pan.play`、`app.search` / `openVod` / `openSetting` / `history`、`ui.*`、`device` / `site` / `config.info` 等。
-- 电视端没有网页 Tab；站点配置里的 `homePage` 不会作为首页渲染。旧版"自定义首页"设置只做一次性迁移，迁移为一个可信的网页 Tab 页面。
 
 ### 播放
 
 - 双内核可在播放设置中切换：Exo（定制 Media3 `1.11.0-alpha01-fongmi`）、MPV（`libmpv.so` + 自建 JNI `libplayer.so`）。各内核有独立的性能设置。
-- Exo 增强：libass ASS 字幕渲染（`third_party/exo-ass-native`）、双字幕、杜比视界（基于 libdovi 转换 DV7 → P8.1 / HDR10 回退）、nextlib FFmpeg 软解（含 AV3A、AVS3、APE）、实时弹幕。
+- Exo 增强：libass ASS 字幕渲染（`third_party/exo-ass-native`）、双字幕、杜比视界（基于 libdovi 转换 DV7 → P8.1 / HDR10 回退）、nextlib FFmpeg 软解（含 AV3A、AVS3、APE）。
 - MPV 增强：OpenGL / Vulkan、AImageReader 硬解、HDR / Dolby Vision、TrueHD / 压缩音频直通、curl + HTTP/2、配置编辑。
 - 光盘：DVD / 蓝光 ISO（含远程 HTTP Range ISO）与光盘菜单导航。
 - 其他：播放器按钮 / OSD 自定义、编解码能力查看、播放性能面板、歌词（含桌面歌词）。
@@ -44,8 +43,8 @@ MewPlayer 是基于 [FongMi/TV](https://github.com/FongMi/TV) 与 WebHTV 二次�
 - 站点健康排序：自动记录站点搜索成败，搜索与换源优先使用更可用的站点；站点弹窗保留用户配置顺序。
 - 当前播放记录 API：只读接口 `/api/playback/current`（兼容 `/playback/current`）。
 - 调试日志：设置页「调试日志」同时给出本机地址和局域网地址（`/debug/logs`）。
-- 推送：二维码 / 剪贴板（电视）、链接对话框（手机）、系统分享、`/action?do=push&url=` 等入口统一交给 `push_agent` 站点；没有该站点时使用内置兜底解析（磁力 / 迅雷 / 种子 / YouTube 列表等）。
-- DLNA：电视端可作为投屏接收端，两端都可投屏到其他设备；支持 MediaSession（Media3 `MediaLibraryService`）。
+- 推送：链接对话框、系统分享、`/action?do=push&url=` 等入口统一交给 `push_agent` 站点；没有该站点时使用内置兜底解析（磁力 / 迅雷 / 种子 / YouTube 列表等）。
+- DLNA：可投屏到其他设备（DLNA 接收端已随电视端代码移除）；支持 MediaSession（Media3 `MediaLibraryService`）。
 - 备份：仅在设置页手动触发，写入 `/sdcard/TV/bak-yyyyMMdd-HHmm.zip`，保留最新 7 份；退出时不再自动备份。
 
 ### 已移除 / 深度瘦身精简
@@ -126,14 +125,11 @@ Windows 使用 `.\gradlew.bat`，macOS / Linux 使用 `bash gradlew`，任务名
 ```powershell
 # debug
 .\gradlew.bat :app:assembleMobileArm64_v8aDebug
-.\gradlew.bat :app:assembleLeanbackArm64_v8aDebug
-.\gradlew.bat :app:assembleLeanbackArmeabi_v7aDebug
+.\gradlew.bat :app:assembleMobileArmeabi_v7aDebug
 
 # release
 .\gradlew.bat :app:assembleMobileArm64_v8aRelease
 .\gradlew.bat :app:assembleMobileArmeabi_v7aRelease
-.\gradlew.bat :app:assembleLeanbackArm64_v8aRelease
-.\gradlew.bat :app:assembleLeanbackArmeabi_v7aRelease
 
 # 快速 release：关闭 R8 / 资源压缩 / release lint，仅用于临时测试
 .\gradlew.bat :app:assembleMobileArm64_v8aRelease -PfastRelease=true
@@ -149,7 +145,6 @@ debug：
 
 ```text
 app/build/outputs/apk/mobileArm64_v8a/debug/app-mobile-arm64_v8a-debug.apk
-app/build/outputs/apk/leanbackArm64_v8a/debug/app-leanback-arm64_v8a-debug.apk
 ...
 ```
 
@@ -158,8 +153,6 @@ release：Gradle 原始输出在 `app/build/outputs/apk/<flavor>/release/<mode>-
 ```text
 Release/apk/mobile-arm64_v8a.apk
 Release/apk/mobile-armeabi_v7a.apk
-Release/apk/leanback-arm64_v8a.apk
-Release/apk/leanback-armeabi_v7a.apk
 ```
 
 复制时会把 `app/build/outputs/apk/**/release/` 下的所有 APK 一起拷过去，`Release/apk/` 里可能留有之前构建的其他变体，请以修改时间为准。快速包与正式包文件名相同，只能通过应用内版本号区分。
@@ -229,7 +222,7 @@ keyPassword=your_key_password
 ## 目录结构
 
 ```text
-app/          Android 主应用（leanback/mobile × arm64_v8a/armeabi_v7a，内置 nodejs-mobile 与 CMake 原生桥）
+app/          Android 主应用（mobile × arm64_v8a/armeabi_v7a，内置 nodejs-mobile 与 CMake 原生桥）
 catvod/       CatVod 抽象层：Spider 接口、OkHttp 网络、代理、WebDAV/SMB、工具类
 quickjs/      QuickJS JavaScript Spider 运行时
 chaquo/       Python Spider 运行时（Chaquopy，Python 3.10）

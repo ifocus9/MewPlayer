@@ -31,6 +31,8 @@ import com.fongmi.android.tv.ui.dialog.DebugLogDialog;
 import com.fongmi.android.tv.ui.dialog.HistoryDialog;
 import com.fongmi.android.tv.ui.dialog.RestoreDialog;
 import com.fongmi.android.tv.ui.dialog.BackupProgressDialog;
+import com.fongmi.android.tv.api.tmdb.TmdbCache;
+import com.fongmi.android.tv.ui.dialog.TmdbDialog;
 import com.fongmi.android.tv.ui.dialog.SiteDialog;
 import com.fongmi.android.tv.utils.AppVersion;
 import com.fongmi.android.tv.utils.FileUtil;
@@ -98,6 +100,7 @@ public class SettingFragment extends BaseFragment implements ConfigListener, Sit
         mBinding.dohText.setText(getDohList()[getDohIndex()]);
         mBinding.incognitoText.setText(getSwitch(Setting.isIncognito()));
         mBinding.debugLogText.setText(getSwitch(Setting.isDebugLog()));
+        mBinding.tmdbText.setText(getSwitch(Setting.isTmdbEnable()));
     }
 
     private void setCacheText() {
@@ -119,6 +122,7 @@ public class SettingFragment extends BaseFragment implements ConfigListener, Sit
         mBinding.debugLog.setOnClickListener(this::setDebugLog);
         mBinding.debugLog.setOnLongClickListener(this::onDebugLogLongClick);
         mBinding.player.setOnClickListener(this::onPlayer);
+        mBinding.tmdb.setOnClickListener(this::onTmdb);
         mBinding.restore.setOnClickListener(this::onRestore);
         mBinding.version.setOnClickListener(this::onVersion);
         mBinding.vod.setOnLongClickListener(this::onVodEdit);
@@ -148,17 +152,27 @@ public class SettingFragment extends BaseFragment implements ConfigListener, Sit
         return new Callback() {
             @Override
             public void start() {
-                Notify.progress(requireActivity());
+                if (getActivity() instanceof HomeActivity activity) {
+                    activity.showLoading();
+                } else {
+                    Notify.progress(requireActivity());
+                }
             }
 
             @Override
             public void success() {
+                if (getActivity() instanceof HomeActivity activity) {
+                    activity.hideLoading();
+                }
                 Notify.dismiss();
                 setCacheText();
             }
 
             @Override
             public void error(String msg) {
+                if (getActivity() instanceof HomeActivity activity) {
+                    activity.hideLoading();
+                }
                 Notify.dismiss();
                 Notify.show(msg);
             }
@@ -189,6 +203,10 @@ public class SettingFragment extends BaseFragment implements ConfigListener, Sit
 
     private void onPlayer(View view) {
         SettingPlayerActivity.start(requireActivity());
+    }
+
+    private void onTmdb(View view) {
+        TmdbDialog.show(this, () -> mBinding.tmdbText.setText(getSwitch(Setting.isTmdbEnable())));
     }
 
     private void setDebugLog(View view) {
@@ -233,6 +251,7 @@ public class SettingFragment extends BaseFragment implements ConfigListener, Sit
     }
 
     private void onCache(View view) {
+        TmdbCache.get().clearAll();
         FileUtil.clearCache(new Callback() {
             @Override
             public void success() {

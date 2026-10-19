@@ -26,7 +26,6 @@ import com.fongmi.android.tv.bean.Parse;
 import com.fongmi.android.tv.databinding.ActivityVideoBinding;
 import com.fongmi.android.tv.databinding.DialogControlBinding;
 import com.fongmi.android.tv.player.PlayerManager;
-import com.fongmi.android.tv.player.lut.LutPreset;
 import com.fongmi.android.tv.setting.PlayerSetting;
 import com.fongmi.android.tv.setting.Setting;
 import com.fongmi.android.tv.ui.adapter.ParseAdapter;
@@ -130,12 +129,9 @@ public class ControlDialog extends BaseBottomSheetDialog implements ParseAdapter
         setControlPadding();
         setSheetBackground();
         binding.decode.setText(parent.control.action.decode.getText());
-        setLut();
         binding.ending.setText(parent.control.action.ending.getText());
         binding.opening.setText(parent.control.action.opening.getText());
         binding.repeat.setSelected(parent.control.action.repeat.isSelected());
-        binding.immersiveAudio.setSelected(PlayerSetting.isImmersiveAudioMode());
-        setImmersiveAudioVisible();
         binding.timer.setSelected(Timer.get().isRunning());
         setTrackVisible();
         setTitleVisible();
@@ -155,7 +151,6 @@ public class ControlDialog extends BaseBottomSheetDialog implements ParseAdapter
     protected void initEvent() {
         if (!ready) return;
         binding.timer.setOnClickListener(this::onTimer);
-        binding.immersiveAudio.setOnClickListener(v -> setImmersiveAudio());
         binding.speed.addOnChangeListener(this::setSpeed);
         for (TextView view : speeds) view.setOnClickListener(this::setSpeedPreset);
         for (TextView view : scales) view.setOnClickListener(this::setScale);
@@ -167,13 +162,12 @@ public class ControlDialog extends BaseBottomSheetDialog implements ParseAdapter
         binding.episodeColumn2.setOnClickListener(v -> setEpisodeColumn(2));
         binding.compactEpisodeTitle.setOnClickListener(v -> setCompactEpisodeTitle());
         binding.title.setOnClickListener(v -> ((Listener) requireActivity()).onTitlePanel());
+        binding.chapter.setOnClickListener(v -> ((Listener) requireActivity()).onChapterPanel());
         binding.player.setOnClickListener(v -> dismiss(parent.control.action.player));
-        binding.danmaku.setOnClickListener(v -> ((Listener) requireActivity()).onDanmakuPanel());
         binding.repeat.setOnClickListener(v -> active(binding.repeat, parent.control.action.repeat));
         binding.decode.setOnClickListener(v -> click(binding.decode, parent.control.action.decode));
         binding.codecCapability.setOnClickListener(v -> ((Listener) requireActivity()).onCodecCapabilityPanel());
         binding.panDiagnostic.setOnClickListener(v -> onPanDiagnostic());
-        binding.lut.setOnClickListener(v -> onLut());
         binding.ending.setOnClickListener(v -> click(binding.ending, parent.control.action.ending));
         binding.opening.setOnClickListener(v -> click(binding.opening, parent.control.action.opening));
         binding.player.setOnLongClickListener(v -> longClick(binding.player, parent.control.action.player));
@@ -191,12 +185,6 @@ public class ControlDialog extends BaseBottomSheetDialog implements ParseAdapter
         if (activity == null || current == null) return;
         dismissAllowingStateLoss();
         App.post(() -> PanNetworkDiagnosticDialog.show(activity, current), 140);
-    }
-
-    private void setImmersiveAudio() {
-        PlayerSetting.putImmersiveAudioMode(!PlayerSetting.isImmersiveAudioMode());
-        binding.immersiveAudio.setSelected(PlayerSetting.isImmersiveAudioMode());
-        ((Listener) requireActivity()).onImmersiveAudioModeChanged();
     }
 
     private void onTrack(View view) {
@@ -281,10 +269,6 @@ public class ControlDialog extends BaseBottomSheetDialog implements ParseAdapter
         view.setText(target.getText());
     }
 
-    private void onLut() {
-        ((Listener) requireActivity()).onLutPanel();
-    }
-
     private boolean longClick(TextView view, TextView target) {
         target.performLongClick();
         view.setText(target.getText());
@@ -302,18 +286,9 @@ public class ControlDialog extends BaseBottomSheetDialog implements ParseAdapter
         setSpeedPresets();
         binding.player.setText(parent.control.action.player.getText());
         binding.reset.setText(parent.control.action.reset.getText());
-        setLut();
         setEpisodeColumn();
         binding.decode.setVisibility(parent.control.action.decode.getVisibility());
-        // 弹幕入口在设置面板里始终保留：EXO 全屏时底部操作栏的弹幕按钮会隐藏，这里仍可进入
-        binding.danmaku.setVisibility(View.VISIBLE);
-        setImmersiveAudioVisible();
         setTrackVisible();
-    }
-
-    public void setLut() {
-        if (binding == null || !resolveHostDependencies()) return;
-        binding.lut.setText(parent.control.action.lut.getText());
     }
 
     private boolean resolveHostDependencies() {
@@ -336,15 +311,9 @@ public class ControlDialog extends BaseBottomSheetDialog implements ParseAdapter
         binding.text.setVisibility(parent.control.action.text.getVisibility());
         binding.audio.setVisibility(parent.control.action.audio.getVisibility());
         binding.video.setVisibility(parent.control.action.video.getVisibility());
-        boolean visible = binding.text.getVisibility() != View.GONE || binding.audio.getVisibility() != View.GONE || binding.video.getVisibility() != View.GONE || binding.title.getVisibility() != View.GONE || binding.danmaku.getVisibility() != View.GONE;
+        boolean visible = binding.text.getVisibility() != View.GONE || binding.audio.getVisibility() != View.GONE || binding.video.getVisibility() != View.GONE || binding.title.getVisibility() != View.GONE || binding.chapter.getVisibility() != View.GONE;
         binding.trackText.setVisibility(visible ? View.VISIBLE : View.GONE);
         binding.trackRow.setVisibility(visible ? View.VISIBLE : View.GONE);
-    }
-
-    private void setImmersiveAudioVisible() {
-        FragmentActivity activity = getActivity();
-        boolean visible = activity instanceof Listener listener && listener.isControlAudioContent();
-        binding.immersiveAudio.setVisibility(visible ? View.VISIBLE : View.GONE);
     }
 
     @Override
@@ -415,6 +384,7 @@ public class ControlDialog extends BaseBottomSheetDialog implements ParseAdapter
 
     public void setTitleVisible() {
         binding.title.setVisibility(parent.control.action.title.getVisibility());
+        binding.chapter.setVisibility(parent.control.action.chapter.getVisibility());
         setTrackVisible();
     }
 
@@ -437,8 +407,6 @@ public class ControlDialog extends BaseBottomSheetDialog implements ParseAdapter
 
         boolean isControlParseEnabled();
 
-        boolean isControlAudioContent();
-
         void onScale(int tag);
 
         void onEpisodeColumn(int column);
@@ -447,28 +415,12 @@ public class ControlDialog extends BaseBottomSheetDialog implements ParseAdapter
 
         void onParse(Parse item);
 
-        void onLutSelected(LutPreset preset);
-
-        void onLutImport();
-
-        void onLutDir();
-
-        void onLutPanel();
-
         void onTrackPanel(int type);
 
         void onTitlePanel();
 
-        void onDanmakuPanel();
-
-        void onImmersiveAudioModeChanged();
-
-        void onKaraokeModeChanged();
-
-        void onKaraokeTrackPanel();
+        void onChapterPanel();
 
         void onCodecCapabilityPanel();
-
-        void onPlayParamsPanel();
     }
 }

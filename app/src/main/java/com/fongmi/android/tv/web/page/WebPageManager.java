@@ -62,7 +62,7 @@ public final class WebPageManager {
      * 新增或按 id 覆盖。第一条网页自动设为默认。
      */
     public static synchronized void save(WebPage page) {
-        if (page == null || !WebPage.isHttpUrl(page.getUrl())) return;
+        if (page == null || !WebPage.isValidUrl(page.getUrl())) return;
         List<WebPage> items = upsert(read(), page);
         write(items);
         if (find(items, Prefers.getString(KEY_DEFAULT)) == null) Prefers.put(KEY_DEFAULT, page.getId());
@@ -111,7 +111,7 @@ public final class WebPageManager {
     // ---- 以下为纯逻辑，便于 JVM 单元测试 ----
 
     static WebPage fromLegacy(String url) {
-        if (!WebPage.isHttpUrl(url)) return null;
+        if (!WebPage.isValidUrl(url)) return null;
         return WebPage.create("WebHome", url, "", null, true);
     }
 

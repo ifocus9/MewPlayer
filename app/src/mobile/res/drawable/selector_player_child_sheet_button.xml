@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 播放器子弹窗列表项（片段标题 / 定时 / 弹幕源）：与全屏 LUT 快捷面板（LutQuickPanel.applyBg）同一套配色，
+<!-- 播放器子弹窗列表项（片段标题 / 定时）：与全屏 LUT 快捷面板（LutQuickPanel.applyBg）同一套配色，
      和 selector_player_track_sheet_button 保持一致 -->
 <ripple xmlns:android="http://schemas.android.com/apk/res/android"
     android:color="#33FFFFFF">

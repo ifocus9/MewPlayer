@@ -70,9 +70,15 @@ public class Util {
     }
 
     public static void showKeyboard(View view) {
-        if (!view.requestFocus()) return;
+        if (view == null) return;
         InputMethodManager imm = (InputMethodManager) App.get().getSystemService(Context.INPUT_METHOD_SERVICE);
-        if (imm != null) view.postDelayed(() -> imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT), 250);
+        if (view.requestFocus() && imm != null) imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT);
+        if (imm != null) {
+            view.postDelayed(() -> {
+                view.requestFocus();
+                imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT);
+            }, 250);
+        }
     }
 
     public static void hideKeyboard(View view) {

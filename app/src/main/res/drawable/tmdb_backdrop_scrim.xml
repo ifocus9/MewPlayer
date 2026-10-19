@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 全屏高斯模糊背景的渐变遮罩：对齐 AVBox (0.22f -> 0.48f -> 0.80f)，透出海报绚丽色彩与氛围 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient
+        android:type="linear"
+        android:angle="270"
+        android:startColor="#33080A0E"
+        android:centerColor="#73080A0E"
+        android:endColor="#CC080A0E" />
+</shape>

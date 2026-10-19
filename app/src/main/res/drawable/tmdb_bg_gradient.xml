@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 背景渐变：透明 → 黑色，覆盖 backdrop 图 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient
+        android:type="linear"
+        android:angle="270"
+        android:startColor="@color/tmdb_overlay_gradient_start"
+        android:endColor="@color/tmdb_overlay_gradient_end" />
+</shape>

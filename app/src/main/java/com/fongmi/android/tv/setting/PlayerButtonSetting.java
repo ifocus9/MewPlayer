@@ -20,11 +20,9 @@ public class PlayerButtonSetting {
 
     public static final String PLAYER = "player";
     public static final String DECODE = "decode";
-    public static final String PLAY_PARAMS = "play_params";
     public static final String CODEC_CAPABILITY = "codec_capability";
     public static final String SPEED = "speed";
     public static final String SCALE = "scale";
-    public static final String LUT = "lut";
     public static final String KARAOKE = "karaoke";
     public static final String RESET = "reset";
     public static final String REPEAT = "repeat";
@@ -33,8 +31,8 @@ public class PlayerButtonSetting {
     public static final String VIDEO = "video";
     public static final String OPENING = "opening";
     public static final String ENDING = "ending";
-    public static final String DANMAKU = "danmaku";
     public static final String TITLE = "title";
+    public static final String CHAPTER = "chapter";
     public static final String PREV = "prev";
     public static final String NEXT = "next";
     public static final String EPISODES = "episodes";
@@ -46,11 +44,9 @@ public class PlayerButtonSetting {
     private static final List<Item> DEFAULT = List.of(
             new Item(PLAYER, R.string.play_exo),
             new Item(DECODE, R.string.play_decode),
-            new Item(PLAY_PARAMS, R.string.play_params),
             new Item(CODEC_CAPABILITY, R.string.codec_capability_short),
             new Item(SPEED, R.string.play_speed),
             new Item(SCALE, R.string.play_scale),
-            new Item(LUT, R.string.play_lut),
             new Item(RESET, R.string.play_reset),
             new Item(REPEAT, R.string.play_repeat),
             new Item(TEXT, R.string.play_track_text),
@@ -58,15 +54,15 @@ public class PlayerButtonSetting {
             new Item(VIDEO, R.string.play_track_video),
             new Item(OPENING, R.string.play_op),
             new Item(ENDING, R.string.play_ed),
-            new Item(DANMAKU, R.string.danmaku),
             new Item(TITLE, R.string.play_title),
+            new Item(CHAPTER, R.string.play_chapter),
             new Item(PREV, R.string.play_prev),
             new Item(NEXT, R.string.play_next),
             new Item(EPISODES, R.string.play_episodes),
             new Item(FULLSCREEN, R.string.play_fullscreen),
             new Item(CHANGE, R.string.play_change));
     // 不在“播放器按钮设置”里展示的按钮：仍保留在内部排序中（避免 applyOrder 重排时把它甩到最前面），但不可配置、不会被隐藏
-    private static final Set<String> UNCONFIGURABLE = Set.of(DANMAKU, FULLSCREEN);
+    private static final Set<String> UNCONFIGURABLE = Set.of(FULLSCREEN);
 
     public static List<Item> getItems() {
         List<Item> items = new ArrayList<>();
@@ -174,7 +170,7 @@ public class PlayerButtonSetting {
 
     private static Set<String> getHidden() {
         Set<String> hidden = new HashSet<>();
-        // 不可配置的按钮（弹幕、全屏）忽略旧的隐藏配置，避免升级后一直被隐藏且无法在设置里恢复
+        // 不可配置的按钮（全屏）忽略旧的隐藏配置，避免升级后一直被隐藏且无法在设置里恢复
         for (String id : split(Prefers.getString(HIDDEN))) if (contains(id) && !UNCONFIGURABLE.contains(id)) hidden.add(id);
         return hidden;
     }

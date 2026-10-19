@@ -7,6 +7,7 @@ import android.os.Build;
 import androidx.media3.common.C;
 import androidx.media3.common.Effect;
 import androidx.media3.common.Format;
+import androidx.media3.common.MediaChapter;
 import androidx.media3.common.MediaEdition;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.MediaMetadata;
@@ -50,6 +51,7 @@ import com.fongmi.android.tv.utils.ResUtil;
 import com.github.catvod.crawler.SpiderDebug;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -61,6 +63,7 @@ public class ExoPlayerEngine implements PlayerEngine {
 
     private final ErrorMsgProvider provider;
     private final PreCache preCache;
+    private PreCache nextPreCache;
     private final Set<String> attemptedFormats;
     private final ExoDecoderRuntimeSession decoderRuntimeSession;
     private final ExoCompressedAudioDirectPolicy compressedAudioDirectPolicy;
@@ -213,6 +216,10 @@ public class ExoPlayerEngine implements PlayerEngine {
             cacheRelease = MediaSourceFactory::releaseCacheSession;
         }
         preCache.release(cacheRelease);
+        if (nextPreCache != null) {
+            nextPreCache.release();
+            nextPreCache = null;
+        }
         cancelTunnelingWatchdog();
         cancelTunnelingProgressWatchdog();
         cancelDecoderRuntimeStableWindow();
@@ -827,17 +834,56 @@ public class ExoPlayerEngine implements PlayerEngine {
 
     @Override
     public boolean haveTitle() {
-        return !player.getCurrentMediaEditions().isEmpty();
+        return player != null && !getCurrentMediaEditions().isEmpty();
+    }
+
+    @Override
+    public boolean haveChapter() {
+        return player != null && !getCurrentMediaChapters().isEmpty();
     }
 
     @Override
     public List<MediaEdition> getCurrentMediaEditions() {
-        return player.getCurrentMediaEditions();
+        if (player == null) return Collections.emptyList();
+        List<MediaEdition> editions = player.getCurrentMediaEditions();
+        return editions != null ? editions : Collections.emptyList();
+    }
+
+    @Override
+    public List<MediaChapter> getCurrentMediaChapters() {
+        if (player == null) return Collections.emptyList();
+        List<MediaChapter> chapters = player.getCurrentMediaChapters();
+        return chapters != null ? chapters : Collections.emptyList();
     }
 
     @Override
     public boolean selectEdition(MediaEdition edition) {
-        return player.selectEdition(edition);
+        return player != null && edition != null && player.selectEdition(edition);
+    }
+
+    @Override
+    public boolean selectChapter(MediaChapter chapter) {
+        return player != null && chapter != null && player.selectChapter(chapter);
+    }
+
+    @Override
+    public void preload(PlaySpec spec, long startPositionMs) {
+        if (spec == null || spec.getUrl() == null) return;
+        clearPreload();
+        try {
+            MediaItem item = ExoUtil.getMediaItem(spec, decode);
+            if (nextPreCache == null) nextPreCache = new PreCache();
+            nextPreCache.start(null, item, spec.getPlaybackTraceId(), spec.getPlaybackRoute());
+        } catch (Throwable e) {
+            SpiderDebug.log("preload", "exo preload failed: %s", e.getMessage());
+        }
+    }
+
+    @Override
+    public void clearPreload() {
+        if (nextPreCache != null) {
+            nextPreCache.stop("clear-next-preload");
+        }
     }
 
     @Override

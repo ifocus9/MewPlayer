@@ -28,7 +28,11 @@
             android:textAppearance="@style/ToolbarTextAppearance"
             android:textColor="?attr/colorOnSurface"
             android:textColorHint="?attr/colorOnSurfaceVariant"
-            android:textCursorDrawable="@drawable/shape_cursor" />
+            android:cursorVisible="true"
+            android:textCursorDrawable="@drawable/shape_cursor">
+
+            <requestFocus />
+        </com.google.android.material.textfield.TextInputEditText>
 
     </com.google.android.material.appbar.MaterialToolbar>
 

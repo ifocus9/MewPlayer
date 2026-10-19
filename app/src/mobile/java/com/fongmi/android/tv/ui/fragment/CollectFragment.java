@@ -34,6 +34,7 @@ import com.fongmi.android.tv.setting.Setting;
 import com.fongmi.android.tv.setting.SiteHealthStore;
 import com.fongmi.android.tv.ui.activity.FolderActivity;
 import com.fongmi.android.tv.ui.activity.VideoActivity;
+import com.fongmi.android.tv.ui.activity.VodNavigator;
 import com.fongmi.android.tv.ui.adapter.CollectAdapter;
 import com.fongmi.android.tv.ui.adapter.SearchAdapter;
 import com.fongmi.android.tv.ui.base.BaseFragment;
@@ -270,7 +271,7 @@ public class CollectFragment extends BaseFragment implements MenuProvider, Colle
         if (item.isFolder()) FolderActivity.start(requireActivity(), item.getSiteKey(), Result.folder(item));
         else {
             String pic = item.getPic().isEmpty() ? getPic() : item.getPic();
-            VideoActivity.collect(requireActivity(), item.getSiteKey(), item.getId(), item.getName(), pic, getWallPic());
+            VodNavigator.collect(requireActivity(), item.getSiteKey(), item.getId(), item.getName(), pic, getWallPic());
         }
     }
 

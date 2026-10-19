@@ -17,7 +17,6 @@ import com.fongmi.android.tv.player.PlaybackMemoryMonitor;
 import com.fongmi.android.tv.player.PlaybackSystemConditionMonitor;
 import com.fongmi.android.tv.player.mpv.PlaybackRecoveryMonitor;
 import com.fongmi.android.tv.setting.Setting;
-import com.fongmi.android.tv.utils.DanmakuSearchListFocusFixer;
 import com.fongmi.android.tv.utils.NsdDeviceDiscovery;
 import com.fongmi.android.tv.utils.Notify;
 import com.fongmi.android.tv.utils.PreviousProcessExitLogger;
@@ -117,7 +116,6 @@ public class App extends Application implements Application.ActivityLifecycleCal
             PreviousProcessExitLogger.log(this);
         }
         Notify.createChannel();
-        DanmakuSearchListFocusFixer.start();
         registerActivityLifecycleCallbacks(this);
         post(this::startBackgroundServices, 1200);
     }

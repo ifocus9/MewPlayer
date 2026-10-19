@@ -3,6 +3,15 @@
     <!-- App -->
     <string name="app_name">MewPlayer</string>
     <string name="loading_source">正在載入源...</string>
+    <string name="node_loading_check">正在解析 Node 源配置...</string>
+    <string name="node_loading_download_script">正在下載 Node 核心腳本 (index.js)...</string>
+    <string name="node_loading_download_config">正在下載 Node 站點配置 (index.config.js)...</string>
+    <string name="node_loading_download_percent">正在下載 %1$s... %2$d%%</string>
+    <string name="node_loading_clean_process">正在重置舊 Node 進程...</string>
+    <string name="node_loading_start_engine">正在啟動 Node.js 運行時...</string>
+    <string name="node_loading_wait_ready">正在等待本地服務就緒...</string>
+    <string name="node_loading_wait_ready_seconds">正在等待本地服務就緒 (%1$ds)...</string>
+    <string name="node_loading_fetch_sites">本地服務已就緒，正在載入站點列表...</string>
     <string name="history_item_site">站源： %1$s</string>
     <string name="history_item_flag">線路： %1$s</string>
     <string name="history_item_episode">劇集： %1$s</string>
@@ -22,6 +31,7 @@
     <string name="detail_actor">演員：<xliff:g name="name">%s</xliff:g></string>
     <string name="detail_content">簡介：<xliff:g name="name">%s</xliff:g></string>
     <string name="detail_desc">簡介</string>
+    <string name="setting_tmdb">TMDB 設定</string>
 
     <string name="exit_confirm_title">確定退出應用？</string>
     <string name="exit_confirm_message">目前頁面將關閉；如果正在播放，會繼續留在後台。</string>
@@ -51,7 +61,9 @@
     <string name="codec_capability_audio">音訊</string>
     <string name="codec_capability_copy">複製</string>
     <string name="play_timer">定時</string>
-    <string name="play_title">章節</string>
+    <string name="play_title">標題</string>
+    <string name="play_chapter">章節</string>
+    <string name="dialog_select_chapter">選擇章節</string>
     <string name="play_scale">原始</string>
     <string name="play_lut">LUT</string>
     <string name="play_cast">投屏</string>
@@ -78,42 +90,6 @@
     <string name="play_switch_site">正在切換站源至「<xliff:g name="name">%s</xliff:g>」</string>
     <string name="play_switch_parse">正在切换解析至「<xliff:g name="name">%s</xliff:g>」</string>
 
-    <!-- Danmaku Setting -->
-    <string name="danmaku">彈幕</string>
-    <string name="danmaku_select">選擇彈幕</string>
-    <string name="danmaku_setting">彈幕設定</string>
-    <string name="danmaku_text_size">字體縮放</string>
-    <string name="danmaku_transparency">透明度</string>
-    <string name="danmaku_text_bold">粗體</string>
-    <string name="danmaku_style_mode">字體效果</string>
-    <string name="danmaku_style_none">無</string>
-    <string name="danmaku_style_shadow">陰影</string>
-    <string name="danmaku_style_stroke">描邊</string>
-    <string name="danmaku_style_projection">投影</string>
-    <string name="danmaku_shadow_transparency">陰影透明度</string>
-    <string name="danmaku_stroke_width">描邊寬度</string>
-    <string name="danmaku_projection_offset_x">投影水平偏移</string>
-    <string name="danmaku_projection_offset_y">投影垂直偏移</string>
-    <string name="danmaku_projection_transparency">投影透明度</string>
-    <string name="danmaku_color_mode">顏色模式</string>
-    <string name="danmaku_color_default">原色</string>
-    <string name="danmaku_color_colorful">彩色</string>
-    <string name="danmaku_color_gradient">漸層</string>
-    <string name="danmaku_color_override_hint">彈幕原始顏色將被忽略</string>
-    <string name="danmaku_duration">滾動時間</string>
-    <string name="danmaku_fixed_duration">固定顯示時間</string>
-    <string name="danmaku_time_offset">時間偏移</string>
-    <string name="danmaku_display_rows">顯示行數</string>
-    <string name="danmaku_rows_1">1行</string>
-    <string name="danmaku_rows_2">2行</string>
-    <string name="danmaku_rows_3">3行</string>
-    <string name="danmaku_rows_4">4行</string>
-    <string name="danmaku_rows_5">5行</string>
-    <string name="danmaku_line_spacing">垂直間距</string>
-    <string name="danmaku_scroll_gap_ratio">水平間距</string>
-    <string name="danmaku_section_display">顯示</string>
-    <string name="danmaku_section_timing">時間</string>
-    <string name="danmaku_reset">重設</string>
 
     <!-- Parse -->
     <string name="parse">解析</string>
@@ -129,7 +105,6 @@
     <string name="setting_wall">壁紙</string>
     <string name="setting_config_dialog_title">%1$s%2$s</string>
     <string name="setting_player">播放設定</string>
-    <string name="setting_danmaku">彈幕設定</string>
     <string name="setting_debug_log">調試日誌</string>
     <string name="dialog_cancel">取消</string>
     <string name="dialog_confirm">確認</string>
@@ -353,12 +328,6 @@
     <string name="lut_unavailable_hdr">HDR/Dolby Vision 內容暫不支援 LUT 調色</string>
     <string name="lut_unavailable_no_video">當前內容沒有視訊畫面</string>
 
-    <!-- Danmaku -->
-    <string name="danmaku_load">彈幕載入</string>
-    <string name="danmaku_api">搜尋接口</string>
-    <string name="danmaku_api_invalid">彈幕接口地址無效</string>
-    <string name="danmaku_auto_load">自動搜尋</string>
-    <string name="danmaku_spider_first">爬蟲優先</string>
 
     <!-- Search -->
     <string name="search_keyword">關鍵字…</string>

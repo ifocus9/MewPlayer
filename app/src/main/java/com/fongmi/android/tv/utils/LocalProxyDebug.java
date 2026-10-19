@@ -76,6 +76,31 @@ public final class LocalProxyDebug {
         return false;
     }
 
+    public static boolean isLocalConnectOrTimeout(Throwable error) {
+        if (isConnectionRefused(error)) return true;
+        Throwable current = error;
+        int depth = 0;
+        while (current != null && depth++ < 8) {
+            String message = current.getMessage();
+            if (current instanceof java.net.SocketTimeoutException) return true;
+            if (current instanceof java.net.SocketException) return true;
+            if (current instanceof java.net.NoRouteToHostException) return true;
+            if (message != null) {
+                String lower = message.toLowerCase(Locale.US);
+                if (lower.contains("reset")
+                        || lower.contains("timeout")
+                        || lower.contains("timed out")
+                        || lower.contains("aborted")
+                        || lower.contains("refused")
+                        || lower.contains("broken pipe")) {
+                    return true;
+                }
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+
     public static boolean isLocalProxyUrl(String url) {
         if (url == null || url.isBlank()) return false;
         PlaybackRoute.Resolution resolution = PlaybackRoute.resolve(url);

@@ -33,10 +33,6 @@
                 style="@style/Control"
                 android:text="@string/play_decode" />
 
-            <com.google.android.material.textview.MaterialTextView
-                android:id="@+id/playParams"
-                style="@style/Control"
-                android:text="@string/play_params" />
 
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/speed"
@@ -49,16 +45,6 @@
                 style="@style/Control"
                 android:text="@string/play_scale" />
 
-            <com.google.android.material.textview.MaterialTextView
-                android:id="@+id/lut"
-                style="@style/Control"
-                android:text="@string/play_lut" />
-
-            <com.google.android.material.textview.MaterialTextView
-                android:id="@+id/karaoke"
-                style="@style/Control"
-                android:text="@string/player_karaoke_mode"
-                android:visibility="gone" />
 
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/reset"
@@ -88,17 +74,18 @@
                 android:tag="2"
                 android:text="@string/play_track_video" />
 
-            <com.google.android.material.textview.MaterialTextView
-                android:id="@+id/danmaku"
-                style="@style/Control"
-                android:text="@string/danmaku"
-                android:visibility="gone"
-                tools:visibility="visible" />
 
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/title"
                 style="@style/Control"
                 android:text="@string/play_title"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/chapter"
+                style="@style/Control"
+                android:text="@string/play_chapter"
                 android:visibility="gone"
                 tools:visibility="visible" />
 

@@ -6,10 +6,6 @@
     "version": "1.11.0-alpha01-fongmi",
     "patches": [
       {
-        "path": "third_party/patches/media3-danmaku-live.patch",
-        "sha256": "c7d3405851c975a7256e363047405e652ec24ffcba39181b5be410b6907db3a5"
-      },
-      {
         "path": "third_party/patches/media3-dolby-vision-matroska.patch",
         "sha256": "dda4ab64ac9982377545d23fbcf864d9e9d9308d5be09f86d94efde43a994cce"
       },

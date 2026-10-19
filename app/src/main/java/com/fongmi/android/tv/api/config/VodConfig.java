@@ -12,8 +12,10 @@ import com.fongmi.android.tv.bean.Depot;
 import com.fongmi.android.tv.bean.Parse;
 import com.fongmi.android.tv.bean.Result;
 import com.fongmi.android.tv.bean.Rule;
+import com.fongmi.android.tv.R;
 import com.fongmi.android.tv.bean.Site;
 import com.fongmi.android.tv.event.ConfigEvent;
+import com.fongmi.android.tv.event.LoadingEvent;
 import com.fongmi.android.tv.event.RefreshEvent;
 import com.fongmi.android.tv.impl.Callback;
 import com.fongmi.android.tv.utils.UrlUtil;
@@ -126,11 +128,11 @@ public class VodConfig extends BaseConfig {
 
     @Override
     protected void load(Config config) throws Throwable {
-        String url = config.getUrl();
+        String url = UrlUtil.convert(config.getUrl());
         if (NodeBundleManager.isNodeConfig(url)) {
-            loadNodeBundle(config);
+            loadNodeBundle(config, url);
         } else {
-            String json = Decoder.getJson(UrlUtil.convert(url), TAG);
+            String json = Decoder.getJson(url, TAG);
             checkJson(config, Json.parse(json).getAsJsonObject());
         }
     }
@@ -140,14 +142,17 @@ public class VodConfig extends BaseConfig {
      * 把 video.sites 映射为 api 以 {@link SiteApi#NODE_PREFIX} 开头的站点，由 SiteApi 按站点路由 POST JSON 调用；
      * 没有标准 /config 时退回旧版 T4 适配（/t4/config + /t4/api）。
      */
-    private void loadNodeBundle(Config config) throws Throwable {
-        NodeBundleManager.prepareAndStartSync(App.get(), config.getUrl(), NodeBundleManager.DEFAULT_TIMEOUT_MS);
+    private void loadNodeBundle(Config config, String url) throws Throwable {
+        LoadingEvent.show(R.string.node_loading_check);
+        NodeBundleManager.prepareAndStartSync(App.get(), url, NodeBundleManager.DEFAULT_TIMEOUT_MS);
+        LoadingEvent.show(R.string.node_loading_fetch_sites);
         JsonObject standard = nodeStandardConfig();
         if (standard != null) {
             parseConfig(config, standard);
             return;
         }
-        JsonObject obj = fetchNodeJson("/t4/config");
+        JsonObject obj = NodeBundleManager.consumeCachedConfig();
+        if (obj == null) obj = fetchNodeJson("/t4/config");
         if (obj == null) throw new Exception("Node bundle has neither /config (video.sites) nor /t4/config");
         if (!obj.has("sites") || !obj.get("sites").isJsonArray() || obj.getAsJsonArray("sites").isEmpty()) {
             JsonArray sites = new JsonArray();
@@ -168,7 +173,8 @@ public class VodConfig extends BaseConfig {
      * @return 转换成本应用配置结构（sites/parses/...）的标准猫源配置；/config 不存在或没有 video.sites 时返回 null
      */
     private JsonObject nodeStandardConfig() {
-        JsonObject root = fetchNodeJson("/config");
+        JsonObject root = NodeBundleManager.consumeCachedConfig();
+        if (root == null) root = fetchNodeJson("/config");
         if (root == null) return null;
         JsonObject video = childObject(root, "video");
         if (video == null) video = childObject(childObject(root, "data"), "video");
@@ -257,7 +263,6 @@ public class VodConfig extends BaseConfig {
         initParse(config, object);
         config.setLogo(Json.safeString(object, "logo"));
         config.setNotice(Json.safeString(object, "notice"));
-        config.setDanmaku(Json.safeString(object, "danmaku"));
     }
 
     private void initList(JsonObject object) {

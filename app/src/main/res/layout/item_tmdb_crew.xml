@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 主创团队卡片（72dp 圆形头像 + 姓名 + 职位） -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="86dp"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:layout_marginEnd="16dp">
+
+    <!-- 圆形头像 -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        app:cardCornerRadius="36dp"
+        app:cardElevation="0dp"
+        app:cardBackgroundColor="@color/tmdb_surface_variant">
+
+        <ImageView
+            android:id="@+id/crewAvatar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:contentDescription="@null" />
+
+    </androidx.cardview.widget.CardView>
+
+    <!-- 成员名 -->
+    <TextView
+        android:id="@+id/crewName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textColor="@color/tmdb_text_primary"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:maxLines="1"
+        android:ellipsize="end"
+        tools:text="叶宁" />
+
+    <!-- 职位 -->
+    <TextView
+        android:id="@+id/crewJob"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:textColor="@color/tmdb_text_meta"
+        android:textSize="11sp"
+        android:gravity="center"
+        android:maxLines="1"
+        android:ellipsize="end"
+        tools:text="Producer" />
+
+</LinearLayout>

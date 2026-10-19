@@ -237,7 +237,7 @@ public class ExoCompressedAudioDirectPolicyTest {
         f.memory.nowMs.set(800);
         f.output.getPositionUs();
         ExoPlaybackException error = assertThrows(ExoPlaybackException.class, () -> wrapped.render(0, 800_000));
-        assertTrue(error.isRecoverable);
+        assertTrue(isRecoverable(error));
         assertEquals(ExoPlaybackException.TYPE_RENDERER, error.type);
         assertEquals(PlaybackException.ERROR_CODE_AUDIO_TRACK_WRITE_FAILED, error.errorCode);
         assertTrue(error.getCause() instanceof ExoStartupAudioRenderer.StartupStallException);
@@ -1394,6 +1394,16 @@ public class ExoCompressedAudioDirectPolicyTest {
             assertSame(this.config, config);
             creations++;
             return output;
+        }
+    }
+
+    private static boolean isRecoverable(ExoPlaybackException error) {
+        try {
+            java.lang.reflect.Field field = ExoPlaybackException.class.getDeclaredField("isRecoverable");
+            field.setAccessible(true);
+            return field.getBoolean(error);
+        } catch (Exception e) {
+            return false;
         }
     }
 }

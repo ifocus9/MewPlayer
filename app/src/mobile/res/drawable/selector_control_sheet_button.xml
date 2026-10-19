@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 播放设置面板 / 弹幕设置 / 解析线路的胶囊按钮：与全屏 LUT 快捷面板（LutQuickPanel.applyBg）同一套配色。
+<!-- 播放设置面板 / 解析线路的胶囊按钮：与全屏 LUT 快捷面板（LutQuickPanel.applyBg）同一套配色。
      选中蓝底白边，焦点 / 按下半透明白底白边，默认半透明深灰细边，圆角 6dp（无内边距，由布局控制） -->
 <ripple xmlns:android="http://schemas.android.com/apk/res/android"
     android:color="#33FFFFFF">

@@ -119,6 +119,11 @@
             android:screenOrientation="fullUser"
             android:supportsPictureInPicture="true" />
 
+        <activity
+            android:name=".ui.activity.VodDetailActivity"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|uiMode|orientation"
+            android:screenOrientation="fullUser" />
+
         <service
             android:name=".service.DLNACastService"
             android:exported="false" />

@@ -861,7 +861,6 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
         mService.addPlayerCallback(mPlayerCallback);
         getSeekView().setProgressPlayer(player().getPlayer());
         player().setLutAllowed(isLutAllowed());
-        player().setDanmakuForeground(true);
         publishRenderTarget(getExoView().getVideoSurfaceView());
         applyExoOutputMode();
         if (SpiderDebug.isEnabled()) SpiderDebug.log("playback-flow", "service connected cost=%dms key=%s", System.currentTimeMillis() - start, getPlaybackKey());
@@ -881,7 +880,6 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
         super.onResume();
         if (mService != null) {
             mService.setPlaybackForeground(true);
-            if (isOwner()) player().setDanmakuForeground(true);
         }
         if (SpiderDebug.isEnabled()) SpiderDebug.log("playback-lifecycle", "activity resume %s", lifecycleState());
         playbackExiting = false;
@@ -904,7 +902,6 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
     protected void onStop() {
         if (mService != null) {
             mService.setPlaybackForeground(false);
-            if (isOwner()) player().setDanmakuForeground(false);
         }
         restoreExoOutputMode();
         if (SpiderDebug.isEnabled()) SpiderDebug.log("playback-lifecycle", "activity stop backgroundOff=%s %s", PlayerSetting.isBackgroundOff(), lifecycleState());

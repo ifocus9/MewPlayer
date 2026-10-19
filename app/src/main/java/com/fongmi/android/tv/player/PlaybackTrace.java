@@ -96,7 +96,7 @@ public final class PlaybackTrace {
         return time == null || startedAtMs < 0 ? -1 : Math.max(0, time - startedAtMs);
     }
 
-    synchronized boolean hasStage(Stage stage) {
+    public synchronized boolean hasStage(Stage stage) {
         return stageTimes.containsKey(stage);
     }
 

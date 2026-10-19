@@ -44,7 +44,7 @@ public class WebPage {
 
     public void update(String name, String url, String ua, Map<String, String> headers, boolean trusted) {
         this.name = trim(name);
-        this.url = trim(url);
+        this.url = normalizeUrl(url);
         this.ua = trim(ua);
         this.headers = headers == null ? new LinkedHashMap<>() : new LinkedHashMap<>(headers);
         this.trusted = trusted;
@@ -52,17 +52,17 @@ public class WebPage {
     }
 
     /**
-     * 修正反序列化后可能为空的字段。返回 false 表示该记录无效（URL 不是 http/https），应丢弃。
+     * 修正反序列化后可能为空的字段。返回 false 表示该记录无效（URL 不是 http/https 或本地网页），应丢弃。
      */
     boolean normalize() {
         name = trim(name);
-        url = trim(url);
+        url = normalizeUrl(url);
         ua = trim(ua);
         if (headers == null) headers = new LinkedHashMap<>();
         if (isEmpty(id)) id = UUID.randomUUID().toString();
         if (createTime <= 0) createTime = System.currentTimeMillis();
         if (updateTime <= 0) updateTime = createTime;
-        return isHttpUrl(url);
+        return isValidUrl(url);
     }
 
     public String getId() {
@@ -74,10 +74,16 @@ public class WebPage {
     }
 
     /**
-     * 名称为空时退回显示 host，再退回完整 URL。
+     * 名称为空时退回显示 host（网络网页）或文件名（本地网页），再退回完整 URL。
      */
     public String getDisplayName() {
         if (!isEmpty(name)) return name;
+        if (isLocalUrl(url)) {
+            String path = trim(url);
+            int lastSlash = path.lastIndexOf('/');
+            if (lastSlash >= 0 && lastSlash + 1 < path.length()) return path.substring(lastSlash + 1);
+            return path;
+        }
         String host = host(url);
         return isEmpty(host) ? getUrl() : host;
     }
@@ -126,6 +132,25 @@ public class WebPage {
         if (value.startsWith("http://")) return value.length() > "http://".length();
         if (value.startsWith("https://")) return value.length() > "https://".length();
         return false;
+    }
+
+    public static boolean isLocalUrl(String url) {
+        String value = trim(url).toLowerCase(Locale.ROOT);
+        if (value.startsWith("file://") && value.length() > "file://".length()) return true;
+        if (value.startsWith("file:/") && value.length() > "file:/".length()) return true;
+        if (value.startsWith("assets://") && value.length() > "assets://".length()) return true;
+        if (value.startsWith("/") && value.length() > 1) return true;
+        return false;
+    }
+
+    public static boolean isValidUrl(String url) {
+        return isHttpUrl(url) || isLocalUrl(url);
+    }
+
+    public static String normalizeUrl(String url) {
+        String value = trim(url);
+        if (value.startsWith("/")) return "file://" + value;
+        return value;
     }
 
     /**

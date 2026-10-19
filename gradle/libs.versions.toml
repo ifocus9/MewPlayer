@@ -9,7 +9,6 @@ annotation = "1.10.0"
 appcompat = "1.7.1"
 biometric = "1.1.0"
 desugar = "2.1.5"
-leanback = "1.2.0"
 lifecycleService = "2.10.0"
 media = "1.8.0"
 palette = "1.0.0"
@@ -23,7 +22,6 @@ viewpager2 = "1.1.0"
 webkit = "1.16.0"
 
 androidGifDrawable = "1.2.31"
-androidautosize = "1.2.1"
 brotli = "0.1.2"
 customactivityoncrash = "2.4.0"
 flexbox = "3.0.0"
@@ -62,7 +60,6 @@ annotation = { group = "androidx.annotation", name = "annotation", version.ref =
 appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 biometric = { group = "androidx.biometric", name = "biometric", version.ref = "biometric" }
 desugar = { group = "com.android.tools", name = "desugar_jdk_libs_nio", version.ref = "desugar" }
-leanback = { group = "androidx.leanback", name = "leanback", version.ref = "leanback" }
 lifecycle-service = { group = "androidx.lifecycle", name = "lifecycle-service", version.ref = "lifecycleService" }
 media = { group = "androidx.media", name = "media", version.ref = "media" }
 palette = { group = "androidx.palette", name = "palette", version.ref = "palette" }
@@ -77,7 +74,6 @@ viewpager2 = { group = "androidx.viewpager2", name = "viewpager2", version.ref =
 webkit = { group = "androidx.webkit", name = "webkit", version.ref = "webkit" }
 
 android-gif-drawable = { group = "pl.droidsonroids.gif", name = "android-gif-drawable", version.ref = "androidGifDrawable" }
-androidautosize = { group = "com.github.JessYanCoding", name = "AndroidAutoSize", version.ref = "androidautosize" }
 brotli = { group = "org.brotli", name = "dec", version.ref = "brotli" }
 customactivityoncrash = { group = "cat.ereza", name = "customactivityoncrash", version.ref = "customactivityoncrash" }
 eventbus = { group = "org.greenrobot", name = "eventbus", version.ref = "greenrobot" }
@@ -114,7 +110,6 @@ media3-exoplayer-smoothstreaming = { group = "androidx.media3", name = "media3-e
 media3-extractor = { group = "androidx.media3", name = "media3-extractor", version.ref = "media3" }
 media3-session = { group = "androidx.media3", name = "media3-session", version.ref = "media3" }
 media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3" }
-media3-ui-danmaku = { group = "androidx.media3", name = "media3-ui-danmaku", version.ref = "media3" }
 exoplayer-hdr-utils = { group = "com.suyashbelekar", name = "exoplayerhdrutils", version.ref = "exoplayerHdrUtils" }
 nanohttpd = { group = "org.nanohttpd", name = "nanohttpd", version.ref = "nanohttpd" }
 newpipeextractor = { group = "com.github.TeamNewPipe", name = "NewPipeExtractor", version.ref = "newpipeextractor" }
@@ -146,5 +141,5 @@ chaquo-python = { id = "com.chaquo.python", version.ref = "python" }
 [bundles]
 glide = ["glide", "glide-annotations", "glide-avif-integration", "glide-okhttp3-integration"]
 jupnp = ["org-jupnp", "org-jupnp-android", "org-jupnp-support"]
-media3 = ["media3-common", "media3-container", "media3-database", "media3-datasource", "media3-datasource-okhttp", "media3-datasource-rtmp", "media3-decoder", "media3-effect", "media3-exoplayer", "media3-exoplayer-dash", "media3-exoplayer-hls", "media3-exoplayer-rtsp", "media3-exoplayer-smoothstreaming", "media3-extractor", "media3-session", "media3-ui", "media3-ui-danmaku"]
+media3 = ["media3-common", "media3-container", "media3-database", "media3-datasource", "media3-datasource-okhttp", "media3-datasource-rtmp", "media3-decoder", "media3-effect", "media3-exoplayer", "media3-exoplayer-dash", "media3-exoplayer-hls", "media3-exoplayer-rtsp", "media3-exoplayer-smoothstreaming", "media3-extractor", "media3-session", "media3-ui"]
 okhttp = ["okhttp", "okhttp-dnsoverhttps", "okhttp-logging-interceptor"]

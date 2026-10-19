@@ -17,10 +17,10 @@
     <string name="web_page_edit">Edit web page</string>
     <string name="web_page_list">Web pages</string>
     <string name="web_page_name">Name</string>
-    <string name="web_page_url">URL (http/https)</string>
+    <string name="web_page_url">URL or Local Path</string>
     <string name="web_page_trusted">Allow native capabilities (window.fongmi)</string>
     <string name="web_page_trusted_hint">Only enable for pages you trust: the page will be able to send native network requests, read config info and launch the player.</string>
-    <string name="web_page_url_invalid">Please enter a URL starting with http:// or https://</string>
+    <string name="web_page_url_invalid">Please enter a valid URL (http://, https:// or local page)</string>
     <string name="web_page_error">Failed to load the page</string>
     <string name="web_page_retry">Retry</string>
     <string name="web_page_fullscreen">Fullscreen</string>

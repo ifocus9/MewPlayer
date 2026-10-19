@@ -64,6 +64,45 @@ public class Setting {
 
     public static final int WALL_BLACK = 0;
 
+    // ---- TMDB 刮削配置 ----
+
+    /** TMDB 功能总开关（默认关闭，需用户主动开启并配置 API Key） */
+    public static boolean isTmdbEnable() {
+        return Prefers.getBoolean("tmdb_enable", false);
+    }
+
+    public static void putTmdbEnable(boolean enable) {
+        Prefers.put("tmdb_enable", enable);
+    }
+
+    /** TMDB API Key（用户输入，本地明文存储） */
+    public static String getTmdbApiKey() {
+        return Prefers.getString("tmdb_api_key", "");
+    }
+
+    public static void putTmdbApiKey(String apiKey) {
+        Prefers.put("tmdb_api_key", apiKey != null ? apiKey.trim() : "");
+    }
+
+    /** TMDB API 代理 Base URL（默认 https://api.tmdb.org） */
+    public static String getTmdbApiBase() {
+        return Prefers.getString("tmdb_api_base", "");
+    }
+
+    public static void putTmdbApiBase(String base) {
+        Prefers.put("tmdb_api_base", base != null ? base.trim() : "");
+    }
+
+    /** TMDB 图片 CDN 代理 Base URL（默认 https://image.tmdb.org/t/p） */
+    public static String getTmdbImageBase() {
+        return Prefers.getString("tmdb_image_base", "");
+    }
+
+    public static void putTmdbImageBase(String base) {
+        Prefers.put("tmdb_image_base", base != null ? base.trim() : "");
+    }
+
+
     public static String getDoh() {
         return Prefers.getString("doh");
     }

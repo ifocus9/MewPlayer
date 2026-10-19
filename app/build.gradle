@@ -105,9 +105,6 @@ android {
     flavorDimensions = ["mode", "abi"]
 
     productFlavors {
-        leanback {
-            dimension "mode"
-        }
         mobile {
             dimension "mode"
         }
@@ -172,7 +169,7 @@ android {
             eachDependency { details ->
                 if (details.requested.group == 'androidx.media3') {
                     details.useVersion(libs.versions.media3.get())
-                    details.because('Use bundled Media3 build with MediaTitle and danmaku APIs')
+                    details.because('Use bundled Media3 build with MediaTitle APIs')
                 }
             }
         }
@@ -255,9 +252,6 @@ dependencies {
     implementation libs.simple.xml
     implementation libs.textdrawable
     implementation libs.zxing.core
-    leanbackImplementation libs.leanback
-    leanbackImplementation libs.androidautosize
-    leanbackImplementation libs.zxing.android.embedded
     mobileImplementation libs.biometric
     mobileImplementation libs.zxing.android.embedded
     annotationProcessor libs.room.compiler
@@ -265,7 +259,6 @@ dependencies {
     annotationProcessor libs.glide.compiler
     coreLibraryDesugaring libs.desugar
     testImplementation libs.junit
-    testLeanbackImplementation 'org.robolectric:robolectric:4.16'
     androidTestImplementation libs.junit
     androidTestImplementation 'androidx.test:runner:1.7.0'
     testImplementation libs.okhttp.mockwebserver
