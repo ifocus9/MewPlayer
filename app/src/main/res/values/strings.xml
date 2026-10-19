@@ -744,4 +744,8 @@
     <string name="remote_trust_config_add">Add</string>
     <string name="remote_trust_config_edit">Edit</string>
     <string name="remote_trust_config_url_required">Enter config URL</string>
+    <string name="detail_download">Download</string>
+    <string name="detail_download_list">Download List</string>
+    <string name="detail_download_parsing">Resolving download URL for [%s]...</string>
+    <string name="idm_not_found">1DM (IDM) not found. Opening with system chooser.</string>
 </resources>

@@ -54,7 +54,8 @@
                 android:id="@+id/progress"
                 layout="@layout/view_progress"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_height="match_parent"
+                android:visibility="gone" />
 
 
             <include
@@ -228,9 +229,12 @@
                             android:layout_weight="1" />
 
                         <com.google.android.material.textview.MaterialTextView
-                            android:id="@+id/flagCount"
-                            style="@style/DetailSectionMeta"
-                            tools:text="共 2 条" />
+                            android:id="@+id/download"
+                            style="@style/DetailSectionAction"
+                            android:layout_marginEnd="-8dp"
+                            android:text="@string/detail_download"
+                            app:drawableEndCompat="@drawable/ic_detail_chevron_right"
+                            app:drawableTint="@color/selector_detail_action_text" />
 
                     </androidx.appcompat.widget.LinearLayoutCompat>
 

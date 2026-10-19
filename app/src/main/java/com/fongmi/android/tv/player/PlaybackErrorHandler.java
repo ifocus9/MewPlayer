@@ -133,7 +133,6 @@ public class PlaybackErrorHandler {
         if (decoderRuntimeObserved && retryExoDecoderRuntimeFailure(e)) return;
         if (action == PlayerEngine.ErrorAction.DECODE && retryHardDecodeSwitch(e)) return;
         if (action == PlayerEngine.ErrorAction.FATAL) {
-            if (fallbackMpvForExternalLocalProxy()) return;
             if (retryLocalProxy(e)) return;
         }
         if (action == PlayerEngine.ErrorAction.RELOAD) {
@@ -144,7 +143,6 @@ public class PlaybackErrorHandler {
         if (action == PlayerEngine.ErrorAction.RECOVERED) {
             return;
         }
-        if (fallbackMpvForExternalLocalProxy()) return;
         host.finishPlaybackProfileAbSession("player-error", SystemClock.elapsedRealtime());
         host.onErrorCallback(getPlaybackErrorMessage(failure));
     }
@@ -154,7 +152,6 @@ public class PlaybackErrorHandler {
         if (retryMpvVulkanBackendTimeout()) return;
         if (retryMpvAutoVulkanToOpenGl("auto-vulkan-first-frame-timeout")) return;
         if (retryExoDv7FirstFrameTimeout()) return;
-        if (fallbackMpvForExternalLocalProxy()) return;
         host.onErrorCallback(ResUtil.getString(R.string.error_play_timeout));
     }
 
@@ -468,17 +465,6 @@ public class PlaybackErrorHandler {
         return true;
     }
 
-    private boolean fallbackMpvForExternalLocalProxy() {
-        if (host.getPlayerType() == PlayerSetting.MPV) return false;
-        PlaySpec spec = host.getSpec();
-        if (spec == null) return false;
-        PlaybackRoute.Resolution route = host.getEffectivePlaybackRoute();
-        boolean isExternalLoopback = route != null && route.route() == PlaybackRoute.EXTERNAL_LOOPBACK_PROXY;
-        if (!isExternalLoopback) return false;
-        if (SpiderDebug.isEnabled()) SpiderDebug.log("player", "external local proxy failed in exo; fallback to mpv spec=%s", host.getDebugSpec());
-        host.switchPlayer(PlayerSetting.MPV, false);
-        return true;
-    }
 
     private boolean isLocalProxyRetryable(PlaybackException e, boolean isExternalLoopback) {
         if (LocalProxyDebug.isConnectionRefused(e)) return true;

@@ -123,6 +123,7 @@ import com.fongmi.android.tv.ui.dialog.CastDialog;
 import com.fongmi.android.tv.ui.dialog.CodecCapabilityDialog;
 import com.fongmi.android.tv.ui.dialog.ControlDialog;
 import com.fongmi.android.tv.ui.dialog.EpisodeSheetDialog;
+import com.fongmi.android.tv.ui.dialog.EpisodeDownloadDialog;
 import com.fongmi.android.tv.ui.dialog.EpisodeListDialog;
 import com.fongmi.android.tv.ui.dialog.InfoDialog;
 import com.fongmi.android.tv.ui.dialog.PlayerKernelDialog;
@@ -167,7 +168,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class VideoActivity extends PlaybackActivity implements Clock.Callback, CustomKeyDown.Listener, TrackDialog.Listener, ControlDialog.Listener, FlagAdapter.OnClickListener, EpisodeAdapter.OnClickListener, EpisodeListDialog.Host, QualityAdapter.OnClickListener, QuickAdapter.OnClickListener, ParseAdapter.OnClickListener, CastDialog.Listener, InfoDialog.Listener {
+public class VideoActivity extends PlaybackActivity implements Clock.Callback, CustomKeyDown.Listener, TrackDialog.Listener, ControlDialog.Listener, FlagAdapter.OnClickListener, EpisodeAdapter.OnClickListener, EpisodeListDialog.Host, EpisodeDownloadDialog.Host, QualityAdapter.OnClickListener, QuickAdapter.OnClickListener, ParseAdapter.OnClickListener, CastDialog.Listener, InfoDialog.Listener {
 
     private static final String SIZE_TAG = "MPV_SIZE";
     // 剧集数达到该值时，选集横排末尾显示“更多”卡片
@@ -195,6 +196,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     private String mPosterUrl;
     private Vod mPendingDetailVod;
     private Result mPendingPlayerResult;
+    private Episode mPendingDownloadEpisode;
     private Map<String, View> mActionButtons;
     private final List<View> mCustomActionViews = new ArrayList<>();
     private HorizontalScrollView mCustomLeftButtons;
@@ -440,6 +442,11 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         if (TextUtils.isEmpty(id) || id.equals(oldId)) return;
         mBinding.swipeLayout.setRefreshing(true);
         saveHistory();
+        if (service() != null) {
+            player().reset();
+            player().stop();
+            hideProgress();
+        }
         getIntent().putExtras(intent);
         setOrient();
         checkId();
@@ -473,13 +480,13 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         setShortDisplay();
         showInitialPreview();
         mBinding.progressLayout.showProgress();
-        showProgress();
     }
 
     @Override
     @SuppressLint("ClickableViewAccessibility")
     protected void initEvent() {
         mBinding.name.setOnClickListener(view -> onName());
+        mBinding.download.setOnClickListener(view -> onDownload());
         mBinding.episodeCount.setOnClickListener(view -> onMore());
         mBinding.other.setOnClickListener(view -> onOther());
         mBinding.director.setOnClickListener(view -> onDirector());
@@ -883,6 +890,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         if (service() != null) {
             player().reset();
             player().stop();
+            hideProgress();
         }
         getDetail();
     }
@@ -925,7 +933,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         item.checkContent(getContent());
         mBinding.name.setText(item.getName());
         mFlagAdapter.addAll(item.getFlags());
-        updateFlagCount();
         if (mBinding.flagLayout != null) mBinding.flagLayout.setVisibility(item.getFlags().isEmpty() ? View.GONE : View.VISIBLE);
         if (mBinding.flag != null) mBinding.flag.setVisibility(item.getFlags().isEmpty() ? View.GONE : View.VISIBLE);
         App.removeCallbacks(mLoadingTimeoutRunnable);
@@ -1026,7 +1033,11 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         }
         mBinding.control.parse.setVisibility(isUseParse() ? View.VISIBLE : View.GONE);
         startPlayer(getHistoryKey(), result, isUseParse(), getSite().getTimeout(), buildMetadata());
-        if (!result.shouldUseParse()) checkPreload();
+        if (mPendingDownloadEpisode != null && mPendingDownloadEpisode.equals(getEpisode()) && !result.shouldUseParse() && !result.getRealUrl().isEmpty()) {
+            Episode ep = mPendingDownloadEpisode;
+            mPendingDownloadEpisode = null;
+            startDownloadWithUrl(ep, result.getRealUrl(), result.getHeader());
+        }
     }
 
     private void onPreload(Result result) {
@@ -1035,14 +1046,10 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
             return;
         }
         mPreloadResult = result;
-        if (player().canPreloadNext() && !result.shouldUseParse()) {
-            PlaySpec spec = PlaySpec.from(result, getHistoryKey(), buildMetadata());
-            player().preload(spec, 0);
-        }
     }
 
     private void checkPreload() {
-        if (!PreloadSetting.isPreload() || !player().canPreloadNext()) return;
+        if (!PreloadSetting.isPreload()) return;
         if (mPreloadRequested || mPreloadResult != null) return;
         if (!hasAdjacentEpisode(1)) return;
         Episode next = getAdjacentEpisode(1);
@@ -1112,6 +1119,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     @Override
     public void onItemClick(Flag item) {
         if (item.isSelected()) return;
+        clearPreload();
         mFlagAdapter.setSelected(item);
         scrollToPosition(mBinding.flag, mFlagAdapter.getPosition());
         setEpisodeAdapter(item.getEpisodes());
@@ -1220,6 +1228,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     private void refreshEpisodeSheet() {
         for (Fragment fragment : getSupportFragmentManager().getFragments()) {
             if (fragment instanceof EpisodeSheetDialog dialog) dialog.refresh();
+            else if (fragment instanceof EpisodeDownloadDialog dialog) dialog.refresh();
             else if (fragment instanceof EpisodeListDialog panel) panel.refresh();
         }
     }
@@ -1706,6 +1715,88 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         setRedirect(true);
     }
 
+    @Override
+    public List<Episode> getEpisodeDownloadItems() {
+        return getEpisodeSheetItems();
+    }
+
+    @Override
+    public int getEpisodeDownloadMaxSpan() {
+        return getEpisodeGridMaxSpan();
+    }
+
+    @Override
+    public void onEpisodeDownload(Episode item) {
+        startDownload(item);
+    }
+
+    private void onDownload() {
+        if (getEpisodeDownloadItems().isEmpty()) {
+            Notify.show(R.string.error_play_url);
+            return;
+        }
+        Flag flag = getFlag();
+        if (flag != null) syncSelectedEpisode(flag);
+        EpisodeDownloadDialog.create().show(this);
+    }
+
+    private void startDownload(Episode episode) {
+        if (episode == null) return;
+        if (episode.equals(getEpisode()) && player() != null && !TextUtils.isEmpty(player().getUrl())) {
+            startDownloadWithUrl(episode, player().getUrl(), player().getHeaders());
+            return;
+        }
+        mPendingDownloadEpisode = episode;
+        Notify.show(getString(R.string.detail_download_parsing, episode.getName()));
+        if (!episode.equals(getEpisode())) {
+            onItemClick(episode);
+        }
+    }
+
+    private void checkPendingDownload() {
+        if (mPendingDownloadEpisode == null) return;
+        if (mPendingDownloadEpisode.equals(getEpisode()) && player() != null && !TextUtils.isEmpty(player().getUrl())) {
+            Episode ep = mPendingDownloadEpisode;
+            mPendingDownloadEpisode = null;
+            startDownloadWithUrl(ep, player().getUrl(), player().getHeaders());
+        }
+    }
+
+    private void startDownloadWithUrl(Episode episode, String url, Map<String, String> playerHeaders) {
+        if (TextUtils.isEmpty(url)) {
+            Notify.show(R.string.error_play_url);
+            return;
+        }
+        setRedirect(true);
+
+        String vodName = mBinding.name.getText() != null ? mBinding.name.getText().toString().trim() : "";
+        String epName = episode != null && !TextUtils.isEmpty(episode.getName()) ? episode.getName().trim() : "";
+
+        String title;
+        if (epName.isEmpty() || epName.equalsIgnoreCase(vodName)) {
+            title = vodName;
+        } else {
+            title = vodName + " - " + epName;
+        }
+        if (TextUtils.isEmpty(title)) {
+            title = mBinding.control.title.getText() != null ? mBinding.control.title.getText().toString().replace("：", " - ") : "video";
+        }
+
+        Map<String, String> headers = new HashMap<>();
+        if (getSite() != null && getSite().getHeader() != null) {
+            headers.putAll(getSite().getHeader());
+        }
+        if (playerHeaders != null) {
+            headers.putAll(playerHeaders);
+        }
+        boolean hasReferer = headers.keySet().stream().anyMatch(k -> "referer".equalsIgnoreCase(k));
+        if (!hasReferer && getSite() != null && !TextUtils.isEmpty(getSite().getApi()) && getSite().getApi().startsWith("http")) {
+            headers.put("Referer", getSite().getApi());
+        }
+
+        PlayerHelper.download(this, url, headers, title);
+    }
+
     private boolean onChooseLong() {
         onChoose();
         return true;
@@ -2141,14 +2232,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
                     target.mergeEpisodes(item.getEpisodes(), mHistory.isRevSort());
                     if (target.equals(activated)) setEpisodeAdapter(target.getEpisodes());
                 }, () -> mFlagAdapter.add(item)));
-        updateFlagCount();
-    }
-
-    private void updateFlagCount() {
-        if (mBinding == null || mFlagAdapter == null) return;
-        int count = mFlagAdapter.getItemCount();
-        mBinding.flagCount.setText(getString(R.string.detail_flag_count, count));
-        mBinding.flagCount.setVisibility(count > 0 ? View.VISIBLE : View.GONE);
     }
 
     private final PlaybackService.NavigationCallback mNavigationCallback = new PlaybackService.NavigationCallback() {
@@ -2189,6 +2272,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     protected void onPrepare() {
         setDecode();
         setPosition();
+        checkPendingDownload();
     }
 
     @Override
@@ -2225,6 +2309,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
 
     @Override
     protected void onError(String msg) {
+        mPendingDownloadEpisode = null;
         recordPlayHealth(false, msg);
         mBinding.swipeLayout.setEnabled(true);
         Track.delete(player().getKey());
@@ -2324,7 +2409,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         if (mHistory.canSave() && mHistory.canSync()) syncHistory();
         long ending = mHistory.getEnding() > 0 && mHistory.getEnding() < duration ? mHistory.getEnding() : 0;
         long remaining = duration - position - ending;
-        if (duration > 0 && position > 0 && remaining <= 60000L) {
+        if (duration > 0 && position >= 15000L && remaining <= 60000L) {
             checkPreload();
         }
         if (mHistory.getEnding() > 0 && duration > 0 && mHistory.getEnding() + position >= duration) {

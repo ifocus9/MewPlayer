@@ -868,15 +868,8 @@ public class ExoPlayerEngine implements PlayerEngine {
 
     @Override
     public void preload(PlaySpec spec, long startPositionMs) {
-        if (spec == null || spec.getUrl() == null) return;
+        if (spec == null || spec.getUrl() == null || player == null) return;
         clearPreload();
-        try {
-            MediaItem item = ExoUtil.getMediaItem(spec, decode);
-            if (nextPreCache == null) nextPreCache = new PreCache();
-            nextPreCache.start(null, item, spec.getPlaybackTraceId(), spec.getPlaybackRoute());
-        } catch (Throwable e) {
-            SpiderDebug.log("preload", "exo preload failed: %s", e.getMessage());
-        }
     }
 
     @Override

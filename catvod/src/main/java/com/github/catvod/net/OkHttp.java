@@ -25,6 +25,7 @@ import javax.net.ssl.X509TrustManager;
 
 import okhttp3.Call;
 import okhttp3.Connection;
+import okhttp3.Dispatcher;
 import okhttp3.EventListener;
 import okhttp3.FormBody;
 import okhttp3.Headers;
@@ -104,7 +105,11 @@ public class OkHttp {
 
     public static synchronized OkHttpClient player() {
         if (get().player != null) return get().player;
+        Dispatcher dispatcher = new Dispatcher();
+        dispatcher.setMaxRequests(64);
+        dispatcher.setMaxRequestsPerHost(16);
         return get().player = getBuilder()
+                .dispatcher(dispatcher)
                 .addInterceptor(new KuaishouMediaFallbackInterceptor())
                 .eventListenerFactory(call -> SpiderDebug.isEnabled() ? new DebugEventListener() : EventListener.NONE)
                 .build();

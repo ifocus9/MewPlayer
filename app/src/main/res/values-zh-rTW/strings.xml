@@ -703,4 +703,8 @@
     <string name="remote_trust_config_add">新增</string>
     <string name="remote_trust_config_edit">編輯</string>
     <string name="remote_trust_config_url_required">請輸入接口 URL</string>
+    <string name="detail_download">下載</string>
+    <string name="detail_download_list">下載列表</string>
+    <string name="detail_download_parsing">正在解析【%s】下載地址...</string>
+    <string name="idm_not_found">未檢測到 1DM (IDM) 下載器，已為您調起系統選擇器</string>
 </resources>

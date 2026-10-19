@@ -47,6 +47,11 @@
         <package android:name="com.oneplus.security" />
         <package android:name="com.meizu.safe" />
         <package android:name="com.android.settings" />
+        <package android:name="idm.internet.download.manager" />
+        <package android:name="idm.internet.download.manager.plus" />
+        <package android:name="idm.internet.download.manager.adm.lite" />
+        <package android:name="com.dv.adm" />
+        <package android:name="com.dv.adm.pay" />
     </queries>
 
     <application

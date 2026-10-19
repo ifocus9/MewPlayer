@@ -16,8 +16,10 @@ import androidx.media3.common.util.Util;
 
 import com.fongmi.android.tv.App;
 import com.fongmi.android.tv.BuildConfig;
+import com.fongmi.android.tv.R;
 import com.fongmi.android.tv.setting.Setting;
 import com.fongmi.android.tv.utils.FileUtil;
+import com.fongmi.android.tv.utils.Notify;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,6 +85,147 @@ public class PlayerHelper {
             activity.startActivity(getChooser(intent));
         } catch (Exception ignored) {
         }
+    }
+
+    public static void download(Activity activity, String url, Map<String, String> headers, CharSequence title) {
+        try {
+            if (url == null || url.isEmpty()) return;
+            String[] idmPackages = new String[]{
+                    "idm.internet.download.manager.plus",
+                    "idm.internet.download.manager",
+                    "idm.internet.download.manager.adm.lite",
+                    "com.dv.adm.pay",
+                    "com.dv.adm"
+            };
+
+            PackageManager pm = activity.getPackageManager();
+            String targetPackage = null;
+            for (String pkg : idmPackages) {
+                try {
+                    pm.getPackageInfo(pkg, 0);
+                    targetPackage = pkg;
+                    break;
+                } catch (Exception ignored) {
+                }
+            }
+
+            // Case-insensitive header lookup
+            String referer = getHeader(headers, "Referer");
+            String userAgent = getHeader(headers, "User-Agent");
+            if (userAgent.isEmpty()) userAgent = getUa();
+            String cookie = getHeader(headers, "Cookie");
+
+            Bundle bundle = new Bundle();
+            if (headers != null) {
+                headers.forEach(bundle::putString);
+            }
+            if (!userAgent.isEmpty() && !hasHeader(bundle, "User-Agent")) {
+                bundle.putString("User-Agent", userAgent);
+            }
+            if (!referer.isEmpty() && !hasHeader(bundle, "Referer")) {
+                bundle.putString("Referer", referer);
+            }
+            if (!cookie.isEmpty() && !hasHeader(bundle, "Cookie")) {
+                bundle.putString("Cookie", cookie);
+            }
+
+            List<String> list = new ArrayList<>();
+            for (String key : bundle.keySet()) {
+                list.add(key);
+                list.add(bundle.getString(key));
+            }
+
+            String fileName = title != null ? title.toString().trim() : "";
+            if (!fileName.isEmpty()) {
+                fileName = fileName.replaceAll("[\\\\/:*?\"<>|]", "_");
+                if (!fileName.contains(".")) {
+                    fileName = fileName + (url.contains(".m3u8") ? ".mp4" : ".mp4");
+                }
+            }
+
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setData(Uri.parse(url));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+            if (!fileName.isEmpty()) {
+                intent.putExtra("title", fileName);
+                intent.putExtra("extra_filename", fileName);
+            }
+
+            // 1DM 官方标准参数 (注意：不要传 secure_uri=true，否则 1DM 会将其作为安全网址锁定，导致无法直接下载并显示更新链接)
+            if (!referer.isEmpty()) intent.putExtra("extra_referer", referer);
+            if (!userAgent.isEmpty()) intent.putExtra("extra_useragent", userAgent);
+            if (!cookie.isEmpty()) intent.putExtra("extra_cookies", cookie);
+
+            // 通用及 1DM 支持的 Headers Bundle
+            intent.putExtra("headers", bundle);
+            intent.putExtra("extra_headers", bundle);
+            intent.putExtra("android.media.intent.extra.HTTP_HEADERS", bundle);
+            if (!list.isEmpty()) intent.putExtra("headers_array", list.toArray(String[]::new));
+
+            intent.putExtra("force_editor", true);
+
+            if (targetPackage != null) {
+                try {
+                    if (targetPackage.startsWith("idm.internet.download.manager")) {
+                        intent.setComponent(new ComponentName(targetPackage, "idm.internet.download.manager.Downloader"));
+                    } else {
+                        intent.setPackage(targetPackage);
+                    }
+                    activity.startActivity(intent);
+                } catch (Exception e) {
+                    intent.setComponent(null);
+                    intent.setPackage(targetPackage);
+                    activity.startActivity(intent);
+                }
+            } else {
+                Notify.show(R.string.idm_not_found);
+                activity.startActivity(Intent.createChooser(intent, activity.getString(R.string.detail_download)));
+            }
+        } catch (Exception e) {
+            Notify.show(e.getMessage());
+        }
+    }
+
+    public static void openDownloadApp(Activity activity) {
+        if (activity == null) return;
+        try {
+            String[] idmPackages = new String[]{
+                    "idm.internet.download.manager.plus",
+                    "idm.internet.download.manager",
+                    "idm.internet.download.manager.adm.lite",
+                    "com.dv.adm.pay",
+                    "com.dv.adm"
+            };
+            PackageManager pm = activity.getPackageManager();
+            for (String pkg : idmPackages) {
+                Intent launchIntent = pm.getLaunchIntentForPackage(pkg);
+                if (launchIntent != null) {
+                    launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    activity.startActivity(launchIntent);
+                    return;
+                }
+            }
+            Notify.show(R.string.idm_not_found);
+        } catch (Exception e) {
+            Notify.show(e.getMessage());
+        }
+    }
+
+    private static boolean hasHeader(Bundle bundle, String name) {
+        if (bundle == null) return false;
+        for (String key : bundle.keySet()) {
+            if (name.equalsIgnoreCase(key)) return true;
+        }
+        return false;
+    }
+
+    private static String getHeader(Map<String, String> headers, String name) {
+        if (headers == null) return "";
+        for (Map.Entry<String, String> entry : headers.entrySet()) {
+            if (name.equalsIgnoreCase(entry.getKey())) return entry.getValue();
+        }
+        return "";
     }
 
     public static void choose(Activity activity, String url, Map<String, String> headers, boolean isVod, long position, CharSequence title) {

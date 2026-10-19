@@ -370,7 +370,10 @@ public class NodeBundleManager {
     /** Node 服务当前（或下次启动）监听的端口 */
     public static int getPort() {
         int value = port;
-        if (value <= 0) port = value = Prefers.getInt(KEY_PORT, DEFAULT_PORT);
+        if (value <= 0) {
+            port = value = Prefers.getInt(KEY_PORT, DEFAULT_PORT);
+            com.fongmi.android.tv.player.PlaybackRouteRegistry.registerAppService(value, com.fongmi.android.tv.player.PlaybackRouteRegistry.AppOwner.NODE_SERVER);
+        }
         return value;
     }
 
@@ -381,6 +384,7 @@ public class NodeBundleManager {
     private static void setPort(int value) {
         port = value;
         Prefers.put(KEY_PORT, value);
+        com.fongmi.android.tv.player.PlaybackRouteRegistry.registerAppService(value, com.fongmi.android.tv.player.PlaybackRouteRegistry.AppOwner.NODE_SERVER);
     }
 
     /** 把网页地址里写死的 127.0.0.1:9988 / localhost:9988 换成实际端口 */

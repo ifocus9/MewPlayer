@@ -92,7 +92,7 @@ public enum PlaybackRoute {
 
     private static Owner owner(PlaybackRouteRegistry.AppOwner owner) {
         return switch (owner) {
-            case MAIN_SERVER -> Owner.APP_MAIN_SERVER;
+            case MAIN_SERVER, NODE_SERVER -> Owner.APP_MAIN_SERVER;
             case HLS_PROXY -> Owner.APP_HLS_PROXY;
         };
     }

@@ -152,8 +152,6 @@ public class PlayerManager implements ParseCallback {
     private boolean initTrack;
     private boolean playWhenReady = true;
     private boolean hardDecodeSwitchRetryArmed;
-    private boolean externalLoopbackAutoMpv;
-    private boolean userForcedLoopbackPlayer;
     private int playerType;
     private int retry;
     private int prepareSeq;
@@ -994,8 +992,6 @@ public class PlayerManager implements ParseCallback {
         engine.release();
         playerType = type;
         if (persist) {
-            userForcedLoopbackPlayer = true;
-            externalLoopbackAutoMpv = false;
             PlayerSetting.putPlayer(type);
         }
         if (SpiderDebug.isEnabled()) SpiderDebug.log("player", "switch player type=%d persist=%s position=%d spec=%s", type, persist, position, debugSpec());
@@ -1132,7 +1128,6 @@ public class PlayerManager implements ParseCallback {
         reset();
         clear();
         stopParse();
-        userForcedLoopbackPlayer = false;
         start(spec, Constant.TIMEOUT_PLAY);
     }
 
@@ -1155,7 +1150,6 @@ public class PlayerManager implements ParseCallback {
         retry = 0;
         playbackErrorHandler.resetLocalProxyRetry();
         hardDecodeSwitchRetryArmed = false;
-        userForcedLoopbackPlayer = false;
         setMediaItem(timeout);
     }
 
@@ -1263,28 +1257,6 @@ public class PlayerManager implements ParseCallback {
         pendingSwitchRepeat = false;
     }
 
-    private boolean routeExternalLocalProxyToMpv() {
-        if (spec == null || spec.getUrl() == null || userForcedLoopbackPlayer) return false;
-        PlaybackRoute.Resolution route = PlaybackRoute.resolve(spec.getUrl());
-        boolean isExternalLoopback = route.route() == PlaybackRoute.EXTERNAL_LOOPBACK_PROXY;
-        if (!isExternalLoopback) {
-            if (externalLoopbackAutoMpv) {
-                externalLoopbackAutoMpv = false;
-                int defaultPlayer = PlayerSetting.getPlayer();
-                if (defaultPlayer != playerType) {
-                    switchPlayer(defaultPlayer, false);
-                    return true;
-                }
-            }
-            return false;
-        }
-        if (isMpv()) return false;
-        externalLoopbackAutoMpv = true;
-        if (SpiderDebug.isEnabled()) SpiderDebug.log("player", "route external loopback proxy to mpv url=%s", spec.getUrl());
-        switchPlayer(PlayerSetting.MPV, false);
-        return true;
-    }
-
     public void setMediaItem() {
         playWhenReady = player == null || player.getPlayWhenReady();
         setMediaItem(Constant.TIMEOUT_PLAY);
@@ -1293,7 +1265,6 @@ public class PlayerManager implements ParseCallback {
     private void setMediaItem(long timeout) {
         pendingPreload = null;
         if (spec == null || spec.getUrl() == null) return;
-        if (routeExternalLocalProxyToMpv()) return;
         int seq = ++prepareSeq;
         if (rejectMpvDrmMedia()) return;
         if (LocalProxyDebug.shouldAwaitReady(spec.getUrl())) {

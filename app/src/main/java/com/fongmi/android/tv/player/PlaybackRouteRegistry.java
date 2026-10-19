@@ -8,6 +8,10 @@ public final class PlaybackRouteRegistry {
     private static final ConcurrentHashMap<Integer, Entry> APP_PORTS = new ConcurrentHashMap<>();
     private static final AtomicLong TOKENS = new AtomicLong();
 
+    static {
+        APP_PORTS.put(9988, new Entry(TOKENS.incrementAndGet(), AppOwner.NODE_SERVER));
+    }
+
     private PlaybackRouteRegistry() {
     }
 
@@ -25,7 +29,8 @@ public final class PlaybackRouteRegistry {
 
     public enum AppOwner {
         MAIN_SERVER("app-main-server"),
-        HLS_PROXY("app-hls-proxy");
+        HLS_PROXY("app-hls-proxy"),
+        NODE_SERVER("app-node-server");
 
         private final String label;
 
