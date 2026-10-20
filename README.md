@@ -4,7 +4,7 @@ MewPlayer 是基于 [FongMi/TV](https://github.com/FongMi/TV) 与 WebHTV 二次�
 
 - 应用名：`MewPlayer`；applicationId：`com.mewplayer.tv`；代码 namespace 仍为 `com.fongmi.android.tv`。
 - 版本：`5.6.0`（versionCode 560），对应上游 FongMi/TV 560 基线。
-- 构建变体：`mobile`（手机）× `arm64_v8a` / `armeabi_v7a`。
+- 构建变体：`mobile`（手机）× `arm64_v8a`（纯 64 位架构，已移除 32 位 armeabi-v7a）。
 
 ## 核心特性
 
@@ -125,11 +125,9 @@ Windows 使用 `.\gradlew.bat`，macOS / Linux 使用 `bash gradlew`，任务名
 ```powershell
 # debug
 .\gradlew.bat :app:assembleMobileArm64_v8aDebug
-.\gradlew.bat :app:assembleMobileArmeabi_v7aDebug
 
 # release
 .\gradlew.bat :app:assembleMobileArm64_v8aRelease
-.\gradlew.bat :app:assembleMobileArmeabi_v7aRelease
 
 # 快速 release：关闭 R8 / 资源压缩 / release lint，仅用于临时测试
 .\gradlew.bat :app:assembleMobileArm64_v8aRelease -PfastRelease=true
@@ -152,7 +150,6 @@ release：Gradle 原始输出在 `app/build/outputs/apk/<flavor>/release/<mode>-
 
 ```text
 Release/apk/mobile-arm64_v8a.apk
-Release/apk/mobile-armeabi_v7a.apk
 ```
 
 复制时会把 `app/build/outputs/apk/**/release/` 下的所有 APK 一起拷过去，`Release/apk/` 里可能留有之前构建的其他变体，请以修改时间为准。快速包与正式包文件名相同，只能通过应用内版本号区分。
@@ -222,7 +219,7 @@ keyPassword=your_key_password
 ## 目录结构
 
 ```text
-app/          Android 主应用（mobile × arm64_v8a/armeabi_v7a，内置 nodejs-mobile 与 CMake 原生桥）
+app/          Android 主应用（mobile × arm64_v8a，内置 nodejs-mobile 与 CMake 原生桥）
 catvod/       CatVod 抽象层：Spider 接口、OkHttp 网络、代理、WebDAV/SMB、工具类
 quickjs/      QuickJS JavaScript Spider 运行时
 chaquo/       Python Spider 运行时（Chaquopy，Python 3.10）

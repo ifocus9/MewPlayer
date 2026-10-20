@@ -1,6 +1,6 @@
 lxml
 ujson
-pyquery
+pyquery==2.0.2
 requests
 cachetools
 pycryptodome

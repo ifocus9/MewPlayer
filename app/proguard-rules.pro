@@ -92,3 +92,31 @@
 
 # Zxing
 -keep class com.google.zxing.** { *; }
+
+# Chaquopy / Python
+-keep class com.fongmi.chaquo.** { *; }
+-dontwarn com.fongmi.chaquo.**
+-keep class com.chaquo.python.** { *; }
+-dontwarn com.chaquo.python.**
+
+# R8 Deep Optimization: Strip verbose/debug logs and their string concatenations in release builds
+-assumenosideeffects class android.util.Log {
+    public static *** v(...);
+    public static *** d(...);
+    public static *** println(...);
+}
+
+-assumenosideeffects class com.github.catvod.crawler.SpiderDebug {
+    public static *** log(...);
+}
+
+# R8 SourceFile & LineNumber remapping
+-renamesourcefileattribute SourceFile
+-keepattributes SourceFile,LineNumberTable
+
+# GSON optimization: allow obfuscation of fields with SerializedName
+-keepclassmembers,allowobfuscation class * {
+    @com.google.gson.annotations.SerializedName <fields>;
+}
+-keep,allowobfuscation,allowoptimization class * extends com.google.gson.reflect.TypeToken
+

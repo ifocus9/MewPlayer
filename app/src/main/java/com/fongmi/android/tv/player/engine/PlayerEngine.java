@@ -226,11 +226,6 @@ public interface PlayerEngine {
         return false;
     }
 
-    default void preload(PlaySpec spec, long startPositionMs) {
-    }
-
-    default void clearPreload() {
-    }
 
     String getErrorMessage(PlaybackException e);
 

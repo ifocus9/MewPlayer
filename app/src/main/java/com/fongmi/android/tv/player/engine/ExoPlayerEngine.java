@@ -63,7 +63,6 @@ public class ExoPlayerEngine implements PlayerEngine {
 
     private final ErrorMsgProvider provider;
     private final PreCache preCache;
-    private PreCache nextPreCache;
     private final Set<String> attemptedFormats;
     private final ExoDecoderRuntimeSession decoderRuntimeSession;
     private final ExoCompressedAudioDirectPolicy compressedAudioDirectPolicy;
@@ -216,10 +215,6 @@ public class ExoPlayerEngine implements PlayerEngine {
             cacheRelease = MediaSourceFactory::releaseCacheSession;
         }
         preCache.release(cacheRelease);
-        if (nextPreCache != null) {
-            nextPreCache.release();
-            nextPreCache = null;
-        }
         cancelTunnelingWatchdog();
         cancelTunnelingProgressWatchdog();
         cancelDecoderRuntimeStableWindow();
@@ -864,19 +859,6 @@ public class ExoPlayerEngine implements PlayerEngine {
     @Override
     public boolean selectChapter(MediaChapter chapter) {
         return player != null && chapter != null && player.selectChapter(chapter);
-    }
-
-    @Override
-    public void preload(PlaySpec spec, long startPositionMs) {
-        if (spec == null || spec.getUrl() == null || player == null) return;
-        clearPreload();
-    }
-
-    @Override
-    public void clearPreload() {
-        if (nextPreCache != null) {
-            nextPreCache.stop("clear-next-preload");
-        }
     }
 
     @Override

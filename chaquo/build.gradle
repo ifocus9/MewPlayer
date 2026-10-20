@@ -11,11 +11,20 @@ android {
     defaultConfig {
         minSdk libs.versions.minSdk.get().toInteger()
         targetSdk libs.versions.targetSdk.get().toInteger()
-        ndk { abiFilters "arm64-v8a", "armeabi-v7a" }
+        ndk { abiFilters "arm64-v8a" }
         python {
             version = "3.10"
+            def explicitBuildPython = (project.findProperty("buildPython") as String) ?: System.getenv("CHAQUOPY_BUILD_PYTHON")
+            def defaultBuildPython = new File(System.getProperty("user.home"), "AppData/Local/Programs/Python/Python310/python.exe").absolutePath
+            def buildPythonPath = [explicitBuildPython, defaultBuildPython].find { it && new File(it).exists() }
+            if (buildPythonPath) {
+                buildPython(buildPythonPath)
+            }
             pip {
-                install("-r", "requirements.txt")
+                options "-i", "https://repo.huaweicloud.com/repository/pypi/simple/"
+                options "--extra-index-url", "https://chaquo.com/pypi-13.1"
+                install "-r", "requirements.txt"
+                install file("wheels/jsonpath-0.54-py3-none-any.whl").absolutePath
             }
         }
     }

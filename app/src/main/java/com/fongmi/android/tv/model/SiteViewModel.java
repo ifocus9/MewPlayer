@@ -38,7 +38,6 @@ public class SiteViewModel extends ViewModel {
 
     private final MutableLiveData<Result> result;
     private final MutableLiveData<Result> player;
-    private final MutableLiveData<Result> preload;
     private final MutableLiveData<Result> search;
     private final MutableLiveData<SearchProgress> searchProgress;
     private final MutableLiveData<Result> action;
@@ -54,7 +53,6 @@ public class SiteViewModel extends ViewModel {
     public SiteViewModel() {
         result = new MutableLiveData<>();
         player = new MutableLiveData<>();
-        preload = new MutableLiveData<>();
         search = new MutableLiveData<>();
         searchProgress = new MutableLiveData<>();
         action = new MutableLiveData<>();
@@ -78,10 +76,6 @@ public class SiteViewModel extends ViewModel {
 
     public LiveData<Result> getPlayer() {
         return player;
-    }
-
-    public LiveData<Result> getPreload() {
-        return preload;
     }
 
     public LiveData<Result> getSearch() {
@@ -151,10 +145,6 @@ public class SiteViewModel extends ViewModel {
 
     public void playerContent(String key, String flag, String id) {
         execute(TaskType.PLAYER, player, () -> SiteApi.playerContent(key, flag, id));
-    }
-
-    public void preloadContent(String key, String flag, String id) {
-        execute(TaskType.PRELOAD, preload, () -> SiteApi.playerContent(key, flag, id));
     }
 
     public void searchContent(Site site, String keyword, boolean quick, String page) {
@@ -251,5 +241,5 @@ public class SiteViewModel extends ViewModel {
         playerExecutor.shutdownNow();
     }
 
-    private enum TaskType {RESULT, PLAYER, ACTION, PRELOAD}
+    private enum TaskType {RESULT, PLAYER, ACTION}
 }

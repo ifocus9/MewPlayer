@@ -104,7 +104,6 @@ import com.fongmi.android.tv.player.mpv.MpvConfigStore;
 import com.fongmi.android.tv.service.PlaybackService;
 import com.fongmi.android.tv.setting.PlayerButtonSetting;
 import com.fongmi.android.tv.setting.PlayerSetting;
-import com.fongmi.android.tv.setting.PreloadSetting;
 import com.fongmi.android.tv.setting.Setting;
 import com.fongmi.android.tv.setting.SiteHealthStore;
 import com.fongmi.android.tv.ui.adapter.EpisodeAdapter;
@@ -180,10 +179,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     private Observer<Result> mObserveDetail;
     private Observer<Result> mObservePlayer;
     private Observer<Result> mObserveSearch;
-    private Observer<Result> mObservePreload;
-    private Result mPreloadResult;
-    private Episode mPreloadEpisode;
-    private boolean mPreloadRequested;
     private EpisodeAdapter mEpisodeAdapter;
     // 选集横排末尾的“更多”卡片（剧集数 >= EPISODE_MORE_MIN_COUNT 时显示）
     private EpisodeMoreAdapter mEpisodeMoreAdapter;
@@ -466,7 +461,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         mObserveDetail = this::setDetail;
         mObservePlayer = this::setPlayer;
         mObserveSearch = this::setSearch;
-        mObservePreload = this::onPreload;
         mBroken = new ArrayList<>();
         mClock = Clock.create();
         mHideControlRunnable = this::hideControl;
@@ -853,7 +847,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         mViewModel.getResult().observeForever(mObserveDetail);
         mViewModel.getPlayer().observeForever(mObservePlayer);
         mViewModel.getSearch().observeForever(mObserveSearch);
-        mViewModel.getPreload().observeForever(mObservePreload);
     }
 
     private void checkId() {
@@ -1040,46 +1033,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         }
     }
 
-    private void onPreload(Result result) {
-        if (result == null || result.getUrl() == null || result.getUrl().isEmpty()) {
-            mPreloadResult = null;
-            return;
-        }
-        mPreloadResult = result;
-    }
-
-    private void checkPreload() {
-        if (!PreloadSetting.isPreload()) return;
-        if (mPreloadRequested || mPreloadResult != null) return;
-        if (!hasAdjacentEpisode(1)) return;
-        Episode next = getAdjacentEpisode(1);
-        if (next == null || next.isSelected()) return;
-        Flag flag = getFlag();
-        if (flag == null) return;
-        mPreloadRequested = true;
-        mPreloadEpisode = next;
-        String playFlag = getEpisodePlayFlag(flag, next);
-        mViewModel.preloadContent(getKey(), playFlag, next.getUrl());
-    }
-
-    private boolean consumePreload(Episode item) {
-        if (mPreloadEpisode != null && mPreloadEpisode.equals(item) && mPreloadResult != null) {
-            Result result = mPreloadResult;
-            clearPreload();
-            setPlayer(result);
-            return true;
-        }
-        clearPreload();
-        return false;
-    }
-
-    private void clearPreload() {
-        mPreloadRequested = false;
-        mPreloadResult = null;
-        mPreloadEpisode = null;
-        player().clearPreload();
-    }
-
     private boolean consumePendingPlaybackResult() {
         boolean consumed = false;
         Vod detail = mPendingDetailVod;
@@ -1119,7 +1072,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     @Override
     public void onItemClick(Flag item) {
         if (item.isSelected()) return;
-        clearPreload();
         mFlagAdapter.setSelected(item);
         scrollToPosition(mBinding.flag, mFlagAdapter.getPosition());
         setEpisodeAdapter(item.getEpisodes());
@@ -1137,7 +1089,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         // 横排刷新后保持当前集可见（居中）
         scrollEpisodeToSelected();
         if (isFullscreen()) Notify.show(getString(R.string.play_ready, item.getName()));
-        if (consumePreload(item)) return;
         onRefresh();
     }
 
@@ -1601,7 +1552,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     }
 
     private void onRefresh() {
-        clearPreload();
         saveHistory();
         player().stop();
         player().clear();
@@ -2408,10 +2358,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         PlaybackEventCollector.get().onProgress(mHistory, player());
         if (mHistory.canSave() && mHistory.canSync()) syncHistory();
         long ending = mHistory.getEnding() > 0 && mHistory.getEnding() < duration ? mHistory.getEnding() : 0;
-        long remaining = duration - position - ending;
-        if (duration > 0 && position >= 15000L && remaining <= 60000L) {
-            checkPreload();
-        }
         if (mHistory.getEnding() > 0 && duration > 0 && mHistory.getEnding() + position >= duration) {
             checkEnded(false);
         }
@@ -3018,8 +2964,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         mViewModel.getResult().removeObserver(mObserveDetail);
         mViewModel.getPlayer().removeObserver(mObservePlayer);
         mViewModel.getSearch().removeObserver(mObserveSearch);
-        mViewModel.getPreload().removeObserver(mObservePreload);
-        clearPreload();
         SiteHealthStore.flush();
         super.onDestroy();
     }

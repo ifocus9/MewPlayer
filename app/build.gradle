@@ -89,6 +89,9 @@ android {
         buildConfigField "String", "MPV_NATIVE_SOURCES", "\"${mpvSourceRevisions}\""
         buildConfigField "String", "MEDIA3_VERSION", "\"${libs.versions.media3.get()}\""
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            abiFilters "arm64-v8a"
+        }
         javaCompileOptions {
             annotationProcessorOptions {
                 arguments = ["room.schemaLocation": "$projectDir/schemas".toString(), "eventBusIndex": "com.fongmi.android.tv.event.EventIndex"]
@@ -111,10 +114,6 @@ android {
         arm64_v8a {
             dimension "abi"
             ndk { abiFilters "arm64-v8a" }
-        }
-        armeabi_v7a {
-            dimension "abi"
-            ndk { abiFilters "armeabi-v7a" }
         }
     }
 
@@ -150,6 +149,10 @@ android {
         }
     }
 
+    androidResources {
+        localeFilters += ['en', 'zh', 'zh-rCN', 'b+zh+Hant', 'zh-rTW', 'zh-rHK']
+    }
+
     packaging {
         // jniLibs 保持 AGP 默认（.so 不压缩、直接从 APK 内 mmap 加载，不解压到 nativeLibraryDir）。
         // 试过 useLegacyPackaging = true：APK 降到约 93MB，但安装后 APK 内压缩副本 + 解压副本双份共存，
@@ -157,6 +160,12 @@ android {
         resources {
             // BouncyCastle 后量子 Picnic 签名的查表数据（约 1MB），本项目不使用 Picnic。
             excludes += 'org/bouncycastle/pqc/crypto/picnic/*.properties'
+            excludes += 'META-INF/DEPENDENCIES'
+            excludes += 'META-INF/beans.xml'
+            excludes += 'META-INF/INDEX.LIST'
+            excludes += 'META-INF/*.version'
+            excludes += 'META-INF/LICENSE*'
+            excludes += 'META-INF/NOTICE*'
         }
     }
 
@@ -198,7 +207,7 @@ android {
 androidComponents {
     onVariants(selector().all()) { variant ->
         def abiFlavor = variant.productFlavors.find { it.first == 'abi' }?.second
-        def abiPairs = [arm64_v8a: ['arm64-v8a', 'armeabi-v7a'], armeabi_v7a: ['armeabi-v7a', 'arm64-v8a']]
+        def abiPairs = [arm64_v8a: ['arm64-v8a', 'armeabi-v7a']]
         def pair = abiPairs[abiFlavor]
         if (pair == null) return
         def stripTask = project.tasks.register("strip${variant.name.capitalize()}ForeignAbiAssets", StripForeignAbiAssetsTask) { t ->

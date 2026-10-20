@@ -139,7 +139,6 @@ public class PlayerManager implements ParseCallback {
     private ParseJob parseJob;
     private PlaySpec spec;
     private Player player;
-    private PendingPreload pendingPreload;
     private String lastLoggedRouteTraceId = PlaybackTrace.NONE;
     private PlaybackAutoContext.SessionToken playbackAutoSession = PlaybackAutoContext.SessionToken.none();
     private long playbackTrackSequence;
@@ -266,31 +265,6 @@ public class PlayerManager implements ParseCallback {
     public boolean haveChapter() {
         return !getCurrentMediaChapters().isEmpty();
     }
-
-    public boolean canPreloadNext() {
-        return PreloadSetting.isPreload() && engine != null && isExo();
-    }
-
-    public boolean preload(PlaySpec spec, long startPositionMs) {
-        if (!canPreloadNext() || spec == null) return false;
-        pendingPreload = new PendingPreload(spec.checkUa(), Math.max(0, startPositionMs));
-        startPreloadIfReady();
-        return true;
-    }
-
-    public void clearPreload() {
-        pendingPreload = null;
-        if (engine != null) engine.clearPreload();
-    }
-
-    private void startPreloadIfReady() {
-        PendingPreload preload = pendingPreload;
-        if (preload == null || player == null || player.getPlaybackState() != Player.STATE_READY) return;
-        pendingPreload = null;
-        engine.preload(preload.spec(), preload.startPositionMs());
-    }
-
-    private record PendingPreload(PlaySpec spec, long startPositionMs) {}
 
     public MediaItem getCurrentMediaItem() {
         return player.getCurrentMediaItem();
@@ -744,7 +718,6 @@ public class PlayerManager implements ParseCallback {
     }
 
     public void stop() {
-        clearPreload();
         playbackAudioSession.stop();
         engine.stop();
         stopParse();
@@ -1263,7 +1236,6 @@ public class PlayerManager implements ParseCallback {
     }
 
     private void setMediaItem(long timeout) {
-        pendingPreload = null;
         if (spec == null || spec.getUrl() == null) return;
         int seq = ++prepareSeq;
         if (rejectMpvDrmMedia()) return;
@@ -1597,7 +1569,6 @@ public class PlayerManager implements ParseCallback {
             publishPlaybackAutoContext(state != Player.STATE_IDLE);
             if (state == Player.STATE_READY) {
                 playbackErrorHandler.resetLocalProxyRetry();
-                startPreloadIfReady();
                 completeMpvDirectFirstFrame(state);
                 mpvPlaybackController.onPlaybackReady(SystemClock.elapsedRealtime());
                 playbackTrace.mark(PlaybackTrace.Stage.READY, "player=" + playerType);
