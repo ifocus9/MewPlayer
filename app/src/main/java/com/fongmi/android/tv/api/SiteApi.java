@@ -3,6 +3,7 @@ package com.fongmi.android.tv.api;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.collection.ArrayMap;
 
 import com.fongmi.android.tv.App;
@@ -20,6 +21,7 @@ import com.fongmi.android.tv.web.WebHomeInlineVodStore;
 import com.github.catvod.crawler.Spider;
 import com.github.catvod.crawler.SpiderDebug;
 import com.github.catvod.net.OkHttp;
+import com.github.catvod.utils.Json;
 import com.github.catvod.utils.Prefers;
 import com.github.catvod.utils.Util;
 
@@ -32,12 +34,16 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
-import com.fongmi.android.tv.node.NodeBundleManager;
+import com.fongmi.nodejs.NodeBundleManager;
 import com.google.gson.JsonObject;
 
 import okhttp3.Call;
+import okhttp3.Headers;
 import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
@@ -53,13 +59,41 @@ public class SiteApi {
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     private static final Set<String> NODE_INITED = ConcurrentHashMap.newKeySet();
 
+    /** 熔断保护：连续失败 5 次进入 30 秒冷却，避免故障 Node 源拖慢整个页面与聚合搜索 */
+    private static final Map<String, Integer> FAILURE_COUNTS = new ConcurrentHashMap<>();
+    private static final Map<String, Long> FAILURE_TIMESTAMPS = new ConcurrentHashMap<>();
+    private static final int MAX_CONSECUTIVE_FAILURES = 5;
+    private static final long CIRCUIT_COOLDOWN_MS = 30_000;
+
     public static boolean isNode(@NonNull Site site) {
         return site.getApi().startsWith(NODE_PREFIX);
     }
 
-    /** 配置重新加载 / Node 重启后需要重新调用各站点的 /init */
+    /** 配置重新加载 / Node 重启后需要重新调用各站点的 /init 与重置熔断状态 */
     public static void clearNodeInit() {
         NODE_INITED.clear();
+        FAILURE_COUNTS.clear();
+        FAILURE_TIMESTAMPS.clear();
+    }
+
+    private static void checkCircuitBreaker(String key) throws IOException {
+        Integer count = FAILURE_COUNTS.get(key);
+        if (count != null && count >= MAX_CONSECUTIVE_FAILURES) {
+            Long lastTime = FAILURE_TIMESTAMPS.get(key);
+            if (lastTime != null && System.currentTimeMillis() - lastTime < CIRCUIT_COOLDOWN_MS) {
+                throw new IOException("Site [" + key + "] 连续失败超限，已进入保护降级状态 (冷却中)");
+            }
+        }
+    }
+
+    private static void recordSuccess(String key) {
+        FAILURE_COUNTS.remove(key);
+        FAILURE_TIMESTAMPS.remove(key);
+    }
+
+    private static void recordFailure(String key) {
+        FAILURE_COUNTS.compute(key, (k, v) -> v == null ? 1 : v + 1);
+        FAILURE_TIMESTAMPS.put(key, System.currentTimeMillis());
     }
 
     private static String nodeUrl(@NonNull Site site, @NonNull String op) {
@@ -74,9 +108,29 @@ public class SiteApi {
         return route;
     }
 
+    private static long opTimeout(String op) {
+        switch (op) {
+            case "init": return 5000;
+            case "search": return 12000;
+            case "play": return 20000;
+            case "support": return 3000;
+            default: return 15000;
+        }
+    }
+
     private static String nodePost(@NonNull Site site, @NonNull String op, @NonNull JsonObject body) throws IOException {
+        return nodePostWithTimeout(site, op, body, opTimeout(op));
+    }
+
+    private static String nodePostWithTimeout(@NonNull Site site, @NonNull String op, @NonNull JsonObject body, long readTimeoutMs) throws IOException {
         String url = nodeUrl(site, op);
-        try (Response response = OkHttp.newCall(url, site.getHeader(), RequestBody.create(body.toString(), JSON)).execute()) {
+        OkHttpClient client = OkHttp.client().newBuilder()
+                .connectTimeout(3000, TimeUnit.MILLISECONDS)
+                .readTimeout(readTimeoutMs, TimeUnit.MILLISECONDS)
+                .writeTimeout(5000, TimeUnit.MILLISECONDS)
+                .retryOnConnectionFailure(false)
+                .build();
+        try (Response response = client.newCall(new Request.Builder().url(url).headers(Headers.of(site.getHeader())).post(RequestBody.create(body.toString(), JSON)).build()).execute()) {
             String text = response.body() == null ? "" : response.body().string();
             if (!response.isSuccessful()) throw new IOException("Node " + op + " HTTP " + response.code() + " url=" + url + " body=" + text);
             return text;
@@ -84,19 +138,55 @@ public class SiteApi {
     }
 
     private static String nodeCall(@NonNull Site site, @NonNull String op, @NonNull JsonObject body) throws IOException {
+        checkCircuitBreaker(site.getKey());
         String text;
         try {
             nodeInit(site);
             text = nodePost(site, op, body);
+            recordSuccess(site.getKey());
         } catch (java.net.ConnectException e) {
             // :node 进程被系统回收：用已下载的 bundle 拉起后重试一次（重启后各站点需重新 init）
-            if (!recoverNode()) throw e;
+            if (!recoverNode()) {
+                recordFailure(site.getKey());
+                throw e;
+            }
             clearNodeInit();
             nodeInit(site);
-            text = nodePost(site, op, body);
+            try {
+                text = nodePost(site, op, body);
+                recordSuccess(site.getKey());
+            } catch (IOException ex) {
+                recordFailure(site.getKey());
+                throw ex;
+            }
+        } catch (IOException e) {
+            recordFailure(site.getKey());
+            throw e;
         }
         SpiderDebug.log("node", "site=%s op=%s body=%s result=%s", site.getKey(), op, body, text);
         return text;
+    }
+
+    @Nullable
+    public static Boolean support(@NonNull Site site, @NonNull String url) {
+        if (!isNode(site)) return null;
+        try {
+            JsonObject body = new JsonObject();
+            body.addProperty("url", url);
+            String text = nodePostWithTimeout(site, "support", body, 3000);
+            if (TextUtils.isEmpty(text)) return null;
+            String trimmed = text.trim();
+            if ("true".equalsIgnoreCase(trimmed)) return Boolean.TRUE;
+            if ("false".equalsIgnoreCase(trimmed)) return Boolean.FALSE;
+            com.google.gson.JsonElement el = Json.parse(trimmed);
+            if (el != null && el.isJsonObject()) {
+                JsonObject obj = el.getAsJsonObject();
+                if (obj.has("result")) return obj.get("result").getAsBoolean();
+                if (obj.has("support")) return obj.get("support").getAsBoolean();
+            }
+        } catch (Throwable ignored) {
+        }
+        return null;
     }
 
     private static boolean recoverNode() {

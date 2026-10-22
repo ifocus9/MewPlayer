@@ -10,7 +10,10 @@ MewPlayer 是基于 [FongMi/TV](https://github.com/FongMi/TV) 与 WebHTV 二次�
 
 ### Node.js 猫源
 
-- 内置 nodejs-mobile 运行时：`app/src/main/jniLibs/<abi>/libnode.so` + JNI 桥 `app/src/main/cpp/node_bridge.cpp`，Java 侧在 `app/src/main/java/com/fongmi/android/tv/node/`（`NodeService`、`NodeBundleManager`、`NodeRunner`）。
+- **独立模块化架构**：参考 FongMi 官方架构，已完整抽取为根目录独立模块 `:nodejs`（`namespace = 'com.fongmi.nodejs'`）。
+  - 内置 nodejs-mobile 运行时：`nodejs/src/main/jniLibs/arm64-v8a/libnode.so` + JNI 桥 `nodejs/src/main/cpp/node_bridge.cpp`（由 `:nodejs` 内部 CMakeLists.txt 独立编译，彻底解耦 `app` 模块）。
+  - Java 核心在 `com.fongmi.nodejs`（`NodeService`、`NodeBundleManager`、`NodeRunner`、`GitUrl`），通过回调监听器模式与宿主交互，彻底净化 `app` 模块。
+  - 彻底移除 `armeabi-v7a` 32 位冗余库，仓库瘦身 ~75.5 MB，ABI 纯净对齐 `arm64-v8a`。
 - Node 运行在独立进程 `:node`；脚本放在 `files/nodejs/index.js`，数据目录 `files/nodejs/data`（通过 `NODE_PATH` 传给 bundle，网盘 Token / Cookie 等由 bundle 自行持久化在这里，更新脚本不丢登录态）。
 - 端口：首选 `9988`，被占用时依次尝试 `9989`、`9990`……；实际端口会持久化，App 一律通过 `http://127.0.0.1:<端口>` 访问。网页里写死的 `127.0.0.1:9988` / `localhost:9988` 会被自动替换成实际端口。
 - 监听地址：`HOST=0.0.0.0`，同一局域网的手机 / 电脑可以直接打开 `http://<设备IP>:<端口>/website` 管理网盘配置。**该后台无鉴权**，局域网内任何设备都能查看和修改网盘 Cookie / 密码，请只在可信网络中使用。
@@ -54,8 +57,11 @@ MewPlayer 是基于 [FongMi/TV](https://github.com/FongMi/TV) 与 WebHTV 二次�
 - **专有 P2P 与专有协议内核**：移除 ForceTech P2P 组件（`forcetech-release.aar`）与剪片 JianPian 专有内核（`jianpian-release.aar`）及其 scheme 协议。
 - **AI 识别模型与 3D LUT 预设**：移除 TensorFlow Lite 运行时依赖及音高识别模型（`basic_pitch_nmp.tflite`）；移除 `lut_presets/*.cube` 全部 3D 滤镜预设。
 - **QuickJS 冗余辅助库**：清理内置无用的第三方辅助 JS 库（`cat.js`、`cheerio.min.js`、`crypto-js.js`、`gbk.js`、`similarity.js`），仅保留初始化必需的 `spider.js` 与 `http.js`。
-- **Node.js 引擎裁剪**：替换原臃肿的 81.2MB `libnode.so` 为 FongMi 定制裁剪版（48.8MB，剔除庞大完整的 ICU 数据，ABI 完全兼容）。
-- **瘦身成果**：经过系统化精简，arm64-v8a Release APK 体积由原本膨胀的 **~208.66 MB 降至约 ~142.5 MB**，累计精简超过 **66 MB**。
+- **Node.js 引擎裁剪与模块抽离**：替换原臃肿的 81.2MB `libnode.so` 为 FongMi 定制裁剪版（48.8MB，剔除庞大完整的 ICU 数据，ABI 完全兼容）；将 Node.js 独立成平级根目录模块 `:nodejs`，移除 32 位冗余库。
+- **支持一键无 Python 轻量化打包（`-PwithoutPython=true`）**：针对无需 `.py` 爬虫源的用户，重构 `PyLoader` 采用动态反射与安全降级设计，支持通过编译开关排除 `:chaquo`。
+- **瘦身成果**：
+  - **完整版 Release APK**：由原本膨胀的 **~208.66 MB 降至 ~148.1 MB**；
+  - **无 Python 轻量版 Release APK**：体积进一步**暴降至 ~121.0 MB**（净瘦身近 30 MB，编译构建时间缩短近半）。
 - **直播与冗余功能**：直播界面与入口已移除（无 LiveActivity / 直播配置）；设置页的「增强功能」入口、局域网管理页 `/m`、电视端网页首页、WebHome 扩展脚本、站点注入、登录态学习、APP 代理、观影记录同步 / Webhook 上报、背景海报墙等已移除。
 
 ## 系统架构
@@ -100,8 +106,8 @@ MewPlayer 是基于 [FongMi/TV](https://github.com/FongMi/TV) 与 WebHTV 二次�
 
 - JDK 21（`sourceCompatibility` / `targetCompatibility` 均为 Java 21）。
 - Android SDK：Platform 37、Build Tools 37.0.0、Platform Tools。当前 `compileSdk=37`、`minSdk=24`、`targetSdk=28`。
-- **NDK 29.0.14206865 与 CMake 3.22.1**：App 自带 CMake 构建（`app/src/main/cpp/CMakeLists.txt`），会编译 `libnode_bridge.so`，普通打包也需要。SDK 许可已接受时 AGP 可自动安装。
-- **Python 3.10**（`py -3.10` 或 `python3.10` 可用）：`chaquo` 模块（Chaquopy 17.0.0）构建时用 pip 安装 `chaquo/requirements.txt`（lxml、ujson、pyquery、requests、cachetools、pycryptodome、beautifulsoup4），其中原生包只能从 `https://chaquo.com/pypi-13.1` 获取。
+- **NDK 29.0.14206865 与 CMake 3.22.1**：`:nodejs` 模块自带 CMake 构建（`nodejs/src/main/cpp/CMakeLists.txt`），会编译 `libnode_bridge.so`，普通打包也需要。SDK 许可已接受时 AGP 可自动安装。
+- **Python 3.10**（`py -3.10` 或 `python3.10` 可用，可选）：默认全量构建时，`chaquo` 模块（Chaquopy 17.0.0）会用 pip 安装 `chaquo/requirements.txt`；若采用无 Python 模式打包（`-PwithoutPython=true`），则完全不需要本地 Python 环境。
 - Gradle Wrapper 9.5.1，Android Gradle Plugin 9.2.1。
 - 能访问 Maven Central、Google Maven、Gradle Plugin Portal、JitPack 和 chaquo.com。定制 Media3、nextlib 已作为本地 Maven 产物放在 `third_party/maven`，MPV / Node / ASS 原生库均已预编译提交，普通打包不会现场编译它们。
 
@@ -126,8 +132,11 @@ Windows 使用 `.\gradlew.bat`，macOS / Linux 使用 `bash gradlew`，任务名
 # debug
 .\gradlew.bat :app:assembleMobileArm64_v8aDebug
 
-# release
+# release（完整版，含 Python 3.10 运行时，约 148 MB）
 .\gradlew.bat :app:assembleMobileArm64_v8aRelease
+
+# release（无 Python 轻量版，约 121 MB，自动追加 -nopy 后缀）
+.\gradlew.bat :app:assembleMobileArm64_v8aRelease -PwithoutPython=true
 
 # 快速 release：关闭 R8 / 资源压缩 / release lint，仅用于临时测试
 .\gradlew.bat :app:assembleMobileArm64_v8aRelease -PfastRelease=true
@@ -190,7 +199,7 @@ keyPassword=your_key_password
 
 | 位置                                         | 内容                                                                                    |
 | -------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `app/src/main/jniLibs/<abi>/`                | `libnode.so`（nodejs-mobile FongMi 定制裁剪版）                                         |
+| `nodejs/src/main/jniLibs/arm64-v8a/`         | `libnode.so`（nodejs-mobile 定制裁剪版）                                                |
 | `app/src/<abi>/assets/mpv-libs/<abi>/`       | `libmpv.so`、`libplayer.so`、`libc++_shared.so`、改名后的 FFmpeg（`libmv*` / `libmw*`） |
 | `third_party/exo-ass-native/prebuilt/<abi>/` | `libexo_ass.so`（Exo ASS 字幕）                                                         |
 | `third_party/maven/`                         | `androidx.media3:*:1.11.0-alpha01-fongmi`（17 个模块）与 `nextlib-media3ext`            |
@@ -219,10 +228,11 @@ keyPassword=your_key_password
 ## 目录结构
 
 ```text
-app/          Android 主应用（mobile × arm64_v8a，内置 nodejs-mobile 与 CMake 原生桥）
+app/          Android 主应用（mobile × arm64_v8a）
 catvod/       CatVod 抽象层：Spider 接口、OkHttp 网络、代理、WebDAV/SMB、工具类
+nodejs/       Node.js 运行时模块（包含 nodejs-mobile、CMake 原生桥及独立进程服务）
 quickjs/      QuickJS JavaScript Spider 运行时
-chaquo/       Python Spider 运行时（Chaquopy，Python 3.10）
+chaquo/       Python Spider 运行时（Chaquopy，Python 3.10，支持参数化按需打包）
 third_party/  本地 Maven（Media3/nextlib）、原生预编译库、补丁、JNI 源码和版本锁定文件
 gradle/       Gradle Wrapper 与版本目录 libs.versions.toml
 Release/apk/  release 构建自动复制的 APK（已在 .gitignore 中忽略）

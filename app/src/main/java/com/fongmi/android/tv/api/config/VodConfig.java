@@ -19,7 +19,7 @@ import com.fongmi.android.tv.event.LoadingEvent;
 import com.fongmi.android.tv.event.RefreshEvent;
 import com.fongmi.android.tv.impl.Callback;
 import com.fongmi.android.tv.utils.UrlUtil;
-import com.fongmi.android.tv.node.NodeBundleManager;
+import com.fongmi.nodejs.NodeBundleManager;
 import com.github.catvod.bean.Doh;
 import com.github.catvod.bean.Header;
 import com.github.catvod.bean.Proxy;

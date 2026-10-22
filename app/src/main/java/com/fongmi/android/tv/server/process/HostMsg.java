@@ -1,12 +1,18 @@
 package com.fongmi.android.tv.server.process;
 
 import android.text.TextUtils;
+import android.webkit.CookieManager;
+import android.webkit.WebSettings;
 
 import com.fongmi.android.tv.App;
+import com.fongmi.android.tv.bean.History;
+import com.fongmi.android.tv.playback.PlaybackRuntime;
+import com.fongmi.android.tv.player.PlayerManager;
 import com.fongmi.android.tv.server.Server;
 import com.fongmi.android.tv.server.impl.Process;
 import com.fongmi.android.tv.service.PlaybackService;
 import com.fongmi.android.tv.ui.activity.WebActivity;
+import com.fongmi.android.tv.utils.Notify;
 import com.github.catvod.crawler.SpiderDebug;
 import com.google.gson.JsonObject;
 
@@ -40,7 +46,7 @@ public class HostMsg implements Process {
             JsonObject opt = obj(object, "opt");
             SpiderDebug.log("host-msg", "received action=%s", action);
 
-            if ("openInternalWebview".equals(action)) {
+            if ("openInternalWebview".equals(action) || "openWeb".equals(action)) {
                 String targetUrl = str(opt, "url");
                 String title = str(opt, "title");
                 if (!TextUtils.isEmpty(targetUrl)) {
@@ -63,6 +69,76 @@ public class HostMsg implements Process {
                     });
                     return cors(json(Response.Status.OK, "{\"code\":200,\"msg\":\"success\"}"), session);
                 }
+            }
+
+            if ("toast".equals(action)) {
+                String message = str(opt, "message");
+                if (!TextUtils.isEmpty(message)) {
+                    App.post(() -> Notify.show(message));
+                }
+                return cors(json(Response.Status.OK, "{\"code\":200,\"msg\":\"success\"}"), session);
+            }
+
+            if ("getUserAgent".equals(action)) {
+                String ua = "";
+                try {
+                    ua = WebSettings.getDefaultUserAgent(App.get());
+                } catch (Throwable ignored) {
+                }
+                JsonObject res = new JsonObject();
+                res.addProperty("code", 200);
+                res.addProperty("ua", ua);
+                return cors(json(Response.Status.OK, res.toString()), session);
+            }
+
+            if ("getCookie".equals(action)) {
+                String targetUrl = str(opt, "url");
+                String cookie = "";
+                try {
+                    if (!TextUtils.isEmpty(targetUrl)) {
+                        cookie = CookieManager.getInstance().getCookie(targetUrl);
+                    }
+                } catch (Throwable ignored) {
+                }
+                JsonObject res = new JsonObject();
+                res.addProperty("code", 200);
+                res.addProperty("cookie", cookie == null ? "" : cookie);
+                return cors(json(Response.Status.OK, res.toString()), session);
+            }
+
+            if ("setCookie".equals(action)) {
+                String targetUrl = str(opt, "url");
+                String cookie = str(opt, "cookie");
+                try {
+                    if (!TextUtils.isEmpty(targetUrl) && !TextUtils.isEmpty(cookie)) {
+                        CookieManager.getInstance().setCookie(targetUrl, cookie);
+                        CookieManager.getInstance().flush();
+                    }
+                } catch (Throwable ignored) {
+                }
+                return cors(json(Response.Status.OK, "{\"code\":200,\"msg\":\"success\"}"), session);
+            }
+
+            if ("getPlayInfo".equals(action)) {
+                JsonObject res = new JsonObject();
+                res.addProperty("code", 200);
+                History history = PlaybackRuntime.currentHistory();
+                PlayerManager player = history != null ? PlaybackRuntime.playerFor(history.getKey()) : null;
+                String title = history != null ? history.getVodName() : "";
+                String episode = history != null ? history.getVodRemarks() : "";
+                String flag = history != null ? history.getVodFlag() : "";
+                String id = history != null ? history.getVodId() : "";
+                String playUrl = player != null && !player.isReleased() ? player.getUrl() : (history != null ? history.getEpisodeUrl() : "");
+                long position = player != null && !player.isReleased() ? player.getPosition() : (history != null ? history.getPosition() : 0);
+                long duration = player != null && !player.isReleased() ? player.getDuration() : (history != null ? history.getDuration() : 0);
+                res.addProperty("title", title == null ? "" : title);
+                res.addProperty("episodeName", episode == null ? "" : episode);
+                res.addProperty("flag", flag == null ? "" : flag);
+                res.addProperty("id", id == null ? "" : id);
+                res.addProperty("url", playUrl == null ? "" : playUrl);
+                res.addProperty("position", position);
+                res.addProperty("duration", duration);
+                return cors(json(Response.Status.OK, res.toString()), session);
             }
 
             return cors(json(Response.Status.OK, "{\"code\":200,\"msg\":\"unhandled\"}"), session);

@@ -21,8 +21,10 @@ import androidx.annotation.NonNull;
 
 import com.fongmi.android.tv.App;
 import com.fongmi.android.tv.Constant;
+import com.fongmi.android.tv.api.SiteApi;
 import com.fongmi.android.tv.api.config.RuleConfig;
 import com.fongmi.android.tv.api.config.VodConfig;
+import com.fongmi.android.tv.bean.Site;
 import com.fongmi.android.tv.impl.ParseCallback;
 import com.fongmi.android.tv.setting.Setting;
 import com.fongmi.android.tv.ui.dialog.WebDialog;
@@ -220,8 +222,16 @@ public class CustomWebView extends WebView implements DialogInterface.OnDismissL
     private boolean isVideoFormat(String url) {
         try {
             if (!detect && url.equals(this.url)) return false;
-            Spider spider = VodConfig.get().getSite(key).spider();
-            if (spider.manualVideoCheck()) return spider.isVideoFormat(url);
+            Site site = VodConfig.get().getSite(key);
+            if (site != null && SiteApi.isNode(site)) {
+                Boolean supported = SiteApi.support(site, url);
+                if (supported != null) return supported;
+                return Sniffer.isVideoFormat(url);
+            }
+            if (site != null) {
+                Spider spider = site.spider();
+                if (spider.manualVideoCheck()) return spider.isVideoFormat(url);
+            }
             return Sniffer.isVideoFormat(url);
         } catch (Exception ignored) {
             return Sniffer.isVideoFormat(url);

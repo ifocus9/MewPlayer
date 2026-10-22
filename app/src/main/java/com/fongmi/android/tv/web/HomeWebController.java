@@ -34,6 +34,7 @@ import com.fongmi.android.tv.utils.Notify;
 import com.fongmi.android.tv.utils.UrlUtil;
 import com.fongmi.android.tv.utils.WebViewUtil;
 import com.fongmi.android.tv.web.page.WebPage;
+import com.fongmi.nodejs.NodeBundleManager;
 import com.google.common.net.HttpHeaders;
 import com.google.gson.JsonObject;
 
@@ -191,9 +192,9 @@ public class HomeWebController {
         updateCurrentOrigin(webView.getUrl());
         updateBridge();
         registerPageSdk();
-        if (isLocalHostUrl(url) && !com.fongmi.android.tv.node.NodeBundleManager.isServiceRunning()) {
-            com.fongmi.android.tv.node.NodeBundleManager.startIfPresent(activity);
-            if (!com.fongmi.android.tv.node.NodeBundleManager.isServiceRunning()) {
+        if (isLocalHostUrl(url) && !NodeBundleManager.isServiceRunning()) {
+            NodeBundleManager.startIfPresent(activity);
+            if (!NodeBundleManager.isServiceRunning()) {
                 SpiderDebug.log("webhome", "page waits local node service url=%s", url);
                 listener.onWebLoading();
                 show();
@@ -274,7 +275,7 @@ public class HomeWebController {
         new Thread(() -> {
             boolean ready = false;
             while (System.currentTimeMillis() - start < 8000) {
-                if (com.fongmi.android.tv.node.NodeBundleManager.isServiceRunning()) {
+                if (NodeBundleManager.isServiceRunning()) {
                     ready = true;
                     break;
                 }
@@ -306,7 +307,7 @@ public class HomeWebController {
     }
 
     private void loadUrl(String rawUrl) {
-        String url = com.fongmi.android.tv.node.NodeBundleManager.localUrl(rawUrl);
+        String url = NodeBundleManager.localUrl(rawUrl);
         if (!TextUtils.equals(url, rawUrl)) {
             // 本地 Node 服务因 9988 被其它应用占用换了端口：跟随实际端口，受信任的 origin 一并迁移
             if (WebPage.origin(rawUrl).equals(allowedOrigin)) allowedOrigin = WebPage.origin(url);

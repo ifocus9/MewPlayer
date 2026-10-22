@@ -53,7 +53,6 @@ import com.fongmi.android.tv.player.cache.DiskCacheCapacityPolicy;
 import com.fongmi.android.tv.player.cache.PlaybackDiskBufferStore;
 import com.fongmi.android.tv.player.engine.PlayerCacheState;
 import com.fongmi.android.tv.player.iso.IsoSessionManager;
-import com.fongmi.android.tv.player.lut.MpvLutShader;
 import com.fongmi.android.tv.player.mpv.MpvDirectAudioPolicy;
 import com.fongmi.android.tv.player.mpv.MpvConfigStore;
 import com.fongmi.android.tv.player.mpv.MpvNetworkRecoveryPolicy;
@@ -187,8 +186,6 @@ public final class MpvPlayer extends SimpleBasePlayer implements MPVLib.EventObs
     private volatile PlaybackResourceClassifier.Classification resourceClassification;
     private boolean isoTrackListDumped;
     private long isoMetadataListenerSessionId = -1;
-    private MpvLutShader lutShader;
-    private String appliedLutShaderPath;
     private PlaybackParameters playbackParameters;
     private PlaybackException playerError;
     private final MpvTrackCoordinator trackCoordinator;
@@ -449,7 +446,6 @@ public final class MpvPlayer extends SimpleBasePlayer implements MPVLib.EventObs
             @Override public MpvPropertyDispatcher getPropertyDispatcher() { return propertyDispatcher; }
             @Override public MpvLifecycleCoordinator getLifecycleCoordinator() { return lifecycleCoordinator; }
             @Override public MpvHlsCoordinator getHlsCoordinator() { return hlsCoordinator; }
-            @Override public MpvLutShader getLutShader() { return lutShader; }
             @Override public VideoSize getVideoSize() { return videoSize; }
             @Override public long getCachedPositionMs() { return cachedPositionMs; }
             @Override public long getCachedDurationMs() { return cachedDurationMs; }
@@ -942,19 +938,6 @@ public final class MpvPlayer extends SimpleBasePlayer implements MPVLib.EventObs
         } catch (Throwable ignored) {
             return current;
         }
-    }
-
-    public void setLutShader(@Nullable MpvLutShader shader) {
-        lutShader = shader;
-        applyShaderPipeline(false);
-    }
-
-    public void setLutPreviewProgress(float progress) {
-        if (!initialized || lutShader == null || !lutShader.isPreview()) return;
-        float value = Math.max(0f, Math.min(1f, progress));
-        safeCommand(new String[]{
-                "change-list", "glsl-shader-opts", "append",
-                lutShader.getPreviewOptionKey() + "=" + String.format(Locale.US, "%.5f", value)});
     }
 
     public AutoCacheBaselineResult applyAutoCacheBaseline(long forwardBytes, long backBytes) {
@@ -2030,21 +2013,6 @@ public final class MpvPlayer extends SimpleBasePlayer implements MPVLib.EventObs
     }
 
     private void applyShaderPipeline(boolean force) {
-        if (!initialized) return;
-        String target = lutShader == null ? "" : lutShader.getPath();
-        if (!force && TextUtils.equals(appliedLutShaderPath, target)) return;
-        if (!TextUtils.isEmpty(appliedLutShaderPath)) {
-            String optionKey = MpvLutShader.getPreviewOptionKey(appliedLutShaderPath);
-            if (!optionKey.isEmpty()) safeCommand(new String[]{"change-list", "glsl-shader-opts", "del", optionKey});
-            safeCommand(new String[]{"change-list", "glsl-shaders", "remove", appliedLutShaderPath});
-            SpiderDebug.log("mpv", "shader remove lut=%s", appliedLutShaderPath);
-        }
-        if (!TextUtils.isEmpty(target)) {
-            if (lutShader != null && lutShader.isPreview()) setLutPreviewProgress(0f);
-            safeCommand(new String[]{"change-list", "glsl-shaders", "append", target});
-            SpiderDebug.log("mpv", "shader append lut=%s", target);
-        }
-        appliedLutShaderPath = target;
     }
 
     private void postToMain(Runnable runnable) {

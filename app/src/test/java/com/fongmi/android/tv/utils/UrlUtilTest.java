@@ -1,5 +1,6 @@
 package com.fongmi.android.tv.utils;
 
+import com.fongmi.nodejs.NodeBundleManager;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -94,16 +95,16 @@ public class UrlUtilTest {
 
     @Test
     public void nodeBundleManagerRecognizesGiteeConfig() {
-        assertTrue(com.fongmi.android.tv.node.NodeBundleManager.isNodeConfig("gitee://my_token@gitee.com/jadehh/TVSpider/dist/index.js.md5"));
-        assertTrue(com.fongmi.android.tv.node.NodeBundleManager.isNodeConfig("gitee://my_token@gitee.com/jadehh/TVSpider/dist/index.js;md5;1234567890abcdef1234567890abcdef"));
-        assertTrue(com.fongmi.android.tv.node.NodeBundleManager.isNodeConfig("gitee://my_token@gitee.com/jadehh/TVSpider/dist/index.js"));
-        assertFalse(com.fongmi.android.tv.node.NodeBundleManager.isNodeConfig("gitee://my_token@gitee.com/jadehh/TVSpider/master/config.json"));
+        assertTrue(NodeBundleManager.isNodeConfig("gitee://my_token@gitee.com/jadehh/TVSpider/dist/index.js.md5"));
+        assertTrue(NodeBundleManager.isNodeConfig("gitee://my_token@gitee.com/jadehh/TVSpider/dist/index.js;md5;1234567890abcdef1234567890abcdef"));
+        assertTrue(NodeBundleManager.isNodeConfig("gitee://my_token@gitee.com/jadehh/TVSpider/dist/index.js"));
+        assertFalse(NodeBundleManager.isNodeConfig("gitee://my_token@gitee.com/jadehh/TVSpider/master/config.json"));
     }
 
     @Test
     public void nodeBundleManagerParsesGiteeBundleInfoWithAllSiblingUrls() {
         String input = "gitee://my_token@gitee.com/jadehh/TVSpider/dist/index.js.md5";
-        com.fongmi.android.tv.node.NodeBundleManager.BundleInfo info = com.fongmi.android.tv.node.NodeBundleManager.parse(input);
+        NodeBundleManager.BundleInfo info = NodeBundleManager.parse(input);
 
         assertEquals("https://gitee.com/jadehh/TVSpider/raw/dist/index.js?access_token=my_token", info.scriptUrl);
         assertEquals("https://gitee.com/jadehh/TVSpider/raw/dist/index.js.md5?access_token=my_token", info.scriptMd5Url);
@@ -115,7 +116,7 @@ public class UrlUtilTest {
     @Test
     public void nodeBundleManagerParsesGiteeCompatibilityMd5Format() {
         String input = "gitee://my_token@gitee.com/jadehh/TVSpider/dist/index.js;md5;1234567890abcdef1234567890abcdef";
-        com.fongmi.android.tv.node.NodeBundleManager.BundleInfo info = com.fongmi.android.tv.node.NodeBundleManager.parse(input);
+        NodeBundleManager.BundleInfo info = NodeBundleManager.parse(input);
 
         assertEquals("https://gitee.com/jadehh/TVSpider/raw/dist/index.js?access_token=my_token", info.scriptUrl);
         assertEquals("1234567890abcdef1234567890abcdef", info.scriptMd5);

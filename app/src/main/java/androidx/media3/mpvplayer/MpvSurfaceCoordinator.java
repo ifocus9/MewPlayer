@@ -14,7 +14,6 @@ import android.view.ViewGroup;
 
 import androidx.annotation.Nullable;
 
-import com.fongmi.android.tv.player.lut.MpvLutShader;
 import com.fongmi.android.tv.setting.MpvPerformanceSetting;
 import com.github.catvod.crawler.SpiderDebug;
 
@@ -93,9 +92,6 @@ public final class MpvSurfaceCoordinator {
     private long pendingOsdSurfaceRequestId;
     private boolean pendingOsdSurfaceAttach;
     private Surface pendingOsdSurface;
-
-    private MpvLutShader lutShader;
-    private String appliedLutShaderPath;
 
     public MpvSurfaceCoordinator(Host host) {
         this.host = host;
@@ -363,31 +359,6 @@ public final class MpvSurfaceCoordinator {
 
     public synchronized boolean isPendingOsdSurfaceRequestId(long requestId) {
         return pendingOsdSurfaceRequestId != 0 && pendingOsdSurfaceRequestId == requestId;
-    }
-
-    public synchronized void applyLutShaderToNative() {
-        if (!host.isInitialized()) return;
-        MpvLutShader target = lutShader;
-        String path = target == null ? "" : target.getPath();
-        if (TextUtils.equals(appliedLutShaderPath, path)) return;
-        appliedLutShaderPath = path;
-        host.enqueueMpvCommand("change-list", "glsl-shaders", "set", path);
-    }
-
-    @Nullable
-    public synchronized MpvLutShader getLutShader() {
-        return lutShader;
-    }
-
-    public synchronized void setLutShader(@Nullable MpvLutShader shader) {
-        this.lutShader = shader;
-        applyLutShaderToNative();
-    }
-
-    public synchronized void setLutPreviewProgress(float progress) {
-        if (lutShader != null && host.isInitialized()) {
-            host.enqueueMpvCommand("set", "glsl-shader-opts", "preview_split=" + progress);
-        }
     }
 
     public synchronized String videoOutputVo() {

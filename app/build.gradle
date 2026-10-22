@@ -54,6 +54,8 @@ if (localPropsFile.exists()) {
 def hasReleaseSigning = localProps['storeFile'] && localProps['keyAlias'] && localProps['storePassword']
 def releaseKeyPassword = localProps['keyPassword'] ?: localProps['storePassword']
 def fastRelease = (project.findProperty('fastRelease') ?: 'false').toString().toBoolean()
+def withoutPython = (project.findProperty('withoutPython') ?: project.findProperty('noPython') ?: 'false').toString().toBoolean()
+def pythonSuffix = withoutPython ? '-nopy' : ''
 def buildTimestamp = new Date().format('yyyyMMddHHmm', TimeZone.getTimeZone('Asia/Shanghai'))
 def buildTime = fastRelease ? "fast-${buildTimestamp}" : buildTimestamp
 def releaseTag = (System.getenv('WEBHTV_RELEASE_TAG') ?: '').replace('\\', '\\\\').replace('"', '\\"')
@@ -95,12 +97,6 @@ android {
         javaCompileOptions {
             annotationProcessorOptions {
                 arguments = ["room.schemaLocation": "$projectDir/schemas".toString(), "eventBusIndex": "com.fongmi.android.tv.event.EventIndex"]
-            }
-        }
-        externalNativeBuild {
-            cmake {
-                arguments "-DANDROID_PLATFORM=android-26"
-                cppFlags "-std=c++20", "-Wall", "-Wextra", "-Werror=return-type"
             }
         }
     }
@@ -195,13 +191,6 @@ android {
         sourceCompatibility JavaVersion.VERSION_21
         targetCompatibility JavaVersion.VERSION_21
     }
-
-    externalNativeBuild {
-        cmake {
-            path file("src/main/cpp/CMakeLists.txt")
-            version "3.22.1"
-        }
-    }
 }
 
 androidComponents {
@@ -223,7 +212,7 @@ androidComponents {
         def mode = flavors['mode'] ?: 'mode'
         def abi = flavors['abi'] ?: 'abi'
         variant.outputs.each { output ->
-            output.outputFileName.set("${mode}-${abi}${apkSuffix}.apk")
+            output.outputFileName.set("${mode}-${abi}${pythonSuffix}${apkSuffix}.apk")
         }
     }
 }
@@ -231,7 +220,10 @@ androidComponents {
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.aar"])
     implementation project(':catvod')
-    implementation project(':chaquo')
+    if (!withoutPython) {
+        implementation project(':chaquo')
+    }
+    implementation project(':nodejs')
     implementation project(':quickjs')
     implementation libs.appcompat
     implementation libs.lifecycle.service

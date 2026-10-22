@@ -11,7 +11,6 @@ import androidx.media3.mpvplayer.MpvPlayer;
 
 import com.fongmi.android.tv.App;
 import com.fongmi.android.tv.player.engine.ExoPlayerEngine;
-import com.fongmi.android.tv.player.engine.IjkPlayerEngine;
 import com.fongmi.android.tv.player.engine.MpvPlayerEngine;
 import com.fongmi.android.tv.player.engine.PlayerEngine;
 import com.fongmi.android.tv.player.exo.PlaybackAnalyticsListener;
@@ -36,7 +35,6 @@ public class PlaybackTelemetrySession {
         boolean hasSpec();
         boolean isExo();
         boolean isMpv();
-        boolean isIjk();
         float getUserPlaybackSpeed();
         PlaybackAutoContext.SessionToken getPlaybackAutoSession();
         PlaybackAutoContextStore getAutoContextStore();
@@ -361,37 +359,6 @@ public class PlaybackTelemetrySession {
                     if (trace != null) {
                         PlaybackTrace.log("playback-telemetry", trace.current(),
                                 "native metrics unavailable type=%s action=keep-unknown", error.getClass().getSimpleName());
-                    }
-                }
-            }
-        }
-        if (player != null && host.isIjk()) {
-            try {
-                long value = player.getCurrentLiveOffset();
-                if (player.isCurrentMediaItemLive()
-                        && value >= 0 && value != C.TIME_UNSET) {
-                    liveLag = PlaybackTelemetry.Metric.of(
-                            value,
-                            PlaybackAutoContext.ValueSource.PLAYER_CALLBACK,
-                            PlaybackAutoContext.Confidence.HIGH);
-                }
-            } catch (Throwable ignored) {
-            }
-            PlayerEngine engine = host.getEngine();
-            if (!liveLag.known() && engine instanceof IjkPlayerEngine ijk) {
-                try {
-                    Long value = ijk.getLiveLagLowerBoundMs();
-                    if (value != null && value >= 0) {
-                        liveLag = PlaybackTelemetry.Metric.of(
-                                value,
-                                PlaybackAutoContext.ValueSource.PROXY,
-                                PlaybackAutoContext.Confidence.MEDIUM);
-                    }
-                } catch (Throwable error) {
-                    if (trace != null) {
-                        PlaybackTrace.log("ijk-buffer", trace.current(),
-                                "live-lag unavailable errorType=%s action=keep-unknown",
-                                error.getClass().getSimpleName());
                     }
                 }
             }

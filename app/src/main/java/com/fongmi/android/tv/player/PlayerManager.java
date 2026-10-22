@@ -48,7 +48,6 @@ import com.fongmi.android.tv.player.exo.ExoRtspLiveLagSession;
 import com.fongmi.android.tv.player.exo.ExoRtspLiveLagPolicy;
 import com.fongmi.android.tv.player.exo.ForwardBufferTrend;
 import com.fongmi.android.tv.player.exo.PlaybackAnalyticsListener;
-import com.fongmi.android.tv.player.lut.LutPreset;
 import com.fongmi.android.tv.player.mpv.MpvOutputCoordinator;
 import com.fongmi.android.tv.player.mpv.MpvPlaybackController;
 import com.fongmi.android.tv.player.mpv.MpvAutoControlPolicy;
@@ -96,8 +95,6 @@ import java.util.List;
 import java.util.Map;
 
 public class PlayerManager implements ParseCallback {
-
-    public static final String RELOAD_LUT_WARMUP = "reload_lut_warmup";
 
     private static final String NETWORK_GUARD_DEBUG = "EXO_NETWORK_GUARD";
 
@@ -542,31 +539,6 @@ public class PlayerManager implements ParseCallback {
         return playerType;
     }
 
-    public String getLutText() {
-        return "";
-    }
-
-    public void setLutAllowed(boolean allowed) {
-    }
-
-    public String getLutUnavailableReason() {
-        return "";
-    }
-
-    public boolean selectLut(@Nullable LutPreset preset, boolean preview) {
-        return false;
-    }
-
-    public void applyLut(boolean notify) {
-    }
-
-    public void applyLutPreview(boolean notify) {
-    }
-
-    public boolean isIjk() {
-        return playerType == PlayerSetting.IJK;
-    }
-
     public boolean isMpv() {
         return playerType == PlayerSetting.MPV;
     }
@@ -594,10 +566,6 @@ public class PlayerManager implements ParseCallback {
 
     public boolean isExo() {
         return playerType == PlayerSetting.EXO;
-    }
-
-    public boolean requiresTextureRenderForLut() {
-        return false;
     }
 
     public boolean isNativePlayer() {
@@ -1984,11 +1952,6 @@ public class PlayerManager implements ParseCallback {
         @Override
         public boolean isMpv() {
             return PlayerManager.this.isMpv();
-        }
-
-        @Override
-        public boolean isIjk() {
-            return PlayerManager.this.isIjk();
         }
 
         @Override

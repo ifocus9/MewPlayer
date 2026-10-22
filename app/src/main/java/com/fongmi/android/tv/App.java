@@ -21,6 +21,7 @@ import com.fongmi.android.tv.utils.NsdDeviceDiscovery;
 import com.fongmi.android.tv.utils.Notify;
 import com.fongmi.android.tv.utils.PreviousProcessExitLogger;
 import com.fongmi.hook.Hook;
+import com.fongmi.nodejs.NodeBundleManager;
 import com.github.catvod.crawler.DebugLogStore;
 import com.github.catvod.crawler.SpiderDebug;
 import com.github.catvod.Init;
@@ -116,8 +117,49 @@ public class App extends Application implements Application.ActivityLifecycleCal
             PreviousProcessExitLogger.log(this);
         }
         Notify.createChannel();
+        initNodeListeners();
         registerActivityLifecycleCallbacks(this);
         post(this::startBackgroundServices, 1200);
+    }
+
+    private void initNodeListeners() {
+        NodeBundleManager.setPortListener(port -> com.fongmi.android.tv.player.PlaybackRouteRegistry.registerAppService(port, com.fongmi.android.tv.player.PlaybackRouteRegistry.AppOwner.NODE_SERVER));
+        NodeBundleManager.setLoadingListener(new NodeBundleManager.LoadingListener() {
+            @Override
+            public void onCleanProcess() {
+                com.fongmi.android.tv.event.LoadingEvent.show(R.string.node_loading_clean_process);
+            }
+
+            @Override
+            public void onStartEngine() {
+                com.fongmi.android.tv.event.LoadingEvent.show(R.string.node_loading_start_engine);
+            }
+
+            @Override
+            public void onDownloadScript() {
+                com.fongmi.android.tv.event.LoadingEvent.show(R.string.node_loading_download_script);
+            }
+
+            @Override
+            public void onDownloadConfig() {
+                com.fongmi.android.tv.event.LoadingEvent.show(R.string.node_loading_download_config);
+            }
+
+            @Override
+            public void onDownloadProgress(String filename, int percent) {
+                com.fongmi.android.tv.event.LoadingEvent.show(R.string.node_loading_download_percent, filename, percent);
+            }
+
+            @Override
+            public void onWaitReady() {
+                com.fongmi.android.tv.event.LoadingEvent.show(R.string.node_loading_wait_ready);
+            }
+
+            @Override
+            public void onWaitReadySeconds(int seconds) {
+                com.fongmi.android.tv.event.LoadingEvent.show(R.string.node_loading_wait_ready_seconds, seconds);
+            }
+        });
     }
 
     @Override
@@ -134,12 +176,12 @@ public class App extends Application implements Application.ActivityLifecycleCal
 
     private void startBackgroundServices() {
         // :node 进程只跑 NodeService：不要重复起本地 Server（端口扫描可能抢占 9988）、局域网广播与 Node 自启动
-        if (com.fongmi.android.tv.node.NodeBundleManager.isNodeProcess(this)) return;
+        if (NodeBundleManager.isNodeProcess(this)) return;
         SpiderDebug.log("startup", "background services start cost=%sms", System.currentTimeMillis() - time);
         Server.get().start();
         Updater.create().clearStaleApk();
         NsdDeviceDiscovery.register();
-        com.fongmi.android.tv.node.NodeBundleManager.startIfPresent(this);
+        NodeBundleManager.startIfPresent(this);
         SpiderDebug.log("startup", "background services ready cost=%sms", System.currentTimeMillis() - time);
     }
 

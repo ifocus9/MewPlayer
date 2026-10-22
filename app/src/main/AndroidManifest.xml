@@ -135,11 +135,6 @@
             </intent-filter>
         </service>
 
-        <service
-            android:name=".node.NodeService"
-            android:exported="false"
-            android:process=":node" />
-
         <activity
             android:name=".ui.activity.WebActivity"
             android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"

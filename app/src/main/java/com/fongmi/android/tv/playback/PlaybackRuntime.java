@@ -10,7 +10,7 @@ import com.fongmi.android.tv.player.PlayerManager;
 import java.lang.ref.WeakReference;
 import java.util.UUID;
 
-final class PlaybackRuntime {
+public final class PlaybackRuntime {
 
     private static volatile History currentHistory;
     private static volatile WeakReference<PlayerManager> currentPlayer = new WeakReference<>(null);
@@ -24,7 +24,7 @@ final class PlaybackRuntime {
         currentPlayer = new WeakReference<>(player);
     }
 
-    static PlayerManager playerFor(String historyKey) {
+    public static PlayerManager playerFor(String historyKey) {
         PlayerManager player = currentPlayer.get();
         if (player == null || player.isReleased()) return null;
         String key = player.getKey();
@@ -35,7 +35,7 @@ final class PlaybackRuntime {
         currentHistory = history == null ? null : history.copy();
     }
 
-    static History currentHistory() {
+    public static History currentHistory() {
         History history = currentHistory;
         return history == null ? null : history.copy();
     }

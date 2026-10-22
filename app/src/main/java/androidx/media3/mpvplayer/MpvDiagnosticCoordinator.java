@@ -16,7 +16,6 @@ import androidx.media3.common.VideoSize;
 
 import com.fongmi.android.tv.player.AudioPlaybackDiagnostics;
 import com.fongmi.android.tv.player.PlaybackTrace;
-import com.fongmi.android.tv.player.lut.MpvLutShader;
 import com.github.catvod.crawler.SpiderDebug;
 
 import java.io.File;
@@ -53,7 +52,6 @@ public final class MpvDiagnosticCoordinator {
         MpvPropertyDispatcher getPropertyDispatcher();
         MpvLifecycleCoordinator getLifecycleCoordinator();
         MpvHlsCoordinator getHlsCoordinator();
-        @Nullable MpvLutShader getLutShader();
         VideoSize getVideoSize();
         long getCachedPositionMs();
         long getCachedDurationMs();
@@ -483,7 +481,6 @@ public final class MpvDiagnosticCoordinator {
     public String diagnosticSummary(VideoSize videoSize, long cachedPositionMs, long cachedDurationMs, Tracks tracks) {
         MpvLifecycleCoordinator lifecycle = host.getLifecycleCoordinator();
         MpvPropertyDispatcher propertyDispatcher = host.getPropertyDispatcher();
-        MpvLutShader lutShader = host.getLutShader();
         List<String> parts = new ArrayList<>();
         parts.add("trace=" + host.getPlaybackTraceId());
         parts.add("source=" + MpvDiagnosticsPolicy.sourceSummary(lifecycle.getCurrentPlayableUri()));
@@ -499,7 +496,7 @@ public final class MpvDiagnosticCoordinator {
         parts.add("audio-decoder=" + propertyDispatcher.getCachedAudioDecoder());
         parts.add("hwdec=" + propertyDispatcher.getCachedHwdecCurrent());
         parts.add("vo=" + propertyDispatcher.getCachedCurrentVo());
-        parts.add("shader=" + (lutShader == null ? "-" : lutShader.diagnostics()));
+        parts.add("shader=-");
         parts.add("end-file=" + endFileReasonName(lifecycle.getLastEndFileReason()) + "/" + mpvErrorName(lifecycle.getLastEndFileError()) + "(" + lifecycle.getLastEndFileError() + ")");
         if (!TextUtils.isEmpty(lifecycle.getLastEndFileErrorText())) {
             parts.add("end-file-text=" + MpvDiagnosticsPolicy.redactSensitive(lifecycle.getLastEndFileErrorText()));
@@ -594,7 +591,6 @@ public final class MpvDiagnosticCoordinator {
         refreshRuntimeDiagnostics(MpvDiagnosticsPolicy.Request.PANEL);
         MpvPropertyDispatcher propertyDispatcher = host.getPropertyDispatcher();
         MpvPlayerConfig config = host.getConfig();
-        MpvLutShader lutShader = host.getLutShader();
         String hwdec = firstNonEmpty(propertyDispatcher.getCachedHwdecCurrent(), config.hwdec());
         String ao = firstNonEmpty(propertyDispatcher.getCachedCurrentAo(), config.ao());
         String audioDevice = firstNonEmpty(propertyDispatcher.getCachedAudioDevice());
@@ -604,8 +600,7 @@ public final class MpvDiagnosticCoordinator {
                 TextUtils.isEmpty(audioDevice) ? "" : "device " + shortText(audioDevice, 32),
                 propertyDispatcher.formatAvSync(),
                 propertyDispatcher.formatDisplayFps(),
-                propertyDispatcher.formatDisplaySync(),
-                lutShader == null ? "" : "shader 开");
+                propertyDispatcher.formatDisplaySync());
     }
 
     public long getDroppedFrames() {
